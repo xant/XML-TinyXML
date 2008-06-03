@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<xml>
+	<!-- commento1 -->
+	<hello>world</hello>
+	<foo>
+		<![CDATA[ this should unescape <&; etc... :) ]]>
+	</foo>
+</xml>
