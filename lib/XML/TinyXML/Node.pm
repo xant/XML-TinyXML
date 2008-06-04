@@ -5,10 +5,6 @@
 
 XML::TinyXML::Node - Tinyxml Node object
 
-=head1 VERSION
-
-I<$Id$>
-
 =head1 SYNOPSIS
 
 =over 4
