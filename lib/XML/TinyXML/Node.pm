@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-XML::TinyXML::Node
+XML::TinyXML::Node - Tinyxml Node object
 
 =head1 VERSION
 
@@ -18,11 +18,16 @@ I<$Id$>
   # first obtain an xml context:
   $xml = XML::TinyXML->new("rootnode", "somevalue", { attr1 => v1, attr2 => v2 });
 
-  # if we create a childnode
-  $child = XML::TinyXML::Node->new("child", "somevalue");
-  $node->addChildNode($child);
-  # we can later retrive the "child" node calling
-  $child = $xml->getNode("/nodelabel/child");
+  # We create a node and later attach it to a parent one doing:
+  $child_node = XML::TinyXML::Node->new("child", "somevalue");
+  ... [ some code ] ...
+  $parent_node->addChildNode($child_node);
+
+  # or if we want to create a childnode in a single statemnet
+  $child_node = XML::TinyXML::Node->new("child", "somevalue", $parent_node);
+
+  # we can later retrive the "child" node by calling
+  $child_node = $xml->getNode("/nodelabel/child");
 
   # at this point , calling :
   print $xml->dump;
@@ -37,7 +42,7 @@ I<$Id$>
 
 =head1 DESCRIPTION
 
-Tera main object
+Node representation for the TinyXML API
 
 =head1 INSTANCE VARIABLES
 
@@ -59,19 +64,49 @@ package XML::TinyXML::Node;
 use strict;
 our $VERSION = $XML::TinyXML::Version;
 
-=item * new ($name, $value, %attrs)
+=item * new ($entity, $value, $parent, %attrs)
+
+Creates a new XML::TinyXML::Node object.
+
+$entity can be either a scalar or an XmlNodePtr object.
+    - if it's a scalar , it will be intepreted as the entity name 
+    - if it's an XmlNodePtr, it will be used as the underlying object
+      and will be incapsulated in the newly created XML::TinyXML::Node object.
+
+$value is the optianal string value of the newly created node (the "content" of
+the xml node)
+
+if $parent isn't undef the newly created node will be directly attached to 
+the specified parent node. $parent can be either a XML::TinyXML::Node object
+or a XmlNodePtr one.
+
+%attrs is an optional hash specifying attributes for the newly created xml node
+
+Returns a valid XML::TinyXML::Node object
 
 =cut
 sub new {
-    my ($class, $name, $value, %attrs) = @_;
-    return undef unless($name);
+    my ($class, $entity, $value, $parent, %attrs) = @_;
+    return undef unless($entity);
     my $node = undef;
-    if(ref($name) && UNIVERSAL::isa($name, "XmlNodePtr")) {
-        $node = $name;
+    if(ref($entity) && UNIVERSAL::isa($entity, "XmlNodePtr")) {
+        $node = $entity;
     } else {
-        $node = XML::TinyXML::XmlCreateNode($name, $value || "");
+        $node = XML::TinyXML::XmlCreateNode($entity, $value || "");
     }
     return undef unless($node);
+    if(ref($parent)) {
+        my $pnode = undef;
+        if(UNIVERSAL::isa($parent, "XmlNodePtr")) {
+            $pnode = $parent;
+        } elsif(UNIVERSAL::isa($parent, "XML::TinyXML::Node")) {
+            $pnode = $parent->{_node};
+        }
+        if($pnode) {
+            XML::TinyXML::XmlAddChildNode($pnode, $node);
+        } else {
+        }
+    } 
     my $self = {};
     bless($self, $class);
     $self->{_node} = $node;
@@ -192,6 +227,8 @@ sub value {
 
 =item * attributes ()
 
+Read-Only method to obtain an hashref to the attributes of this node
+
 =cut
 sub attributes {
     my ($self) = shift;
@@ -203,16 +240,30 @@ sub attributes {
     return $res;
 }
 
+=item * getChildNode ($index)
+=cut
 sub getChildNode {
     my ($self, $index) = @_;
     return XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNode($self->{_node}, $index));
 }
 
+=item * getChildNodeByName ($name)
+=cut
+sub getChildNodeByName {
+    my ($self, $name) = @_;
+    return undef unless($name);
+    return XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNodeByName($self->{_node}, $name));
+}
+
+=item * countChildren ()
+=cut
 sub countChildren {
     my $self = shift;
     return XML::TinyXML::XmlCountChildren($self->{_node});
 }
 
+=item * children ()
+=cut
 sub children {
     my ($self) = @_;
     my @children = ();
@@ -270,6 +321,10 @@ sub type {
 XML::TinyXML
 
 =back
+
+=head1 AUTHOR
+
+xant, E<lt>xant@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

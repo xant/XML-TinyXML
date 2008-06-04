@@ -58,7 +58,6 @@ typedef struct __XmlNode {
 #define XML_NODETYPE_COMMENT 1
 #define XML_NODETYPE_CDATA 2
     char type;
-    int marker;
 } XmlNode;
 
 typedef struct {

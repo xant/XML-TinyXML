@@ -4,6 +4,7 @@ linklist.h
 Makefile.PL
 MANIFEST
 README
+TODO
 txml.c
 txml.h
 uxdefs.h

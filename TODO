@@ -1,0 +1,12 @@
+- complete documentation
+- complete testsuits
+- write a more exhaustive example.pl
+- handle doctype and let user define it at object construction
+- handle nested arrayrefs in the hashref <-> xml conversion
+- optionally use attributes in hashref <-> xml conversion (as in XML::Simple)
+- make wiping whitespace optional
+- add the possibility to output a raw xml which doesn't include extra \t and \n
+  actually used to preserve readability of the created xml document
+- handle !ENTITY and !ATTLIST 
+- in TinyXML::getNode() return an array of nodes instead of the first one when
+  multiple nodes match a fiven 'path'

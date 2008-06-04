@@ -1,6 +1,6 @@
 =head1 NAME
 
-XML::TinyXML - Perl extension for blah blah blah
+XML::TinyXML - Little and efficient Perl module to manage xml data. 
 
 =head1 SYNOPSIS
 
@@ -56,11 +56,17 @@ XML::TinyXML - Perl extension for blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for XML::TinyXML, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+Since in some environments it could be desirable to avoid installing 
+Expat, XmlParser and blahblahblah , needed by most XML-related perl modules,.
+my main scope was to obtain a fast xml library usable from perl
+(so with a powerful interface) but without the need to install 
+a lot of other modules (or even C libraries) to have it working.
+Once I discovered XS I started porting a very little and efficent
+xml library I wrote in C some years ago.
 
-Blah blah blah.
+The interesting part of porting it in perl is that now it's really easy
+to improve the interface and I was almost always pissed off of installing 
+more than 10 modules to have a simple xml implementation.
 
 =over
 
@@ -126,10 +132,9 @@ our @EXPORT = qw(
 	XmlSave
 	XmlSetNodeValue
 	XmlSubstBranch
-	XmlValueHandler
 );
 
-our $VERSION = '0.05';
+our $VERSION = '0.02';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -219,6 +224,8 @@ sub addRootNode {
 
 =item * dump ()
 
+Returns a stringified version of the XML structure represented internally
+
 =cut
 sub dump {
     my $self = shift;
@@ -227,6 +234,8 @@ sub dump {
 
 =item * loadFile ($path)
 
+Load the xml structure from a file
+
 =cut
 sub loadFile {
     my ($self, $path) = @_;
@@ -234,6 +243,8 @@ sub loadFile {
 }
 
 =item * loadHash ($hash, $root)
+
+Load the xml structure from an hashref (AKA: convert an hashref to an xml document)
 
 =cut
 sub loadHash {
@@ -254,6 +265,8 @@ sub loadHash {
 
 =item * toHAsh ()
 
+Dump the xml structure represented internally in the form of an hashref
+
 =cut
 sub toHash {
     my ($self) = shift;
@@ -266,6 +279,8 @@ sub toHash {
 
 =item * loadBuffer ($buf)
 
+Load the xml structure from a preloaded memory buffer
+
 =cut
 sub loadBuffer {
     my ($self, $buf) = @_;
@@ -273,6 +288,14 @@ sub loadBuffer {
 }
 
 =item * getNode ($path)
+
+Get a node at a specific path.
+
+$path must be of the form: '/rootnode/child1/child2/leafnod'
+and the leading '/' is optional (since all paths will be interpreted
+as absolute)
+
+Returns an XML::TinyXML::Node object
 
 =cut
 sub getNode {
@@ -282,6 +305,10 @@ sub getNode {
 
 =item * getChildNode ($node, $index)
 
+Get the child of $node at index $index.
+
+Returns an XML::TinyXML::Node object
+
 =cut
 sub getChildNode {
     my ($self, $node, $index) = @_;
@@ -289,6 +316,13 @@ sub getChildNode {
 }
 
 =item * removeNode ($path)
+
+Remove the node at specific $path , if present.
+See getNode() documentation for some notes on the $path format.
+
+Returns XML_NOERR (0) if success, error code otherwise.
+
+See Exportable constants for a list of possible error codes
 
 =cut
 sub removeNode {
@@ -308,6 +342,10 @@ sub getBranch {
 
 =item * getRootNode ($index) 
 
+Get the root node at $index.
+
+Returns an XML::TinyXML::Node object if present, undef otherwise
+
 =cut
 sub getRootNode {
     my ($self, $index) = @_;
@@ -316,6 +354,8 @@ sub getRootNode {
 
 =item * removeBranch ($index)
 
+Remove the rootnode (and all his children) at $index.
+
 =cut
 sub removeBranch {
     my ($self, $index) = @_;
@@ -323,6 +363,10 @@ sub removeBranch {
 }
 
 =item * getChildNodeByName ($node, $name)
+
+Get the child of $node with name == $name.
+
+Returns an XML::TinyXML::Node object if there is such a child, undef otherwise
 
 =cut
 sub getChildNodeByName {
@@ -341,6 +385,10 @@ sub getChildNodeByName {
 }
 
 =item * save ($path)
+
+Save the xml document represented internally into $path.
+
+Returns XML_NOERR if success, a specific error code otherwise
 
 =cut
 sub save {
@@ -396,11 +444,11 @@ None by default.
 
   XML::TinyXML::Node
 
-You should also see libtinyxml documentation (mostly tinyxml.h, redistributed with this module)
+You should also see libtinyxml documentation (mostly txml.h, redistributed with this module)
 
 =head1 AUTHOR
 
-xant, E<lt>xant@xant.net<gt>
+xant, E<lt>xant@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
