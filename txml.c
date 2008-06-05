@@ -1058,7 +1058,7 @@ XmlErr XmlFileLock(FILE *file)
 #ifdef WIN32
         while(W32LockFile(file) != 0) {
 #else
-        while(flock(fileno(file), LOCK_EX|LOCK_NB)!=0) {
+        while(ftrylockfile(file) != 0) {
 #endif
     // warning("can't obtain a lock on xml file %s... waiting (%d)", xmlFile, tries);
             tries++;
@@ -1079,9 +1079,10 @@ XmlErr XmlFileUnlock(FILE *file)
 #ifdef WIN32
         if(W32UnlockFile(file)==0) 
 #else
-        if(flock(fileno(file), LOCK_UN)==0) 
+        funlockfile(file);
+
 #endif
-            return XML_NOERR;
+        return XML_NOERR;
     }
     return XML_GENERIC_ERR;
 }

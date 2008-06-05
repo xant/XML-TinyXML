@@ -1,6 +1,9 @@
 Revision history for Perl extension TinyXML.
 
 0.01  Fri May 23 00:39:52 2008
-	- original version; created by h2xs 1.23 with options
-		-Oxan TinyXML linklist.h tinyxml.h
+      - original version; created by h2xs 1.23 with options
+      -Oxan TinyXML linklist.h txml.h
+0.02  switching from flock to ftrylockfile/funlockfile 
+      to preserve solaris compatibility
+
 

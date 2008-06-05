@@ -22,9 +22,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef WIN32
-#include <sys/file.h>
-#else // WIN32
+#ifdef WIN32
 #include <windows.h> // for w32lock/unlock functions
 #include <io.h>
 /* strings */
