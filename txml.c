@@ -920,11 +920,11 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
         walk++;
         
     /* first get root node */
-//#ifndef WIN32
+#ifndef WIN32
     tag  = strtok_r(walk, "/", &brkb);
-//#else
-//    tag = strtok(walk, "/");
-//#endif
+#else
+    tag = strtok(walk, "/");
+#endif
     if(!tag)
         return NULL;
 
@@ -941,11 +941,11 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
         return NULL;
     
     /* now cNode points to the root node ... let's find requested node */
-//#ifndef WIN32
+#ifndef WIN32
     tag = strtok_r(NULL, "/", &brkb);
-//#else
-//    tag = strtok(NULL, "/");
-//#endif
+#else
+    tag = strtok(NULL, "/");
+#endif
     while(tag)
     {
         for(i=1; i<=XmlCountChildren(cNode); i++)
@@ -960,11 +960,11 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
         }
         if(!wNode)
             return NULL;
-//#ifndef WIN32
+#ifndef WIN32
         tag = strtok_r(NULL, "/", &brkb);
-//#else
-//        tag = strtok(NULL, "/");
-//#endif
+#else
+        tag = strtok(NULL, "/");
+#endif
     }
     
     return cNode;

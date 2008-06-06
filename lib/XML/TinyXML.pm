@@ -134,7 +134,7 @@ our @EXPORT = qw(
 	XmlSubstBranch
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -166,28 +166,52 @@ XSLoader::load('XML::TinyXML', $VERSION);
 
 =item * new ($arg, $param, $attrs, $doctype)
 
+Creates a new XML::TinyXML object.
+
+$root can be any of :
+    XML::TinyXML::Node
+    XmlNodePtr
+    HASHREF
+    SCALAR
+
+and if present will be used as first root node of the newly created
+xml document.
+
+%params is an optional hash parameter used only
+if $arg is an HASHREF or a scalar
+
+%params = (
+    param =>  if $root is an hashref, this will be
+                the parameter passed to loadHash()
+              if $root is a scalar, this will be 
+                the value of the root node, 
+    attrs =>  attributes of the 'contextually added' $root node 
+);
+
 =cut
 sub new {
-    my ($class, $arg, $param, $attrs, $doctype) = @_;
+    my ($class, $root, %params ) = @_; #$param, $attrs, $doctype) = @_;
     my $self = {} ;
     bless($self, $class);
 
     $self->{_ctx} = XmlCreateContext();
-    if($arg) {
-        if(UNIVERSAL::isa($arg, "XML::TinyXML::Node")) {
-            XmlAddRootNode($self->{_ctx}, $arg->{_node});
-        } elsif(UNIVERSAL::isa($arg, "XmlNodePtr")) {
-            XmlAddRootNode($self->{_ctx}, $arg);
-        } elsif(ref($arg) eq "HASH") {
-            $self->loadHash($arg, $param);
-        } elsif(defined($arg) && (!ref($arg) || ref($arg) eq "SCALAR")) {
-            $self->addRootNode($arg, $param, $attrs);
+    if($root) {
+        if(UNIVERSAL::isa($root, "XML::TinyXML::Node")) {
+            XmlAddRootNode($self->{_ctx}, $root->{_node});
+        } elsif(UNIVERSAL::isa($root, "XmlNodePtr")) {
+            XmlAddRootNode($self->{_ctx}, $root);
+        } elsif(ref($root) eq "HASH") {
+            $self->loadHash($root, $params{param});
+        } elsif(defined($root) && (!ref($root) || ref($root) eq "SCALAR")) {
+            $self->addRootNode($root, $params{param}, $params{attrs});
         }
     }
     return $self;
 }
 
 =item * addNodeAttribute ($node, $key, $value)
+
+Adds an attribute to a specific $node
 
 =cut
 sub addNodeAttribute {
@@ -198,12 +222,18 @@ sub addNodeAttribute {
 
 =item * removeNodeAttribute ($node, $index)
 
+Removes from $node the attribute at $index if present.
+
 =cut
 sub removeNodeAttribute {
     # TODO
 }
 
-=item * addRootNode ($name, $val, $attrs)
+=item * addRootNode ($name, $val, $attrs)o
+
+Adds a new root node. 
+(This can be considered both as a new tree in the forest represented in the xml document
+or as a new branch in the xml tree represented by the document itself)
 
 =cut
 sub addRootNode {
@@ -245,6 +275,9 @@ sub loadFile {
 =item * loadHash ($hash, $root)
 
 Load the xml structure from an hashref (AKA: convert an hashref to an xml document)
+
+if $root is specified, it will be the entity name of the root node
+in the resulting xml document.
 
 =cut
 sub loadHash {

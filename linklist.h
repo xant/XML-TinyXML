@@ -43,7 +43,9 @@ typedef struct __LinkedList {
 	ListEntry *head;
 	ListEntry *tail;
 	unsigned long length;
-	//pthread_mutex_t lock;
+#ifdef THREADED
+	pthread_mutex_t lock;
+#endif
 	int free;
 } LinkedList;
 

@@ -13,7 +13,7 @@ my $hash = {
     array => [ 
         "arrayval1", 
         { subhashkey => 'subhashvalue' }, 
-        [  # XXX - sub arrays will be flattened by actual implementation
+        [  # XXX - folded arrays will be flattened by actual implementation
             { nome1 => 'subarray1' } , 
             { nome2 => 'subarray2' , 'nome2.5' => 'dfsdf'}, 
             { nested => { nested2_1 => 'nestedvalue', nested2_2 => 'nestedvalue2' } },
