@@ -2,10 +2,10 @@ Revision history for Perl extension TinyXML.
 
 0.01  Fri May 23 00:39:52 2008
       - original version; created by h2xs 1.23 with options
-      -Oxan TinyXML linklist.h txml.h
-0.02  switching from flock to ftrylockfile/funlockfile 
-      to ensure solaris compatibility
+        -Oxan TinyXML linklist.h txml.h
+0.02  - switching from flock to ftrylockfile/funlockfile 
+        to ensure solaris compatibility
 0.03  - make the module to build properly on windows
         (strtok_r doesn't exist on win32)
       - added some documentation (more is still needed)
-
+0.04  - allow the module to be built and used by perl interpreters < 5.8.8
