@@ -112,24 +112,42 @@ sub new {
     $self;
 }
 
-=item * cleanAttributes
+=item * cleanAttributes ()
+
+Removes all node attributes
 
 =cut
 sub cleanAttributes {
+    my ($self) = @_;
+    return XML::TinyXML::XmlClearAttributes($self->{_node});
 }
 
+=item * removeAttribute ($index)
+
+Removes attribute at $index
+
+=cut
 sub removeAttribute {
     my ($self, $index) = @_;
     return XML::TinyXML::XmlRemoveAttribute($self->{_node}, $index);
 }
 
-=item * loadHash ($hash, [ $nest ])
+#=item * removeAttributeByName ($name)
+#=cut
+
+=item * loadHash ($hashref, [ $childname ])
+
+Loads an hashref and represent it as an xml subbranch.
+
+$hashref 
+
+if $childname is specified, newly created childnodes will use it as their name
 
 =cut
 sub loadHash {
-    my ($self, $hash, $nest) = @_;
+    my ($self, $hash, $childname) = @_;
     foreach my $k (keys(%$hash)) {
-        my $name = $nest || $k;
+        my $name = $childname || $k;
         if(!ref($hash->{$k}) || ref($hash->{$k}) eq "SCALAR") {
             $self->addChildNode(XML::TinyXML::Node->new($name, $hash->{$k}));
         } elsif(ref($hash->{$k}) eq "HASH") {
@@ -139,7 +157,7 @@ sub loadHash {
         } elsif(ref($hash->{$k}) eq "ARRAY") {
             foreach my $entry (@{$hash->{$k}}) {
                 #warn "Anonymous/Nested arrayrefs are flattened !!! This should be fixed in the future";
-                #$self->parent->addChildNode($nest);
+                #$self->parent->addChildNode($childname);
                 $self->loadHash({ __import__ => $entry }, $name);
             }
         }
@@ -147,6 +165,11 @@ sub loadHash {
 }
 
 =item * toHash ([ $parent ])
+
+Export the xml structure into an hashref (formerly the inverse of loadHash)
+
+if $parent is specified the resulting structure will be connected to $parent.
+(NOTE: $parent MUST obviously be an hashref)
 
 =cut
 sub toHash {
@@ -184,6 +207,11 @@ sub toHash {
 
 =item * updateAttributes (%attrs)
 
+Updates all attributes.
+
+This method simply clean all current attributes and replace them with 
+the ones specified in the %attrs hash
+
 =cut
 sub updateAttributes {
     my ($self, %attrs) = @_;
@@ -192,6 +220,8 @@ sub updateAttributes {
 }
 
 =item * addAttributes (%attrs)
+
+Add attributes.
 
 =cut
 sub addAttributes {
@@ -203,6 +233,10 @@ sub addAttributes {
 
 =item * name ([$newname])
 
+Set/Get the name of a node.
+if $newname is specified it will be used as the new name, 
+otherwise the current name is returned
+
 =cut
 sub name { 
     my ($self, $newname) = @_;
@@ -212,6 +246,10 @@ sub name {
 }
 
 =item * value ([$newval])
+
+Set/Get the vlue of a node.
+if $newval is specified it will be used as the new value, 
+otherwise the current value is returned
 
 =cut
 sub value {
@@ -237,6 +275,10 @@ sub attributes {
 }
 
 =item * getChildNode ($index)
+
+Returns child node at $index.
+The returned node will be a Xml::TinyXML::Node object
+
 =cut
 sub getChildNode {
     my ($self, $index) = @_;
@@ -244,6 +286,10 @@ sub getChildNode {
 }
 
 =item * getChildNodeByName ($name)
+
+Returns the first child node whose name matches $name.
+The returned node will be a Xml::TinyXML::Node object
+
 =cut
 sub getChildNodeByName {
     my ($self, $name) = @_;
@@ -252,6 +298,9 @@ sub getChildNodeByName {
 }
 
 =item * countChildren ()
+
+Returns the actual number of children
+
 =cut
 sub countChildren {
     my $self = shift;
@@ -259,6 +308,9 @@ sub countChildren {
 }
 
 =item * children ()
+
+Returns an array containing all actual children in the form of Xml::TinyXML::Node objects
+
 =cut
 sub children {
     my ($self) = @_;
@@ -271,6 +323,10 @@ sub children {
 
 =item * addChildNode ($child)
 
+Adds a new child node.
+
+$child MUST be a XML::TinyXML::Node object
+
 =cut
 sub addChildNode {
     my ($self, $child) = @_;
@@ -278,7 +334,9 @@ sub addChildNode {
     return XML::TinyXML::XmlAddChildNode($self->{_node}, $child->{_node});
 }
 
-=item * parent ($child)
+=item * parent ()
+
+Read-Only method which returns the parent node in the form of a XML::TinyXML::Node object.
 
 =cut
 sub parent {
@@ -287,11 +345,13 @@ sub parent {
 }
 
 =item * type ()
+
 Returns the "type" of a XML::TinyXML::Node object.
 type can be :
     NODE
     COMMENT
     CDATA
+
 =cut
 sub type {
     my ($self) = @_;

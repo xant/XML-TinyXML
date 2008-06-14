@@ -9,3 +9,4 @@ Revision history for Perl extension TinyXML.
         (strtok_r doesn't exist on win32)
       - added some documentation (more is still needed)
 0.04  - allow the module to be built and used by perl interpreters < 5.8.8
+      - some more documentation regarding the XML::TinyXML::Node object
