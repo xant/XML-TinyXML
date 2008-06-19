@@ -21,7 +21,7 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   $xml = XML::TinyXML->new($node);
 
   # or maybe 
-  $xml = XML::TinyXML->new("rootnode", "somevalue", { attr1 => v1, attr2 => v2 });
+  $xml = XML::TinyXML->new("rootnode", param => "somevalue", attrs => { attr1 => v1, attr2 => v2 });
 
   # or we can just create an empty root node:
   $xml = XML::TinyXML->new("rootnode");
@@ -43,13 +43,13 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   # An useful facility is loading/dumping of hashrefs from/to xml
   # for ex:
   $hashref = { some => 'thing', someother => 'thing' };
-  my $xml = XML::TinyXML->new($hashref, 'mystruct');
+  my $xml = XML::TinyXML->new($hashref, param => 'mystruct');
 
   # or to load on an existing XML::TinyXML object
   $xml->loadHash($hashref, 'mystruct');
 
   # we can also create and dump to string all at once :
-  my $xmlstring = XML::TinyXML->new($hashref, 'mystruct')->dump;
+  my $xmlstring = XML::TinyXML->new($hashref, param => 'mystruct')->dump;
 
   # to reload the hashref back
   my $hashref = $xml->toHash;
@@ -133,7 +133,7 @@ our @EXPORT = qw(
 	XmlSubstBranch
 );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -163,7 +163,7 @@ XSLoader::load('XML::TinyXML', $VERSION);
 
 # Preloaded methods go here.
 
-=item * new ($arg, $param, $attrs, $doctype)
+=item * new ($arg, %params)
 
 Creates a new XML::TinyXML object.
 
@@ -185,6 +185,7 @@ if $arg is an HASHREF or a scalar
               if $root is a scalar, this will be 
                 the value of the root node, 
     attrs =>  attributes of the 'contextually added' $root node 
+    encoding => 
 );
 
 =cut

@@ -1,5 +1,6 @@
 - complete documentation
 - complete testsuits
+- support different encodings when doing i/o 
 - write a more exhaustive example.pl
 - handle doctype and let user define it at object construction
 - handle nested arrayrefs in the hashref <-> xml conversion
