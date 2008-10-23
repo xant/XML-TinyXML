@@ -11,8 +11,8 @@ TinyXML.xs
 typemap
 t/TinyXML.t
 t/t.xml
-example.pl
 fallback/const-c.inc
 fallback/const-xs.inc
 lib/XML/TinyXML.pm
 lib/XML/TinyXML/Node.pm
+examples/sample1.pl

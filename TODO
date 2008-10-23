@@ -1,6 +1,6 @@
 - complete documentation
 - complete testsuits
-- support different encodings when doing i/o 
+- support different encodings when importing/exporting data
 - write a more exhaustive example.pl
 - handle doctype and let user define it at object construction
 - handle nested arrayrefs in the hashref <-> xml conversion
@@ -11,5 +11,5 @@
 - handle !ENTITY and !ATTLIST 
 - in TinyXML::getNode() return an array of nodes instead of the first one when
   multiple nodes match a given 'path'
-- enable stream-based api since it could be already implemented using 
+- expose a stream-based api since it could be easily implemented using 
   the cnode member in the TXml struct

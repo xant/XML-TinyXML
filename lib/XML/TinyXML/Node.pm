@@ -20,7 +20,7 @@ XML::TinyXML::Node - Tinyxml Node object
   $parent_node->addChildNode($child_node);
 
   # or if we want to create a childnode in a single statemnet
-  $child_node = XML::TinyXML::Node->new("child", "somevalue", $parent_node);
+  $child_node = XML::TinyXML::Node->new("child", "somevalue", $attrs, $parent_node);
 
   # we can later retrive the "child" node by calling
   $child_node = $xml->getNode("/nodelabel/child");
@@ -58,7 +58,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.04';
+our $VERSION = '0.06';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -82,7 +82,7 @@ Returns a valid XML::TinyXML::Node object
 
 =cut
 sub new {
-    my ($class, $entity, $value, $parent, %attrs) = @_;
+    my ($class, $entity, $value, $attrs, $parent) = @_;
     return undef unless($entity);
     my $node = undef;
     if(ref($entity) && UNIVERSAL::isa($entity, "XmlNodePtr")) {
@@ -100,14 +100,13 @@ sub new {
         }
         if($pnode) {
             XML::TinyXML::XmlAddChildNode($pnode, $node);
-        } else {
-        }
+        } 
     } 
     my $self = {};
     bless($self, $class);
     $self->{_node} = $node;
-    if(%attrs) {
-        $self->AddAttributes(%attrs);
+    if($attrs && ref($attrs) eq "HASH") {
+        $self->AddAttributes(%$attrs);
     }
     $self;
 }
