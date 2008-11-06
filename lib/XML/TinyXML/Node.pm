@@ -106,7 +106,7 @@ sub new {
     bless($self, $class);
     $self->{_node} = $node;
     if($attrs && ref($attrs) eq "HASH") {
-        $self->AddAttributes(%$attrs);
+        $self->addAttributes(%$attrs);
     }
     $self;
 }
