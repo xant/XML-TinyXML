@@ -12,3 +12,8 @@ Revision history for Perl extension TinyXML.
       - some more documentation regarding the XML::TinyXML::Node object
 0.05  - updated documentation and implemented XML::TinyXML::addChildNode()
 0.06  - bugfix: typo in XML::TinyXML::Node.pm:109
+0.07  - correctly handle escaping/unescaping of xml special chars on 
+        import/export operations
+0.08  - bugfix : dexml() now works properly so special characters are now
+        handled correctly when importing xml data
+      - testunits now include escaping/unescaping-related checks

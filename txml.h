@@ -17,6 +17,7 @@
 #define XML_PARSER_GENERIC_ERR -4
 #define XML_MEMORY_ERR -5
 #define XML_LINKLIST_ERR -6
+#define XML_BAD_CHARS -7
 
 #include <linklist.h>
 #include <stdio.h>

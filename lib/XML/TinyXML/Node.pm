@@ -58,7 +58,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.06';
+our $VERSION = '0.08';
 
 =item * new ($entity, $value, $parent, %attrs)
 

@@ -13,6 +13,93 @@
 #define XML_ELEMENT_END 3
 #define XML_ELEMENT_UNIQUE 4
 
+static char *dexmlize(char *string)
+{
+    int i, p = 0;
+    int len = strlen(string);
+    char *unescaped = NULL;
+    
+    if (string) {
+        unescaped = calloc(1, len+1); // inlude null-byte
+        for (i = 0; i < len; i++) {
+            switch (string[i]) {
+                case '&':
+                    if (string[i+1] == '#') {
+                        char *marker;
+                        i+=2;
+                        marker = &string[i];
+                        if (string[i] >= '0' && string[i] <= '9' &&
+                            string[i+1] >= '0' && string[i+1] <= '9')
+                        {
+                            char chr = 0;
+                            i+=2;
+                            if (string[i] >= '0' && string[i] <= '9' && string[i+1] == ';') 
+                                i++;
+                            else if (string[i] == ';') 
+                                ;
+                            else
+                                return NULL;
+                            chr = (char)strtol(marker, NULL, 0);
+                            unescaped[p] = chr;
+                        }
+                    } else if (strncmp(&string[i], "&amp;", 5) == 0) {
+                        i+=4;
+                        unescaped[p] = '&';
+                    } else if (strncmp(&string[i], "&lt;", 4) == 0) {
+                        i+=3;
+                        unescaped[p] = '<';
+                    } else if (strncmp(&string[i], "&gt;", 4) == 0) {
+                        i+=3;
+                        unescaped[p] = '>';
+                    } else if (strncmp(&string[i], "&quot;", 6) == 0) {
+                        i+=5;
+                        unescaped[p] = '"';
+                    } else if (strncmp(&string[i], "&apos;", 6) == 0) {
+                        i+=5;
+                        unescaped[p] = '\'';
+                    } else {
+                        return NULL;
+                    }
+                    p++;
+                    break;
+                default:
+                    unescaped[p] = string[i];
+                    p++;
+            }
+        }
+    }
+    return unescaped;
+}
+
+static char *xmlize(char *string)
+{
+    int i, p = 0;
+    int len = strlen(string);
+    char *escaped = NULL;
+    
+    if (string) {
+        escaped = calloc(1, len+1); // inlude null-byte
+        for (i = 0; i < len; i++) {
+            switch (string[i]) {
+                case '&':
+                case '<':
+                case '>':
+                case '"':
+                case '\'':
+                    len += 4;
+                    escaped = realloc(escaped, len+1);
+                    sprintf(&escaped[p], "&#%02d;", string[i]);
+                    p += 5;
+                    break;
+                default:
+                    escaped[p] = string[i];
+                    p++;
+            }
+        }
+    }
+    return escaped;
+}
+
 TXml *XmlCreateContext()
 {
     TXml *xml;
@@ -230,19 +317,22 @@ static XmlErr XmlStartHandler(TXml *xml, char *element, char **attr_names, char 
     XmlNode *newNode = NULL;
     unsigned int offset = 0;
     XmlErr res = XML_NOERR;
+    char *nodename;
     
     if(!element || strlen(element) == 0)
-    {
-        res = XML_BADARGS;
-        goto _start_done;
-    }
+        return XML_BADARGS;
     
-    newNode = XmlCreateNode(element, NULL, xml->cNode);
+    // unescape read element to be used as nodename
+    nodename = dexmlize(element);
+    if (!nodename)
+        return XML_BAD_CHARS;
+
+    newNode = XmlCreateNode(nodename, NULL, xml->cNode);
+    free(nodename);
     if(!newNode || !newNode->name)
     {
         /* XXX - ERROR MESSAGES HERE */
-        res = 1;
-        goto _start_done;
+        return XML_MEMORY_ERR;
     }
     /* handle attributes if present */
     if(attr_names && attr_values)
@@ -298,22 +388,32 @@ static XmlErr XmlValueHandler(TXml *xml, char *text)
 {
     char *p;
     if(text) {
+        // TODO - make 'skipblanks' optional
+        // remove heading blanks
         while((*text == ' ' || *text == '\t' ||
-            *text == '\r' || *text == '\n') && *text != 0) text++;
+            *text == '\r' || *text == '\n') && *text != 0) 
+        {
+            text++;
+        }
+
         p = text+strlen(text)-1;
+
+        // remove trailing blanks
         while((*p == ' ' || *p == '\t' ||
             *p == '\r' || *p == '\n') && p != text) 
         {
             *p=0;
             p--;
         }
-        if(text) {
-            if(xml->cNode) 
-                XmlSetNodeValue(xml->cNode, text);
-            else 
-            {
-                fprintf(stderr, "cTag == NULL while handling a value!!");
-            }
+
+        if(xml->cNode)  {
+            char *rtext = dexmlize(text);
+            if (!rtext)
+                return XML_BAD_CHARS;
+            XmlSetNodeValue(xml->cNode, rtext);
+            free(rtext);
+        } else {
+            fprintf(stderr, "cTag == NULL while handling a value!!");
         }
         return XML_NOERR;
     }
@@ -632,17 +732,20 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     char *endTag;    
     char *childDump;
     char *value; 
-    char *name;
     int nameLen;
     XmlNodeAttribute *attr;
     XmlNode *child;
     unsigned long nAttrs;
     
-    value = rNode->value;
 
-    name = rNode->name;
-    if(name)
-        nameLen=(unsigned int)strlen(name);
+    if (rNode->type == XML_NODETYPE_SIMPLE) {
+        value = xmlize(rNode->value);
+    } else {
+        value = strdup(rNode->value);
+    }
+
+    if(rNode->name)
+        nameLen=(unsigned int)strlen(rNode->name);
     else
         return NULL;
 
@@ -677,22 +780,25 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     for(n = 0; n < depth; n++)
         strcat(startTag, "\t");
     strcat(startTag, "<");
-    strcat(startTag, name);
+    strcat(startTag, rNode->name);
     nAttrs = XmlCountAttributes(rNode);
     if(nAttrs>0) {
         for(i=1;i<=nAttrs;i++) {
             attr = XmlGetAttribute(rNode, i);
             if(attr) {
+                char *value = xmlize(attr->value);
                 startTag = (char *)realloc(startTag, strlen(startTag)+
-                    strlen(attr->name)+strlen(attr->value)+8);
+                    strlen(attr->name)+strlen(value)+8);
                 strcat(startTag, " ");
                 strcat(startTag, attr->name);
                 strcat(startTag, "=\"");
-                strcat(startTag, attr->value); /* XXX - should escape '"' char */
+                strcat(startTag, value);
                 if(i < nAttrs)
                     strcat(startTag, "\" ");
                 else
                     strcat(startTag, "\"");
+                if (value)
+                    free(value);
             }
         }
     }
@@ -716,7 +822,6 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         }
         else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
-            //strcat(startTag, "> ");
             strcat(startTag, ">"); 
         }
         strcat(endTag, "</");
@@ -747,6 +852,8 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     free(startTag);
     free(endTag);
     free(childDump);
+    if (value)
+        free(value);
     return out;
 }
 

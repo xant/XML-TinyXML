@@ -137,7 +137,7 @@ our @EXPORT = qw(
 	XmlSubstBranch
 );
 
-our $VERSION = '0.06';
+our $VERSION = '0.08';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -501,6 +501,7 @@ None by default.
   XML_OPEN_FILE_ERR
   XML_PARSER_GENERIC_ERR
   XML_UPDATE_ERR
+  XML_BAD_CHARS
   XML_NODETYPE_SIMPLE
   XML_NODETYPE_COMMENT
   XML_NODETYPE_CDATA

@@ -5,15 +5,15 @@
 
 # change 'tests => 2' to 'tests => last_test_to_print';
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 BEGIN { use_ok('XML::TinyXML') };
 
 
 my $fail = 0;
 foreach my $constname (qw(
 	XML_BADARGS XML_GENERIC_ERR XML_LINKLIST_ERR XML_MEMORY_ERR XML_NOERR
-	XML_OPEN_FILE_ERR XML_PARSER_GENERIC_ERR XML_UPDATE_ERR XML_NODETYPE_COMMENT
-        XML_NODETYPE_SIMPLE XML_NODETYPE_CDATA)) {
+	XML_OPEN_FILE_ERR XML_PARSER_GENERIC_ERR XML_UPDATE_ERR XML_BAD_CHARS
+        XML_NODETYPE_COMMENT XML_NODETYPE_SIMPLE XML_NODETYPE_CDATA)) {
   next if (eval "my \$a = $constname; 1");
   if ($@ =~ /^Your vendor has not defined XML::TinyXML macro $constname/) {
     print "# pass: $@";
@@ -60,9 +60,21 @@ ok( scalar(keys(%{$newhash->{hash}})) == 2, "nested hash number of members" );
 ok( $newhash->{hash}->{key1} eq $testhash->{hash}->{key1}, "nested hash member1" );
 ok( $newhash->{hash}->{key2} eq $testhash->{hash}->{key2}, "nested hash member2" );
 
-my $txml3 = XML::TinyXML->new();
-$txml3->loadFile("./t/t.xml");
-my $out = $txml3->dump;
+$txml = XML::TinyXML->new();
+$txml->addRootNode("nodelabel", "some'&'value", { attr1 => 'v>1', attr2 => 'v<2' });
+ok ( $txml->dump eq 
+q~<?xml version="1.0"?>
+<nodelabel attr2="v&#60;2"  attr1="v&#62;1">some&#39;&#38;&#39;value</nodelabel>
+~, 'escaping');
+
+$txml = XML::TinyXML->new();
+$txml->loadFile("./t/t.xml");
+my $out = $txml->dump;
+
+$txml = XML::TinyXML->new();
+$txml->loadBuffer("<node>Import&amp;special&quot;&lt;chars&gt;&#67;&#105;&#97;&#111;</node>");
+my $node = $txml->getRootNode(1);
+ok ( $node->value eq "Import&special\"<chars>Ciao", "unescaping" );
 
 # here we KNOW that t.xml should have XML::TinyXML to produce exactly the same output
 # note that this isn't always true ... since XML::TinyXML never expands leading tabs 
