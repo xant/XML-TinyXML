@@ -1,5 +1,5 @@
 /*
- *  tinyxml.c
+ *  txml.c
  *
  *  Created by xant on 2/17/06.
  *
@@ -274,6 +274,17 @@ void XmlClearAttributes(XmlNode *node)
         }
     }
 
+}
+
+XmlNodeAttribute *XmlGetAttributeByName(XmlNode *node, char *name)
+{
+    int i;
+    for (i=1; i <= ListLength(node->attributes); i++) {
+        XmlNodeAttribute *attr = XmlGetAttribute(node, i);
+        if (strcmp(attr->name, name) == 0)
+            return attr;
+    }
+    return NULL;
 }
 
 XmlNodeAttribute *XmlGetAttribute(XmlNode *node, unsigned long index)
@@ -608,7 +619,15 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
                             int quote = *p;
                             p++;
                             mark=p;
-                            while(*p!=quote && *p!=0) p++;
+                            while(*p!=0) {
+                                if (*p == quote) {
+                                    if (*(p+1) != quote) // handle quote escaping
+                                        break;
+                                    else
+                                        p++;
+                                }
+                                p++;
+                            }
                             if(*p==quote) {
                                 char *tmpVal = (char *)malloc(p-mark+2);
                                 strncpy(tmpVal, mark, p-mark);
