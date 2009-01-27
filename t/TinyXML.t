@@ -62,9 +62,10 @@ ok( $newhash->{hash}->{key2} eq $testhash->{hash}->{key2}, "nested hash member2"
 
 $txml = XML::TinyXML->new();
 $txml->addRootNode("nodelabel", "some'&'value", { attr1 => 'v>1', attr2 => 'v<2' });
+print $txml->dump;
 ok ( $txml->dump eq 
 q~<?xml version="1.0"?>
-<nodelabel attr2="v&#60;2"  attr1="v&#62;1">some&#39;&#38;&#39;value</nodelabel>
+<nodelabel attr2="v&#60;2" attr1="v&#62;1">some&#39;&#38;&#39;value</nodelabel>
 ~, 'escaping');
 
 $txml = XML::TinyXML->new();

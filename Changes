@@ -17,3 +17,5 @@ Revision history for Perl extension TinyXML.
 0.08  - bugfix : dexml() now works properly so special characters are now
         handled correctly when importing xml data
       - testunits now include escaping/unescaping-related checks
+0.09  - bugfix : xmlize() MUST ensure to null-terminate the escaped string
+        if the buffer had to be realloc'd

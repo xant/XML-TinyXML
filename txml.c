@@ -91,6 +91,7 @@ static char *xmlize(char *string)
                 case '\'':
                     bufsize += 5;
                     escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
                     sprintf(&escaped[p], "&#%02d;", string[i]);
                     p += 5;
                     break;
@@ -815,10 +816,7 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
                 strcat(startTag, attr->name);
                 strcat(startTag, "=\"");
                 strcat(startTag, value);
-                if(i < nAttrs)
-                    strcat(startTag, "\" ");
-                else
-                    strcat(startTag, "\"");
+                strcat(startTag, "\"");
                 if (value)
                     free(value);
             }
@@ -841,8 +839,7 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
                     }
                 }
             }
-        }
-        else {
+        } else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
             strcat(startTag, ">"); 
         }
