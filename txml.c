@@ -74,11 +74,14 @@ static char *dexmlize(char *string)
 static char *xmlize(char *string)
 {
     int i, p = 0;
-    int len = strlen(string);
+    int len;
+    int bufsize; 
     char *escaped = NULL;
     
+    len = strlen(string);
     if (string) {
-        escaped = calloc(1, len+1); // inlude null-byte
+        bufsize = len+1;
+        escaped = calloc(1, bufsize); // inlude null-byte
         for (i = 0; i < len; i++) {
             switch (string[i]) {
                 case '&':
@@ -86,8 +89,8 @@ static char *xmlize(char *string)
                 case '>':
                 case '"':
                 case '\'':
-                    len += 4;
-                    escaped = realloc(escaped, len+1);
+                    bufsize += 5;
+                    escaped = realloc(escaped, bufsize);
                     sprintf(&escaped[p], "&#%02d;", string[i]);
                     p += 5;
                     break;
