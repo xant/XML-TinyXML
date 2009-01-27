@@ -58,7 +58,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -225,7 +225,7 @@ Add attributes.
 =cut
 sub addAttributes {
     my ($self, %attrs) = @_;
-    foreach my $key (keys %attrs) {
+    foreach my $key (sort keys %attrs) {
         XML::TinyXML::XmlAddAttribute($self->{_node}, $key, $attrs{$key});
     }
 }
