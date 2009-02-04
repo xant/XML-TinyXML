@@ -207,6 +207,7 @@ void XmlDestroyContext(TXml *xml);
 
 
 XmlNodeAttribute *XmlGetAttribute(XmlNode *node,unsigned long index);
+XmlNodeAttribute *XmlGetAttributeByName(XmlNode *node, char *name);
 
 int XmlRemoveAttribute(XmlNode *node, unsigned long index);
 void XmlClearAttributes(XmlNode *node);

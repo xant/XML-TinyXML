@@ -19,3 +19,8 @@ Revision history for Perl extension TinyXML.
       - testunits now include escaping/unescaping-related checks
 0.09  - bugfix : xmlize() MUST ensure to null-terminate the escaped string
         if the buffer had to be realloc'd
+0.10  - forcing prerequisite for perl >= 5.8
+      - introducing XmlGetAttributeByName() in the underlying C implementation
+      - fixed direct dumping on a file: XmlSave() dumped on a file only if it
+        already existed (blindly trying to create a backup copy). It now 
+        creates the file if not there (and backup it if already present)

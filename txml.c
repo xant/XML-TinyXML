@@ -1,5 +1,5 @@
 /*
- *  txml.c
+ *  tinyxml.c
  *
  *  Created by xant on 2/17/06.
  *
@@ -13,12 +13,13 @@
 #define XML_ELEMENT_END 3
 #define XML_ELEMENT_UNIQUE 4
 
-static char *dexmlize(char *string)
+static char *
+dexmlize(char *string)
 {
     int i, p = 0;
     int len = strlen(string);
     char *unescaped = NULL;
-    
+
     if (string) {
         unescaped = calloc(1, len+1); // inlude null-byte
         for (i = 0; i < len; i++) {
@@ -33,9 +34,9 @@ static char *dexmlize(char *string)
                         {
                             char chr = 0;
                             i+=2;
-                            if (string[i] >= '0' && string[i] <= '9' && string[i+1] == ';') 
+                            if (string[i] >= '0' && string[i] <= '9' && string[i+1] == ';')
                                 i++;
-                            else if (string[i] == ';') 
+                            else if (string[i] == ';')
                                 ;
                             else
                                 return NULL;
@@ -71,13 +72,14 @@ static char *dexmlize(char *string)
     return unescaped;
 }
 
-static char *xmlize(char *string)
+static char *
+xmlize(char *string)
 {
     int i, p = 0;
     int len;
-    int bufsize; 
+    int bufsize;
     char *escaped = NULL;
-    
+
     len = strlen(string);
     if (string) {
         bufsize = len+1;
@@ -104,10 +106,11 @@ static char *xmlize(char *string)
     return escaped;
 }
 
-TXml *XmlCreateContext()
+TXml *
+XmlCreateContext()
 {
     TXml *xml;
-    
+
     xml = (TXml *)calloc(1, sizeof(TXml));
     xml->cNode = NULL;
     xml->rootElements = CreateList();
@@ -115,7 +118,8 @@ TXml *XmlCreateContext()
     return xml;
 }
 
-void XmlDestroyContext(TXml *xml)
+void
+XmlDestroyContext(TXml *xml)
 {
     XmlNode *rNode;
     if(xml->rootElements)
@@ -129,19 +133,10 @@ void XmlDestroyContext(TXml *xml)
     free(xml);
 }
 
-XmlNode *XmlCreateNode(char *name, char *value, XmlNode *parent)
+static void
+XmlSetNodePath(XmlNode *node, XmlNode *parent)
 {
-    XmlNode *node = NULL;
     unsigned int pathLen;
-    node = (XmlNode *)calloc(1, sizeof(XmlNode));
-    if(!node || !name)
-        return NULL;
-    
-    node->attributes = CreateList();
-    node->children = CreateList();
-    node->parent = parent;
-    node->name = strdup(name);
-
     if(parent) {
         if(parent->path) {
             pathLen = (unsigned int)strlen(parent->path)+1+strlen(node->name)+1;
@@ -155,6 +150,27 @@ XmlNode *XmlCreateNode(char *name, char *value, XmlNode *parent)
     } else { /* root node */
         node->path = strdup(node->name);
     }
+
+}
+
+XmlNode *
+XmlCreateNode(char *name, char *value, XmlNode *parent)
+{
+    XmlNode *node = NULL;
+    node = (XmlNode *)calloc(1, sizeof(XmlNode));
+    if(!node || !name)
+        return NULL;
+
+    node->attributes = CreateList();
+    node->children = CreateList();
+    node->parent = parent;
+    node->name = strdup(name);
+
+    if (parent)
+        XmlAddChildNode(parent, node);
+    else
+        XmlSetNodePath(node, NULL);
+
     if(value && strlen(value) > 0)
         node->value = strdup(value);
     else
@@ -162,11 +178,12 @@ XmlNode *XmlCreateNode(char *name, char *value, XmlNode *parent)
     return node;
 }
 
-void XmlDestroyNode(XmlNode *node)
+void
+XmlDestroyNode(XmlNode *node)
 {
     XmlNode *child;
     XmlNodeAttribute *attr;
-    
+
     if(node->attributes) {
         while(attr = ShiftValue(node->attributes)) {
             if(attr->name)
@@ -182,7 +199,7 @@ void XmlDestroyNode(XmlNode *node)
             XmlDestroyNode(child);
         DestroyList(node->children);
     }
-    if(node->name) 
+    if(node->name)
         free(node->name);
     if(node->path)
         free(node->path);
@@ -191,11 +208,12 @@ void XmlDestroyNode(XmlNode *node)
     free(node);
 }
 
-XmlErr XmlSetNodeValue(XmlNode *node, char *val)
+XmlErr
+XmlSetNodeValue(XmlNode *node, char *val)
 {
-    if(!val) 
+    if(!val)
         return XML_BADARGS;
-        
+
     if(node->value)
         free(node->value);
     node->value = strdup(val);
@@ -203,48 +221,71 @@ XmlErr XmlSetNodeValue(XmlNode *node, char *val)
 }
 
 /* quite useless */
-char *XmlGetNodeValue(XmlNode *node)
+char *
+XmlGetNodeValue(XmlNode *node)
 {
     if(!node)
         return NULL;
     return node->value;
 }
 
-XmlErr XmlAddChildNode(XmlNode *parent, XmlNode *child)
+static void
+XmlRemoveChildNode(XmlNode *parent, XmlNode *child)
+{
+    int i;
+    for (i = 1; i <= ListLength(parent->children); i++) {
+        XmlNode *p = PickValue(parent->children, i);
+        if (p == child) {
+            FetchValue(parent->children, i);
+            p->parent = NULL;
+            XmlSetNodePath(p, NULL);
+            break;
+        }
+    }
+}
+
+XmlErr
+XmlAddChildNode(XmlNode *parent, XmlNode *child)
 {
     if(!child)
         return XML_BADARGS;
-    
+
+    if (child->parent)
+        XmlRemoveChildNode(child->parent, child);
+
     if(PushValue(parent->children, child)) {
         child->parent = parent;
+        XmlSetNodePath(child, parent);
         return XML_NOERR;
     }
-        
+
     return XML_GENERIC_ERR;
 }
 
-XmlErr XmlAddRootNode(TXml *xml, XmlNode *node)
+XmlErr
+XmlAddRootNode(TXml *xml, XmlNode *node)
 {
     if(!node)
         return XML_BADARGS;
-    
+
     if(PushValue(xml->rootElements, node))
         return XML_NOERR;
-        
+
     return XML_GENERIC_ERR;
 }
 
-XmlErr XmlAddAttribute(XmlNode *node, char *name, char *val)
+XmlErr
+XmlAddAttribute(XmlNode *node, char *name, char *val)
 {
     XmlNodeAttribute *attr;
-    
+
     if(!name || !node)
         return XML_BADARGS;
-        
+
     attr = calloc(1, sizeof(XmlNodeAttribute));
     attr->name = strdup(name);
     attr->value = val?strdup(val):strdup("");
-    
+
     if(PushValue(node->attributes, attr))
         return XML_NOERR;
     free(attr->name);
@@ -253,7 +294,8 @@ XmlErr XmlAddAttribute(XmlNode *node, char *name, char *val)
     return XML_GENERIC_ERR;
 }
 
-int XmlRemoveAttribute(XmlNode *node, unsigned long index)
+int
+XmlRemoveAttribute(XmlNode *node, unsigned long index)
 {
     XmlNodeAttribute *attr = FetchValue(node->attributes, index);
     if(attr) {
@@ -265,7 +307,8 @@ int XmlRemoveAttribute(XmlNode *node, unsigned long index)
     return XML_GENERIC_ERR;
 }
 
-void XmlClearAttributes(XmlNode *node)
+void
+XmlClearAttributes(XmlNode *node)
 {
     unsigned int nAttrs = 0;
     int i;
@@ -280,7 +323,8 @@ void XmlClearAttributes(XmlNode *node)
 
 }
 
-XmlNodeAttribute *XmlGetAttributeByName(XmlNode *node, char *name)
+XmlNodeAttribute
+*XmlGetAttributeByName(XmlNode *node, char *name)
 {
     int i;
     for (i=1; i <= ListLength(node->attributes); i++) {
@@ -291,17 +335,19 @@ XmlNodeAttribute *XmlGetAttributeByName(XmlNode *node, char *name)
     return NULL;
 }
 
-XmlNodeAttribute *XmlGetAttribute(XmlNode *node, unsigned long index)
+XmlNodeAttribute
+*XmlGetAttribute(XmlNode *node, unsigned long index)
 {
     return PickValue(node->attributes, index);
 }
 
-static XmlErr XmlExtraNodeHandler(TXml *xml, char *content, char type)
+static XmlErr
+XmlExtraNodeHandler(TXml *xml, char *content, char type)
 {
     XmlNode *newNode = NULL;
     XmlErr res = XML_NOERR;
     char fakeName[256];
-    
+
     sprintf(fakeName, "_fakenode_%d_", type);
     newNode = XmlCreateNode(fakeName, content, xml->cNode);
     newNode->type = type;
@@ -316,7 +362,7 @@ static XmlErr XmlExtraNodeHandler(TXml *xml, char *content, char type)
             XmlDestroyNode(newNode);
             goto _node_done;
         }
-    } else {    
+    } else {
         res = XmlAddRootNode(xml, newNode) ;
         if(res != XML_NOERR) {
             XmlDestroyNode(newNode);
@@ -327,16 +373,17 @@ _node_done:
     return res;
 }
 
-static XmlErr XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
+static XmlErr
+XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
 {
     XmlNode *newNode = NULL;
     unsigned int offset = 0;
     XmlErr res = XML_NOERR;
     char *nodename;
-    
+
     if(!element || strlen(element) == 0)
         return XML_BADARGS;
-    
+
     // unescape read element to be used as nodename
     nodename = dexmlize(element);
     if (!nodename)
@@ -372,8 +419,8 @@ static XmlErr XmlStartHandler(TXml *xml, char *element, char **attr_names, char 
             goto _start_done;
         }
     }
-    else 
-    {    
+    else
+    {
         res = XmlAddRootNode(xml, newNode) ;
         if(res != XML_NOERR)
         {
@@ -382,12 +429,13 @@ static XmlErr XmlStartHandler(TXml *xml, char *element, char **attr_names, char 
         }
     }
     xml->cNode = newNode;
-    
+
 _start_done:
     return res;
 }
 
-static XmlErr XmlEndHandler(TXml *xml, char *element)
+static XmlErr
+XmlEndHandler(TXml *xml, char *element)
 {
     XmlNode *parent;
     if(xml->cNode)
@@ -399,14 +447,15 @@ static XmlErr XmlEndHandler(TXml *xml, char *element)
     return XML_GENERIC_ERR;
 }
 
-static XmlErr XmlValueHandler(TXml *xml, char *text)
+static XmlErr
+XmlValueHandler(TXml *xml, char *text)
 {
     char *p;
     if(text) {
         // TODO - make 'skipblanks' optional
         // remove heading blanks
         while((*text == ' ' || *text == '\t' ||
-            *text == '\r' || *text == '\n') && *text != 0) 
+            *text == '\r' || *text == '\n') && *text != 0)
         {
             text++;
         }
@@ -415,7 +464,7 @@ static XmlErr XmlValueHandler(TXml *xml, char *text)
 
         // remove trailing blanks
         while((*p == ' ' || *p == '\t' ||
-            *p == '\r' || *p == '\n') && p != text) 
+            *p == '\r' || *p == '\n') && p != text)
         {
             *p=0;
             p--;
@@ -436,7 +485,8 @@ static XmlErr XmlValueHandler(TXml *xml, char *text)
 }
 
 
-XmlErr XmlParseBuffer(TXml *xml, char *buf)
+XmlErr
+XmlParseBuffer(TXml *xml, char *buf)
 {
     XmlErr err = XML_NOERR;
     int state=XML_ELEMENT_NONE;
@@ -448,7 +498,7 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
     char **values = NULL;
     unsigned int nAttrs = 0;
     char *mark = NULL;
-                
+
     //unsigned int offset=fileStat.st_size;
 
 #define XML_FREE_ATTRIBUTES \
@@ -467,11 +517,11 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
 #define SKIP_BLANKS(__p) \
     while((*__p==' ' || *__p=='\t' || *__p=='\r' || *__p == '\n') && *__p!=0) __p++; \
     if(*__p==0) break;
-        
+
 #define ADVANCE_ELEMENT(__p) \
     while(*__p!='>' && *__p!=' ' && *__p!='\t' && *__p!='\r' && *__p != '\n' && *__p!=0) __p++; \
     if(*__p==0) break;
-        
+
 #define ADVANCE_TO_ATTR_VALUE(__p) \
     while(*__p!='=' && *__p!=' ' && *__p!='\t' && *__p!='\r' && *__p != '\n' && *__p!=0) __p++;\
     SKIP_BLANKS(__p);
@@ -487,7 +537,7 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
                 while(*p != '>' && *p != 0) p++;
                 if(*p == '>') {
                     end = (char *)malloc(p-mark+1);
-                    if(!end) 
+                    if(!end)
                     {
                         err = XML_MEMORY_ERR;
                         goto _parser_err;
@@ -533,7 +583,7 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
                 p++;
             } else if(strncmp(p, "!--", 3) == 0) { /* comment */
                 char *comment = NULL;
-                p += 3; /* skip !-- */ 
+                p += 3; /* skip !-- */
                 mark = p;
                 p = strstr(mark, "-->");
                 if(!p) {
@@ -599,7 +649,7 @@ XmlErr XmlParseBuffer(TXml *xml, char *buf)
                 mark=p;
                 ADVANCE_ELEMENT(p);
                 start = (char *)malloc(p-mark+2);
-                if(start == NULL) 
+                if(start == NULL)
                     return XML_MEMORY_ERR;
                 strncpy(start, mark, p-mark);
                 if(*p=='>' && *(p-1)=='/') {
@@ -706,13 +756,14 @@ _parser_err:
 }
 
 
-XmlErr XmlParseFile(TXml *xml, char *path)
+XmlErr
+XmlParseFile(TXml *xml, char *path)
 {
     FILE *inFile;
     char *buffer;
     XmlErr err;
     struct stat fileStat;
-        
+
     inFile = NULL;
     err = XML_NOERR;
     if(!path)
@@ -739,7 +790,7 @@ XmlErr XmlParseFile(TXml *xml, char *path)
             return -1;
         }
     }
-    else 
+    else
     {
         fprintf(stderr, "Can't stat xmlfile %s\n", path);
         return -1;
@@ -747,19 +798,20 @@ XmlErr XmlParseFile(TXml *xml, char *path)
     return XML_NOERR;
 }
 
-char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
+char *
+XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
 {
     unsigned int i, n;
     char *out = NULL;
     char *startTag;
-    char *endTag;    
+    char *endTag;
     char *childDump;
-    char *value; 
+    char *value;
     int nameLen;
     XmlNodeAttribute *attr;
     XmlNode *child;
     unsigned long nAttrs;
-    
+
 
     if (rNode->type == XML_NODETYPE_SIMPLE) {
         value = xmlize(rNode->value);
@@ -794,12 +846,12 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
 
     childDump = (char *)malloc(1);
     *childDump=0;
-    
+
     startTag=(char *)malloc(depth+nameLen+7);
     memset(startTag, 0, depth+nameLen+7);
     endTag=(char *)malloc(depth+nameLen+7);
     memset(endTag, 0, depth+nameLen+7);
-    
+
     for(n = 0; n < depth; n++)
         strcat(startTag, "\t");
     strcat(startTag, "<");
@@ -841,7 +893,7 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             }
         } else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
-            strcat(startTag, ">"); 
+            strcat(startTag, ">");
         }
         strcat(endTag, "</");
         strcat(endTag, rNode->name);
@@ -862,7 +914,7 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             }
         }
         strcat(out, childDump);
-        strcat(out, endTag); 
+        strcat(out, endTag);
     }
     else {
         strcat(startTag, "/>\n");
@@ -876,14 +928,15 @@ char *XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     return out;
 }
 
-char *XmlDump(TXml *xml)
+char *
+XmlDump(TXml *xml)
 {
-    char *dump; 
+    char *dump;
     XmlNode *rNode;
     char *branch;
     unsigned int i;
     char *head;
-    
+
     head = xml->head?xml->head:"xml version=\"1.0\"";
     dump = malloc(strlen(head)+6);
     sprintf(dump, "<?%s?>\n", head);
@@ -901,7 +954,8 @@ char *XmlDump(TXml *xml)
     return(dump);
 }
 
-XmlErr XmlSave(TXml *xml, char *xmlFile)
+XmlErr
+XmlSave(TXml *xml, char *xmlFile)
 {
     struct stat fileStat;
     FILE *saveFile=NULL;
@@ -909,47 +963,48 @@ XmlErr XmlSave(TXml *xml, char *xmlFile)
     char *backup = NULL;
     char *backupPath = NULL;
     FILE *backupFile = NULL;
-    
-    stat(xmlFile, &fileStat);
-    
-    if(fileStat.st_size>0) { /* backup old profiles */
-        saveFile=fopen(xmlFile, "r");
-        if(!saveFile) {
-            fprintf(stderr, "Can't open %s for reading !!", xmlFile);
-            return XML_GENERIC_ERR;
-        }
-        if(XmlFileLock(saveFile) != XML_NOERR) {
-            fprintf(stderr, "Can't lock %s for reading ", xmlFile);
-            return XML_GENERIC_ERR;
-        }
-        backup = (char *)malloc(fileStat.st_size+1);
-        fread(backup, 1, fileStat.st_size, saveFile);
-        backup[fileStat.st_size]=0;
-        XmlFileUnlock(saveFile);
-        fclose(saveFile);
-        backupPath = (char *)malloc(strlen(xmlFile)+5);
-        sprintf(backupPath, "%s.bck", xmlFile);
-        backupFile = fopen(backupPath, "w+");
-        if(backupFile) {
-            if(XmlFileLock(backupFile) != XML_NOERR) {
-                fprintf(stderr, "Can't lock %s for writing ", backupPath);
+
+
+    if (stat(xmlFile, &fileStat) == 0) {
+        if(fileStat.st_size>0) { /* backup old profiles */
+            saveFile=fopen(xmlFile, "r");
+            if(!saveFile) {
+                fprintf(stderr, "Can't open %s for reading !!", xmlFile);
+                return XML_GENERIC_ERR;
+            }
+            if(XmlFileLock(saveFile) != XML_NOERR) {
+                fprintf(stderr, "Can't lock %s for reading ", xmlFile);
+                return XML_GENERIC_ERR;
+            }
+            backup = (char *)malloc(fileStat.st_size+1);
+            fread(backup, 1, fileStat.st_size, saveFile);
+            backup[fileStat.st_size]=0;
+            XmlFileUnlock(saveFile);
+            fclose(saveFile);
+            backupPath = (char *)malloc(strlen(xmlFile)+5);
+            sprintf(backupPath, "%s.bck", xmlFile);
+            backupFile = fopen(backupPath, "w+");
+            if(backupFile) {
+                if(XmlFileLock(backupFile) != XML_NOERR) {
+                    fprintf(stderr, "Can't lock %s for writing ", backupPath);
+                    free(backupPath);
+                    free(backup);
+                    return XML_GENERIC_ERR;
+                }
+                fwrite(backup, 1, fileStat.st_size, backupFile);
+                XmlFileUnlock(backupFile);
+                fclose(backupFile);
+            }
+            else {
+                fprintf(stderr, "Can't open backup file (%s) for writing! ", backupPath);
                 free(backupPath);
                 free(backup);
                 return XML_GENERIC_ERR;
             }
-            fwrite(backup, 1, fileStat.st_size, backupFile);
-            XmlFileUnlock(backupFile);
-            fclose(backupFile);
-        }
-        else {
-            fprintf(stderr, "Can't open backup file (%s) for writing! ", backupPath);
             free(backupPath);
             free(backup);
-            return XML_GENERIC_ERR;
-        }
-        free(backupPath);
-        free(backup);
-    } /* end of backup */
+        } /* end of backup */
+    }
     dump = XmlDump(xml);
      if(dump) {
         saveFile=fopen(xmlFile, "w+");
@@ -975,59 +1030,67 @@ XmlErr XmlSave(TXml *xml, char *xmlFile)
     return XML_NOERR;
 }
 
-unsigned long XmlCountAttributes(XmlNode *node)
+unsigned long
+XmlCountAttributes(XmlNode *node)
 {
     return ListLength(node->attributes);
 }
 
-unsigned long XmlCountChildren(XmlNode *node)
+unsigned long
+XmlCountChildren(XmlNode *node)
 {
     return ListLength(node->children);
 }
 
-unsigned long XmlCountBranches(TXml *xml)
+unsigned long
+XmlCountBranches(TXml *xml)
 {
     return ListLength(xml->rootElements);
 }
 
-XmlErr XmlRemoveNode(TXml *xml, char *path)
+XmlErr
+XmlRemoveNode(TXml *xml, char *path)
 {
     /* XXX - UNIMPLEMENTED */
     return XML_GENERIC_ERR;
 }
 
-XmlErr XmlRemoveBranch(TXml *xml, unsigned long index)
+XmlErr
+XmlRemoveBranch(TXml *xml, unsigned long index)
 {
     /* XXX - UNIMPLEMENTED */
     return XML_GENERIC_ERR;
 }
 
-XmlNode *XmlGetChildNode(XmlNode *node, unsigned long index) 
+XmlNode
+*XmlGetChildNode(XmlNode *node, unsigned long index)
 {
-    if(!node) 
+    if(!node)
         return NULL;
     return PickValue(node->children, index);
 }
 
 /* XXX - if multiple children shares the same name, only the first is returned */
-XmlNode *XmlGetChildNodeByName(XmlNode *node, char *name) 
+XmlNode
+*XmlGetChildNodeByName(XmlNode *node, char *name)
 {
     XmlNode *child;
     unsigned int i;
-    if(!node) 
+    if(!node)
         return NULL;
-    
+
     for(i=1; i <= XmlCountChildren(node); i++)
     {
         child = XmlGetChildNode(node, i);
         if(strcmp(child->name, name) == 0)
             return child;
-        
+
     }
     return NULL;
 }
 
-XmlNode *XmlGetNode(TXml *xml, char *path)
+XmlNode
+*XmlGetNode(TXml *xml, char *path)
 {
     char *walk;
     char *tag;
@@ -1037,14 +1100,14 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
 //#ifndef WIN32
     char *brkb;
 //#endif
-    if(!path) 
+    if(!path)
         return NULL;
-        
+
     walk = strdup(path);
     /* skip leading slashes '/' */
     while(*walk == '/')
         walk++;
-        
+
     /* first get root node */
 #ifndef WIN32
     tag  = strtok_r(walk, "/", &brkb);
@@ -1065,7 +1128,7 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
     }
     if(!cNode)
         return NULL;
-    
+
     /* now cNode points to the root node ... let's find requested node */
 #ifndef WIN32
     tag = strtok_r(NULL, "/", &brkb);
@@ -1092,18 +1155,20 @@ XmlNode *XmlGetNode(TXml *xml, char *path)
         tag = strtok(NULL, "/");
 #endif
     }
-    
+
     return cNode;
 }
 
-XmlNode *XmlGetBranch(TXml *xml, unsigned long index)
+XmlNode
+*XmlGetBranch(TXml *xml, unsigned long index)
 {
-    if(!xml) 
+    if(!xml)
         return NULL;
     return PickValue(xml->rootElements, index);
 }
 
-XmlErr XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
+XmlErr
+XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 {
     XmlNode *oldBranch = (XmlNode *)SubstValue(xml->rootElements, index, newBranch);
     if(oldBranch)
@@ -1114,12 +1179,13 @@ XmlErr XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 #ifdef WIN32
 //************************************************************************
 // BOOL W32LockFile (FILE* filestream)
-// 
+//
 // locks the specific file for exclusive access, nonblocking
-// 
+//
 // returns 0 on success
 //************************************************************************
-static BOOL W32LockFile (FILE* filestream)
+static BOOL
+W32LockFile (FILE* filestream)
 {
     BOOL res = TRUE;
     HANDLE hFile = INVALID_HANDLE_VALUE;
@@ -1145,12 +1211,13 @@ __exit:
 
 //************************************************************************
 // BOOL W32UnlockFile (FILE* filestream)
-// 
+//
 // unlocks the specific file locked by W32LockFile
-// 
+//
 // returns 0 on success
 //************************************************************************
-static BOOL W32UnlockFile (FILE* filestream)
+static BOOL
+W32UnlockFile (FILE* filestream)
 {
     BOOL res = TRUE;
     HANDLE hFile = INVALID_HANDLE_VALUE;
@@ -1177,7 +1244,8 @@ __exit:
 }
 #endif // #ifdef WIN32
 
-XmlErr XmlFileLock(FILE *file)
+XmlErr
+XmlFileLock(FILE *file)
 {
     int tries=0;
     if(file) {
@@ -1188,7 +1256,7 @@ XmlErr XmlFileLock(FILE *file)
 #endif
     // warning("can't obtain a lock on xml file %s... waiting (%d)", xmlFile, tries);
             tries++;
-            if(tries>5) { 
+            if(tries>5) {
                 fprintf(stderr, "sticky lock on xml file!!!");
                 return XML_GENERIC_ERR;
             }
@@ -1203,7 +1271,7 @@ XmlErr XmlFileUnlock(FILE *file)
 {
     if(file) {
 #ifdef WIN32
-        if(W32UnlockFile(file)==0) 
+        if(W32UnlockFile(file)==0)
 #else
         funlockfile(file);
 
