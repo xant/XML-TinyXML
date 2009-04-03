@@ -24,3 +24,6 @@ Revision history for Perl extension TinyXML.
       - fixed direct dumping on a file: XmlSave() dumped on a file only if it
         already existed (blindly trying to create a backup copy). It now 
         creates the file if not there (and backup it if already present)
+0.11  - fixed leaks in underlying XmlGetNode() and XmlSetNodePath()
+      - safety belt in XmlDumpBranch() to avoid accessing invalid memory
+        in some edge cases

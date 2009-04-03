@@ -137,6 +137,10 @@ static void
 XmlSetNodePath(XmlNode *node, XmlNode *parent)
 {
     unsigned int pathLen;
+
+    if (node->path)
+        free(node->path);
+
     if(parent) {
         if(parent->path) {
             pathLen = (unsigned int)strlen(parent->path)+1+strlen(node->name)+1;
@@ -813,10 +817,12 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     unsigned long nAttrs;
 
 
-    if (rNode->type == XML_NODETYPE_SIMPLE) {
-        value = xmlize(rNode->value);
-    } else {
-        value = strdup(rNode->value);
+    if (rNode->value) {
+        if (rNode->type == XML_NODETYPE_SIMPLE) {
+            value = xmlize(rNode->value);
+        } else {
+            value = strdup(rNode->value);
+        }
     }
 
     if(rNode->name)
@@ -1089,10 +1095,10 @@ XmlNode
     return NULL;
 }
 
-XmlNode
-*XmlGetNode(TXml *xml, char *path)
+XmlNode *
+XmlGetNode(TXml *xml, char *path)
 {
-    char *walk;
+    char *buff, *walk;
     char *tag;
     unsigned long i = 0;
     XmlNode *cNode = NULL;
@@ -1103,7 +1109,8 @@ XmlNode
     if(!path)
         return NULL;
 
-    walk = strdup(path);
+    buff = strdup(path);
+    walk = buff;
     /* skip leading slashes '/' */
     while(*walk == '/')
         walk++;
@@ -1114,8 +1121,10 @@ XmlNode
 #else
     tag = strtok(walk, "/");
 #endif
-    if(!tag)
+    if(!tag) {
+        free(buff);
         return NULL;
+    }
 
     for(i=1; i<=XmlCountBranches(xml); i++)
     {
@@ -1126,8 +1135,10 @@ XmlNode
             break;
         }
     }
-    if(!cNode)
+    if(!cNode) {
+        free(buff);
         return NULL;
+    }
 
     /* now cNode points to the root node ... let's find requested node */
 #ifndef WIN32
@@ -1147,8 +1158,10 @@ XmlNode
             }
             wNode = NULL;
         }
-        if(!wNode)
+        if(!wNode) {
+            free(buff);
             return NULL;
+        }
 #ifndef WIN32
         tag = strtok_r(NULL, "/", &brkb);
 #else
@@ -1156,6 +1169,7 @@ XmlNode
 #endif
     }
 
+    free(buff);
     return cNode;
 }
 
