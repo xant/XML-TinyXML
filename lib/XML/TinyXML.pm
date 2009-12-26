@@ -131,13 +131,15 @@ our @EXPORT = qw(
 	XmlParseBuffer
 	XmlParseFile
 	XmlRemoveBranch
+        XmlRemoveChildNode
+        XmlRemoveChildNodeAtIndex
 	XmlRemoveNode
 	XmlSave
 	XmlSetNodeValue
 	XmlSubstBranch
 );
 
-our $VERSION = '0.11';
+our $VERSION = '0.13';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -394,6 +396,26 @@ sub getChildNode {
     return XML::TinyXML::Node->new(XmlGetChildNode($node, $index));
 }
 
+=item * countChildren ()
+
+Returns the number of $node's children
+
+=cut
+sub countChildren {
+    my ($self, $node) = @_;
+    if(UNIVERSAL::isa($node, "XML::TinyXML::Node")) {
+        return XmlCountChildren($node->{_node});
+    } elsif(UNIVERSAL::isa($node, "XmlNodePtr")) {
+        return XmlCountChildren($node);
+    } else {
+        # assume we have been provided a path
+        my $node = XmlGetNode($self->{_ctx}, $node);
+        return XmlCountChildren($node)
+            if ($node);
+    }
+    return undef;
+}
+
 =item * removeNode ($path)
 
 Remove the node at specific $path , if present.
@@ -433,12 +455,47 @@ sub getRootNode {
 
 =item * removeBranch ($index)
 
-Remove the rootnode (and all his children) at $index.
+Alias for removeRootNode
 
 =cut
 sub removeBranch {
     my ($self, $index) = @_;
     return XmlRemoveBranch($self->{_ctx}, $index);
+}
+
+=item * removeRootNode ($index)
+
+Remove the rootnode (and all his children) at $index.
+
+=cut
+sub removeRootNode {
+    my ($self, $index) = @_;
+    return $self->removeBranch($index);
+}
+
+=item * countRootNodes 
+
+Returns the number of root nodes within this context
+
+=cut
+sub countRootNodes {
+    my ($self) = @_;
+    return XmlCountBranches($self->{_ctx});
+}
+
+=item * rootNodes ()
+
+Returns an array containing all rootnodes. 
+In scalar context returns an arrayref.
+
+=cut
+sub rootNodes {
+    my ($self) = @_;
+    my @nodes;
+    for (my $i = 1; $i <= XmlCountBranches($self->{_ctx}); $i++) {
+        push (@nodes, XML::TinyXML::Node->new(XmlGetBranch($self->{_ctx}, $i)));
+    }
+    return wantarray?@nodes:\@nodes;
 }
 
 =item * getChildNodeByName ($node, $name)
@@ -506,17 +563,28 @@ None by default.
   XML_NODETYPE_COMMENT
   XML_NODETYPE_CDATA
 
-=head2 Exportable functions
+=head2 Exportable C functions
 
   TXml *XmlCreateContext()
   void XmlDestroyContext(TXml *xml)
+  XmlNode *XmlCreateNode(char *name,char *val,XmlNode *parent);
+  char *XmlGetNodeValue(XmlNode *node);
+  XmlErr XmlSetNodeValue(XmlNode *node,char *val);
+  void XmlDestroyNode(XmlNode *node);
   int XmlAddAttribute(XmlNode *node, char *name, char *val)
   int XmlAddRootNode(TXml *xml, XmlNode *node)
-  unsigned long XmlCountBranches(TXml *xml)
+  int XmlRemoveNode(TXml *xml,char *path);
+  void XmlRemoveChildNodeAtIndex(XmlNode *node, unsigned long index);
+  void XmlRemoveChildNode(XmlNode *parent, XmlNode *child);
+  XmlErr XmlAddChildNode(XmlNode *parent,XmlNode *child);
   XmlNode *XmlGetChildNode(XmlNode *node, unsigned long index)
+  XmlNode *XmlGetChildNodeByName(XmlNode *node,char *name);
   XmlNode *XmlGetNode(TXml *xml,  char *path)
-  int XmlParseBuffer(TXml *xml, char *buf)
+  unsigned long XmlCountBranches(TXml *xml)
   int XmlRemoveBranch(TXml *xml, unsigned long index)
+  XmlNode *XmlGetBranch(TXml *xml,unsigned long index);
+  int XmlSubstBranch(TXml *xml,unsigned long index, XmlNode *newBranch);
+  int XmlParseBuffer(TXml *xml, char *buf)
   int XmlSave(TXml *xml, char *path)
   char *XmlDump(TXml *xml)
 

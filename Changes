@@ -27,3 +27,11 @@ Revision history for Perl extension TinyXML.
 0.11  - fixed leaks in underlying XmlGetNode() and XmlSetNodePath()
       - safety belt in XmlDumpBranch() to avoid accessing invalid memory
         in some edge cases
+0.12  - small improvements to the API (no changes...only extensions)
+      - more testunits (and started rearranging them in multiple files)
+      - by default, on export, empty nodes will use the shorter <node/> notation
+        (this should be made optionally deactivable through some flag,
+         as for defining encoding, whitespace handling and any other 
+         optional behaviour which makes sense to take into account when 
+         exporting)
+0.13  - switched to macro-based linklist implementation 

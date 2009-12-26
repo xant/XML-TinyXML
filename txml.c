@@ -6,6 +6,8 @@
  */
 
 #include "txml.h"
+#include "string.h"
+#include "stdlib.h"
 
 #define XML_ELEMENT_NONE 0
 #define XML_ELEMENT_START 1
@@ -113,7 +115,7 @@ XmlCreateContext()
 
     xml = (TXml *)calloc(1, sizeof(TXml));
     xml->cNode = NULL;
-    xml->rootElements = CreateList();
+    TAILQ_INIT(&xml->rootElements);
     xml->head = NULL;
     return xml;
 }
@@ -121,12 +123,10 @@ XmlCreateContext()
 void
 XmlDestroyContext(TXml *xml)
 {
-    XmlNode *rNode;
-    if(xml->rootElements)
-    {
-        while(rNode = ShiftValue(xml->rootElements))
-            XmlDestroyNode(rNode);
-        DestroyList(xml->rootElements);
+    XmlNode *rNode, *tmp;
+    TAILQ_FOREACH_SAFE(rNode, &xml->rootElements, siblings, tmp) {
+        TAILQ_REMOVE(&xml->rootElements, rNode, siblings);
+        XmlDestroyNode(rNode);
     }
     if(xml->head)
         free(xml->head);
@@ -165,8 +165,8 @@ XmlCreateNode(char *name, char *value, XmlNode *parent)
     if(!node || !name)
         return NULL;
 
-    node->attributes = CreateList();
-    node->children = CreateList();
+    TAILQ_INIT(&node->attributes);
+    TAILQ_INIT(&node->children);
     node->parent = parent;
     node->name = strdup(name);
 
@@ -185,23 +185,21 @@ XmlCreateNode(char *name, char *value, XmlNode *parent)
 void
 XmlDestroyNode(XmlNode *node)
 {
-    XmlNode *child;
-    XmlNodeAttribute *attr;
+    XmlNodeAttribute *attr, *attr_tmp;
+    XmlNode *child, *child_tmp;
 
-    if(node->attributes) {
-        while(attr = ShiftValue(node->attributes)) {
-            if(attr->name)
-                free(attr->name);
-            if(attr->value)
-                free(attr->value);
-            free(attr);
-        }
-        DestroyList(node->attributes);
+    TAILQ_FOREACH_SAFE(attr, &node->attributes, list, attr_tmp) {
+        TAILQ_REMOVE(&node->attributes, attr, list);
+        if(attr->name)
+            free(attr->name);
+        if(attr->value)
+            free(attr->value);
+        free(attr);
     }
-    if(node->children) {
-        while(child = ShiftValue(node->children))
-            XmlDestroyNode(child);
-        DestroyList(node->children);
+
+    TAILQ_FOREACH_SAFE(child, &node->children, siblings, child_tmp) {
+        TAILQ_REMOVE(&node->children, child, siblings);
+        XmlDestroyNode(child);
     }
     if(node->name)
         free(node->name);
@@ -237,10 +235,10 @@ static void
 XmlRemoveChildNode(XmlNode *parent, XmlNode *child)
 {
     int i;
-    for (i = 1; i <= ListLength(parent->children); i++) {
-        XmlNode *p = PickValue(parent->children, i);
+    XmlNode *p, *tmp;
+    TAILQ_FOREACH_SAFE(p, &parent->children, siblings, tmp) {
         if (p == child) {
-            FetchValue(parent->children, i);
+            TAILQ_REMOVE(&parent->children, p, siblings);
             p->parent = NULL;
             XmlSetNodePath(p, NULL);
             break;
@@ -257,13 +255,10 @@ XmlAddChildNode(XmlNode *parent, XmlNode *child)
     if (child->parent)
         XmlRemoveChildNode(child->parent, child);
 
-    if(PushValue(parent->children, child)) {
-        child->parent = parent;
-        XmlSetNodePath(child, parent);
-        return XML_NOERR;
-    }
-
-    return XML_GENERIC_ERR;
+    TAILQ_INSERT_TAIL(&parent->children, child, siblings);
+    child->parent = parent;
+    XmlSetNodePath(child, parent);
+    return XML_NOERR;
 }
 
 XmlErr
@@ -272,10 +267,8 @@ XmlAddRootNode(TXml *xml, XmlNode *node)
     if(!node)
         return XML_BADARGS;
 
-    if(PushValue(xml->rootElements, node))
-        return XML_NOERR;
-
-    return XML_GENERIC_ERR;
+    TAILQ_INSERT_TAIL(&xml->rootElements, node, siblings);
+    return XML_NOERR;
 }
 
 XmlErr
@@ -290,23 +283,31 @@ XmlAddAttribute(XmlNode *node, char *name, char *val)
     attr->name = strdup(name);
     attr->value = val?strdup(val):strdup("");
 
-    if(PushValue(node->attributes, attr))
-        return XML_NOERR;
+    TAILQ_INSERT_TAIL(&node->attributes, attr, list);
+    return XML_NOERR;
+    /*
     free(attr->name);
     free(attr->value);
     free(attr);
     return XML_GENERIC_ERR;
+    */
 }
 
 int
 XmlRemoveAttribute(XmlNode *node, unsigned long index)
 {
-    XmlNodeAttribute *attr = FetchValue(node->attributes, index);
-    if(attr) {
-        free(attr->name);
-        free(attr->value);
-        free(attr);
-        return XML_NOERR;
+    XmlNodeAttribute *attr, *tmp;
+    int count = 1;
+
+    TAILQ_FOREACH_SAFE(attr, &node->attributes, list, tmp) {
+        if (count == index) {
+            TAILQ_REMOVE(&node->attributes, attr, list);
+            free(attr->name);
+            free(attr->value);
+            free(attr);
+            return XML_NOERR;
+        }
+        count++;
     }
     return XML_GENERIC_ERR;
 }
@@ -314,25 +315,24 @@ XmlRemoveAttribute(XmlNode *node, unsigned long index)
 void
 XmlClearAttributes(XmlNode *node)
 {
+    XmlNodeAttribute *attr, *tmp;
     unsigned int nAttrs = 0;
     int i;
-    XmlNodeAttribute *attr = NULL;
 
-    nAttrs = XmlCountAttributes(node);
-    if(nAttrs>0) {
-        for(i=nAttrs;i>0;i--) {
-            XmlRemoveAttribute(node, i); // TODO - check return code
-        }
+    TAILQ_FOREACH_SAFE(attr, &node->attributes, list, tmp) {
+        TAILQ_REMOVE(&node->attributes, attr, list);
+        free(attr->name);
+        free(attr->value);
+        free(attr);
     }
-
 }
 
 XmlNodeAttribute
 *XmlGetAttributeByName(XmlNode *node, char *name)
 {
     int i;
-    for (i=1; i <= ListLength(node->attributes); i++) {
-        XmlNodeAttribute *attr = XmlGetAttribute(node, i);
+    XmlNodeAttribute *attr;
+    TAILQ_FOREACH(attr, &node->attributes, list) {
         if (strcmp(attr->name, name) == 0)
             return attr;
     }
@@ -342,7 +342,14 @@ XmlNodeAttribute
 XmlNodeAttribute
 *XmlGetAttribute(XmlNode *node, unsigned long index)
 {
-    return PickValue(node->attributes, index);
+    XmlNodeAttribute *attr;
+    int count = 1;
+    TAILQ_FOREACH(attr, &node->attributes, list) {
+        if (count == index)
+            return attr;
+        count++;
+    }
+    return NULL;
 }
 
 static XmlErr
@@ -767,12 +774,15 @@ XmlParseFile(TXml *xml, char *path)
     char *buffer;
     XmlErr err;
     struct stat fileStat;
+    int rc = 0;
 
     inFile = NULL;
     err = XML_NOERR;
     if(!path)
         return XML_BADARGS;
-    stat(path, &fileStat);
+    rc = stat(path, &fileStat);
+    if (rc != 0)
+        return XML_BADARGS;
     xml->cNode=NULL;
     if(fileStat.st_size>0) {
         inFile=fopen(path, "r");
@@ -810,7 +820,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     char *startTag;
     char *endTag;
     char *childDump;
-    char *value;
+    char *value = NULL;
     int nameLen;
     XmlNodeAttribute *attr;
     XmlNode *child;
@@ -867,34 +877,31 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         for(i=1;i<=nAttrs;i++) {
             attr = XmlGetAttribute(rNode, i);
             if(attr) {
-                char *value = xmlize(attr->value);
+                char *attr_value = xmlize(attr->value);
                 startTag = (char *)realloc(startTag, strlen(startTag)+
-                    strlen(attr->name)+strlen(value)+8);
+                    strlen(attr->name)+strlen(attr_value)+8);
                 strcat(startTag, " ");
                 strcat(startTag, attr->name);
                 strcat(startTag, "=\"");
-                strcat(startTag, value);
+                strcat(startTag, attr_value);
                 strcat(startTag, "\"");
-                if (value)
-                    free(value);
+                if (attr_value)
+                    free(attr_value);
             }
         }
     }
-    if(value || XmlCountChildren(rNode)) {
-        if(XmlCountChildren(rNode) > 0) {
+    if((value && *value) || !TAILQ_EMPTY(&rNode->children)) {
+        if(!TAILQ_EMPTY(&rNode->children)) {
             strcat(startTag, ">\n");
             for(n = 0; n < depth; n++)
                 strcat(endTag, "\t");
-            for(i = 1; i <= XmlCountChildren(rNode); i++) {
-                child = XmlGetChildNode(rNode, i);
-                if(child) {
-                    char *childBuff = XmlDumpBranch(xml, child, depth+1); /* let's recurse */
-                    if(childBuff) {
-                        childDump = (char *)realloc(childDump, strlen(childDump)+strlen(childBuff)+2);
-                        strcat(childDump, childBuff);
-                        //strcat(childDump, "\n");
-                        free(childBuff);
-                    }
+            TAILQ_FOREACH(child, &rNode->children, siblings) {
+                char *childBuff = XmlDumpBranch(xml, child, depth+1); /* let's recurse */
+                if(childBuff) {
+                    childDump = (char *)realloc(childDump, strlen(childDump)+strlen(childBuff)+2);
+                    strcat(childDump, childBuff);
+                    //strcat(childDump, "\n");
+                    free(childBuff);
                 }
             }
         } else {
@@ -908,7 +915,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             (value?strlen(value)+1:1)+strlen(childDump)+3);
         strcpy(out, startTag);
         if(value && *value) { // skip also if value is an empty string (not only if it's a null pointer)
-            if(XmlCountChildren(rNode)) {
+            if(!TAILQ_EMPTY(&rNode->children)) {
                 for(n=0;n<depth;n++)
                     strcat(out, "\t");
                 strcat(out, value);
@@ -946,15 +953,12 @@ XmlDump(TXml *xml)
     head = xml->head?xml->head:"xml version=\"1.0\"";
     dump = malloc(strlen(head)+6);
     sprintf(dump, "<?%s?>\n", head);
-    for (i=1;i<=ListLength(xml->rootElements);i++) {
-        rNode = (XmlNode *)PickValue(xml->rootElements, i);
-        if(rNode) {
-            branch = XmlDumpBranch(xml, rNode, 0);
-            if(branch) {
-                dump = (char *)realloc(dump, strlen(dump)+strlen(branch)+1);
-                strcat(dump, branch);
-                free(branch);
-            }
+    TAILQ_FOREACH(rNode, &xml->rootElements, siblings) {
+        branch = XmlDumpBranch(xml, rNode, 0);
+        if(branch) {
+            dump = (char *)realloc(dump, strlen(dump)+strlen(branch)+1);
+            strcat(dump, branch);
+            free(branch);
         }
     }
     return(dump);
@@ -1039,19 +1043,31 @@ XmlSave(TXml *xml, char *xmlFile)
 unsigned long
 XmlCountAttributes(XmlNode *node)
 {
-    return ListLength(node->attributes);
+    XmlNodeAttribute *attr;
+    int cnt = 0;
+    TAILQ_FOREACH(attr, &node->attributes, list) 
+        cnt++;
+    return cnt;
 }
 
 unsigned long
 XmlCountChildren(XmlNode *node)
 {
-    return ListLength(node->children);
+    XmlNode *child;
+    int cnt = 0; 
+    TAILQ_FOREACH(child, &node->children, siblings)
+        cnt++;
+    return cnt;
 }
 
 unsigned long
 XmlCountBranches(TXml *xml)
 {
-    return ListLength(xml->rootElements);
+    XmlNode *node;
+    int cnt = 0;
+    TAILQ_FOREACH(node, &xml->rootElements, siblings)
+        cnt++;
+    return cnt;
 }
 
 XmlErr
@@ -1071,9 +1087,18 @@ XmlRemoveBranch(TXml *xml, unsigned long index)
 XmlNode
 *XmlGetChildNode(XmlNode *node, unsigned long index)
 {
+    XmlNode *child;
+    int count = 1;
     if(!node)
         return NULL;
-    return PickValue(node->children, index);
+    TAILQ_FOREACH(child, &node->children, siblings) {
+        if (count == index) {
+            return child;
+            break;
+        }
+        count++;
+    }
+    return NULL;
 }
 
 /* XXX - if multiple children shares the same name, only the first is returned */
@@ -1085,12 +1110,9 @@ XmlNode
     if(!node)
         return NULL;
 
-    for(i=1; i <= XmlCountChildren(node); i++)
-    {
-        child = XmlGetChildNode(node, i);
+    TAILQ_FOREACH(child, &node->children, siblings) {
         if(strcmp(child->name, name) == 0)
             return child;
-
     }
     return NULL;
 }
@@ -1148,9 +1170,10 @@ XmlGetNode(TXml *xml, char *path)
 #endif
     while(tag)
     {
-        for(i=1; i<=XmlCountChildren(cNode); i++)
-        {
-            wNode = XmlGetChildNode(cNode, i);
+        XmlNode *tmp;
+        wNode = NULL;
+        // XXX - check if logic has changed once switched to bsd_queue
+        TAILQ_FOREACH_SAFE(wNode, &cNode->children, siblings, tmp) {
             if(strcmp(wNode->name, tag) == 0)
             {
                 cNode = wNode;
@@ -1176,17 +1199,31 @@ XmlGetNode(TXml *xml, char *path)
 XmlNode
 *XmlGetBranch(TXml *xml, unsigned long index)
 {
+    XmlNode *node;
+    int cnt = 1;
     if(!xml)
         return NULL;
-    return PickValue(xml->rootElements, index);
+    TAILQ_FOREACH(node, &xml->rootElements, siblings) {
+        if (cnt == index)
+            return node;
+        cnt++;
+    }
+    return NULL;
 }
 
 XmlErr
 XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 {
-    XmlNode *oldBranch = (XmlNode *)SubstValue(xml->rootElements, index, newBranch);
-    if(oldBranch)
-        return XML_NOERR;
+    XmlNode *branch, *tmp;
+    int cnt = 1;
+    TAILQ_FOREACH_SAFE(branch, &xml->rootElements, siblings, tmp) {
+        if (cnt == index) {
+            TAILQ_INSERT_BEFORE(branch, newBranch, siblings);
+            TAILQ_REMOVE(&xml->rootElements, branch, siblings);
+            return XML_NOERR;
+        }
+        cnt++;
+    }
     return XML_LINKLIST_ERR;
 }
 

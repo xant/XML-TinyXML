@@ -1,12 +1,6 @@
 FILE						T_OPAQUE_STRUCT
-LinkedList					T_OPAQUE_STRUCT
-LinkedList *					T_PTROBJ
-ListEntry					T_OPAQUE_STRUCT
-ListEntry *					T_PTROBJ
 TXml						T_OPAQUE_STRUCT
 TXml *						T_PTROBJ
-TaggedValue					T_OPAQUE_STRUCT
-TaggedValue *					T_PTROBJ
 XmlNode						T_OPAQUE_STRUCT
 XmlNode *					T_PTROBJ
 XmlNodeAttribute				T_OPAQUE_STRUCT

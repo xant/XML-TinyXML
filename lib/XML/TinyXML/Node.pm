@@ -58,7 +58,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.11';
+our $VERSION = '0.13';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -144,7 +144,10 @@ if $childname is specified, newly created childnodes will use it as their name
 
 =cut
 sub loadHash {
-    my ($self, $hash, $childname) = @_;
+    my ($self, $hash, $childname, $reset) = @_;
+
+    $self->removeAllChildren if $reset;
+
     foreach my $k (keys(%$hash)) {
         my $name = $childname || $k;
         if(!ref($hash->{$k}) || ref($hash->{$k}) eq "SCALAR") {
@@ -313,11 +316,11 @@ Returns an array containing all actual children in the form of Xml::TinyXML::Nod
 =cut
 sub children {
     my ($self) = @_;
-    my @children = ();
-    for(my $i = 1; $i <= XML::TinyXML::XmlCountChildren($self->{_node}); $i++) {
-        push(@children, XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNode($self->{_node}, $i)));
+    my @children;
+    for (my $i = 1; $i <= XML::TinyXML::XmlCountChildren($self->{_node}); $i++) {
+        push (@children, XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNode($self->{_node}, $i)));
     }
-    return @children;
+    return wantarray?@children:\@children;
 }
 
 =item * addChildNode ($child)
@@ -331,6 +334,18 @@ sub addChildNode {
     my ($self, $child) = @_;
     return undef unless($child && UNIVERSAL::isa($child, "XML::TinyXML::Node"));
     return XML::TinyXML::XmlAddChildNode($self->{_node}, $child->{_node});
+}
+
+sub removeChildNode {
+    my ($self, $index) = @_;
+    XmlRemoveChildNode($self->{_node}, $index);
+}
+
+sub removeAllChildren {
+    my ($self) = @_;
+    for (my $i = 1; $i <= $self->countChildren; $i++) {
+        XmlRemoveChildNode($self->{_node}, $i);
+    }
 }
 
 =item * parent ()

@@ -19,31 +19,50 @@
 #define XML_LINKLIST_ERR -6
 #define XML_BAD_CHARS -7
 
-#include <linklist.h>
+#include "bsd_queue.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef WIN32
-#include <windows.h> // for w32lock/unlock functions
+#include <winsock2.h> // for w32lock/unlock functions
 #include <io.h>
 /* strings */
+#if !defined snprintf
 #define snprintf _snprintf
+#endif
+
+#if !defined strncasecmp
 #define strncasecmp _strnicmp
+#endif
+
+#if !defined strcasecmp
 #define strcasecmp _stricmp
+#endif
+
+#if !defined strdup
 #define strdup _strdup
+#endif
+
 /* files */
+#if !defined stat
 #define stat _stat
+#endif
+
 /* time */
+#if !defined sleep
 #define sleep(_duration) (Sleep(_duration * 1000))
+#endif
+
 #endif // WIN32
 
 /**
     @type XmlNodeAttribute
     @brief One attribute associated to an element 
 */
-typedef struct {
+typedef struct __XmlNodeAttribute {
     char *name; ///< the attribute name
     char *value; ///< the attribute value
+    TAILQ_ENTRY(__XmlNodeAttribute) list;
 } XmlNodeAttribute;
 
 typedef struct __XmlNode {
@@ -51,17 +70,18 @@ typedef struct __XmlNode {
     char *name;
     struct __XmlNode *parent;
     char *value;
-    LinkedList *children;
-    LinkedList *attributes;
+    TAILQ_HEAD(,__XmlNode) children;
+    TAILQ_HEAD(,__XmlNodeAttribute) attributes;
 #define XML_NODETYPE_SIMPLE 0
 #define XML_NODETYPE_COMMENT 1
 #define XML_NODETYPE_CDATA 2
     char type;
+    TAILQ_ENTRY(__XmlNode) siblings;
 } XmlNode;
 
 typedef struct {
     XmlNode *cNode;
-    LinkedList *rootElements;
+    TAILQ_HEAD(,__XmlNode) rootElements;
     char *head;
 } TXml;
 

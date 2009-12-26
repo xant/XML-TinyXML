@@ -1,18 +1,21 @@
 Changes
-linklist.c
-linklist.h
 Makefile.PL
 MANIFEST
 README
 TODO
 txml.c
 txml.h
+bsd_queue.h
 TinyXML.xs
 typemap
-t/TinyXML.t
+t/001_basic.t
+t/002_import_export.t
+t/003_special_chars.t
+t/004_to_from_hash.t
 t/t.xml
 fallback/const-c.inc
 fallback/const-xs.inc
 lib/XML/TinyXML.pm
 lib/XML/TinyXML/Node.pm
 examples/sample1.pl
+META.yml                                 Module meta-data (added by MakeMaker)
