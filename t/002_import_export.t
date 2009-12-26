@@ -14,4 +14,5 @@ my $in = "";
 while(<IN>) {
     $in .= $_;
 }
+close(IN);
 ok( $out eq $in, "import/export" );

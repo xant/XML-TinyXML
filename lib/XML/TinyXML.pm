@@ -507,17 +507,22 @@ Returns an XML::TinyXML::Node object if there is such a child, undef otherwise
 =cut
 sub getChildNodeByName {
     my ($self, $node, $name) = @_;
-    if($node) {
+    if ($node) {
         return XML::TinyXML::Node->new(XmlGetChildNodeByName($node, $name));
     } else {
         my $count = XmlCountBranches($self->{_ctx});
         for (my $i = 0 ; $i < $count; $i++ ){
             my $res = XmlGetChildNodeByName(XmlGetBranch($self->{_ctx}, $i), $name);
-            return XML::TinyXML::Node->new($res) if($res) 
+            return XML::TinyXML::Node->new($res) if($res);
 
         }
     }
     return undef;
+}
+
+sub cNode {
+    my ($self, $value) = @_;
+    return $self->{_ctx}->cNode($value);
 }
 
 =item * save ($path)

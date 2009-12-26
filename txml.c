@@ -1106,13 +1106,28 @@ XmlNode
 *XmlGetChildNodeByName(XmlNode *node, char *name)
 {
     XmlNode *child;
-    unsigned int i;
+    unsigned int i = 0;
+    char *p;
+    int nameLen = strlen(name);
     if(!node)
         return NULL;
 
+    if (name[nameLen-1] == ']') {
+        p = strchr(name, '[');
+        *p = 0;
+        p++;
+        if (sscanf(p, "%d]", &i) != 1) {
+            return NULL;
+        }
+        i--;
+    }
+
     TAILQ_FOREACH(child, &node->children, siblings) {
         if(strcmp(child->name, name) == 0)
-            return child;
+            if (i == 0)
+                return child;
+            else
+                i--;
     }
     return NULL;
 }
@@ -1171,20 +1186,12 @@ XmlGetNode(TXml *xml, char *path)
     while(tag)
     {
         XmlNode *tmp;
-        wNode = NULL;
-        // XXX - check if logic has changed once switched to bsd_queue
-        TAILQ_FOREACH_SAFE(wNode, &cNode->children, siblings, tmp) {
-            if(strcmp(wNode->name, tag) == 0)
-            {
-                cNode = wNode;
-                break;
-            }
-            wNode = NULL;
-        }
+        wNode = XmlGetChildNodeByName(cNode, tag);
         if(!wNode) {
             free(buff);
             return NULL;
         }
+        cNode = wNode; // update current node
 #ifndef WIN32
         tag = strtok_r(NULL, "/", &brkb);
 #else

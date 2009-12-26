@@ -10,4 +10,7 @@
 		<child2/>
 		<child3/>
 	</parent>
+	<parent>
+		<blah>SECOND</blah>
+	</parent>
 </xml>

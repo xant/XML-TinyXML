@@ -336,9 +336,9 @@ cNode(THIS, __value = NO_INIT)
     XmlNode *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->cNode;
     if (items > 1)
         THIS->cNode = __value;
-    RETVAL = THIS->cNode;
     OUTPUT:
     RETVAL
 
