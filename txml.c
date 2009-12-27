@@ -1116,7 +1116,7 @@ XmlNode
     if(!node)
         return NULL;
 
-    nodeName = strdup(name);
+    nodeName = strdup(name); // make a copy to avoid changing the provided buffer
     nameLen = strlen(nodeName);
 
     if (nodeName[nameLen-1] == ']') {
