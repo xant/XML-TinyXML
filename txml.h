@@ -18,6 +18,7 @@
 #define XML_MEMORY_ERR -5
 #define XML_LINKLIST_ERR -6
 #define XML_BAD_CHARS -7
+#define XML_MROOT_ERR -8
 
 #include "bsd_queue.h"
 #include <stdio.h>
