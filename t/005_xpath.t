@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 17;
+use Test::More tests => 18;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
@@ -9,9 +9,9 @@ $txml->loadFile("./t/t.xml");
 
 my $rnode = $txml->getNode("/xml");
 is ($rnode->name, "xml");
-my $test = $rnode->getChildNodeByName("parent[2]");
+my $test = $rnode->getChildNodeByName("parent[2]"); # this tests predicates support within C library
 is ($test->name, "parent");
-$test = $txml->getNode("/xml/parent[2]/blah");
+$test = $txml->getNode("/xml/parent[2]/blah"); # this tests predicates support within C library
 is ($test->value, "SECOND");
 
 my $selector = XML::TinyXML::Selector->new($txml, "XPath");
@@ -42,4 +42,6 @@ ok($node->attributes->{attr});
 ($node) = $selector->select('//parent[@attr]');
 ok($node->attributes->{attr});
 ($node) = $selector->select('//parent[@attr=val]');
+ok($node->attributes->{attr});
+($node) = $selector->select('/xml/parent[@attr=val]'); # this tests predicates support within C library
 ok($node->attributes->{attr});
