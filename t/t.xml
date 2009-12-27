@@ -13,4 +13,5 @@
 	<parent attr="val">
 		<blah>SECOND</blah>
 	</parent>
+	<qtest qattr="&quot;qval&quot;">TEST</qtest>
 </xml>

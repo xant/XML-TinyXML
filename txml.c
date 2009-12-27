@@ -89,16 +89,48 @@ xmlize(char *string)
         for (i = 0; i < len; i++) {
             switch (string[i]) {
                 case '&':
+                    bufsize += 5;
+                    escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
+                    strcpy(&escaped[p], "&amp;");
+                    p += 5;
+                    break;
                 case '<':
+                    bufsize += 4;
+                    escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
+                    strcpy(&escaped[p], "&lt;");
+                    p += 4;
+                    break;
                 case '>':
+                    bufsize += 4;
+                    escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
+                    strcpy(&escaped[p], "&gt;");
+                    p += 4;
+                    break;
                 case '"':
+                    bufsize += 6;
+                    escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
+                    strcpy(&escaped[p], "&quot;");
+                    p += 6;
+                    break;
                 case '\'':
+                    bufsize += 6;
+                    escaped = realloc(escaped, bufsize);
+                    memset(escaped+p, 0, bufsize-p);
+                    strcpy(&escaped[p], "&apos;");
+                    p += 6;
+                    break;
+/*
                     bufsize += 5;
                     escaped = realloc(escaped, bufsize);
                     memset(escaped+p, 0, bufsize-p);
                     sprintf(&escaped[p], "&#%02d;", string[i]);
                     p += 5;
                     break;
+*/
                 default:
                     escaped[p] = string[i];
                     p++;
@@ -695,6 +727,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                                 p++;
                             }
                             if(*p == quote) {
+                                char *dexmlized;
                                 char *tmpVal = (char *)malloc(p-mark+2);
                                 strncpy(tmpVal, mark, p-mark);
                                 tmpVal[p-mark] = 0;
@@ -704,7 +737,9 @@ XmlParseBuffer(TXml *xml, char *buf)
                                 attrs[nAttrs-1] = tmpAttr;
                                 attrs[nAttrs] = NULL;
                                 values = (char **)realloc(values, sizeof(char *)*(nAttrs+1));
-                                values[nAttrs-1] = tmpVal;
+                                dexmlized = dexmlize(tmpVal);
+                                free(tmpVal);
+                                values[nAttrs-1] = dexmlized;
                                 values[nAttrs] = NULL;
                                 p++;
                                 SKIP_BLANKS(p);
@@ -1135,6 +1170,26 @@ XmlNode
             if (attrVal) {
                 *attrVal = 0;
                 attrVal++;
+                if (*attrVal == '\'' || *attrVal == '"') {
+                    char quote = *attrVal;
+                    int n, j;
+                    // s = ++attrVal could be unsafe
+                    attrVal++;
+                    for (n = 0; attrVal[n] != 0; n++) {
+                        if (attrVal[n] == quote) {
+                            if (attrVal[n-1] == quote) { // quote escaping (XXX - perhaps out of spec)
+                                j--;
+                            } else {
+                                attrVal[n] = 0;
+                                break;
+                            }
+                            if (j != n)
+                                attrVal[j] = attrVal[n];
+                            j++;
+                        }
+                    }
+
+                }
             }
         }
     }
@@ -1145,8 +1200,12 @@ XmlNode
                 XmlNodeAttribute *attr = XmlGetAttributeByName(child, attrName);
                 if (attr) {
                     if (attrVal) {
-                        if (strcmp(attr->value, attrVal) != 0) 
+                        char *dexmlized = dexmlize(attrVal);
+                        if (strcmp(attr->value, dexmlized) != 0) {
+                            free(dexmlized);
                             continue; // the attr value doesn't match .. let's skip to next matching node
+                        }
+                        free(dexmlized);
                     }
                     free(nodeName);
                     return child;

@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 18;
+use Test::More tests => 22;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
@@ -9,10 +9,10 @@ $txml->loadFile("./t/t.xml");
 
 my $rnode = $txml->getNode("/xml");
 is ($rnode->name, "xml");
-my $test = $rnode->getChildNodeByName("parent[2]"); # this tests predicates support within C library
-is ($test->name, "parent");
-$test = $txml->getNode("/xml/parent[2]/blah"); # this tests predicates support within C library
-is ($test->value, "SECOND");
+my $node = $rnode->getChildNodeByName("parent[2]"); # this tests predicates support within C library
+is ($node->name, "parent");
+$node = $txml->getNode("/xml/parent[2]/blah"); # this tests predicates support within C library
+is ($node->value, "SECOND");
 
 my $selector = XML::TinyXML::Selector->new($txml, "XPath");
 my @res = $selector->select('//parent');
@@ -37,11 +37,21 @@ is ($res[0]->name, "parent");
 @res = $selector->select('//blah/.');
 is ($res[0]->name, "blah");
 
-my ($node) = $selector->select('//parent[2]');
+($node) = $selector->select('//parent[2]');
 ok($node->attributes->{attr});
 ($node) = $selector->select('//parent[@attr]');
 ok($node->attributes->{attr});
-($node) = $selector->select('//parent[@attr=val]');
+($node) = $selector->select('//parent[@attr="val"]');
 ok($node->attributes->{attr});
-($node) = $selector->select('/xml/parent[@attr=val]'); # this tests predicates support within C library
+# this tests predicates support within C library
+# note the quotes
+($node) = $selector->select('/xml/parent[@attr="val"]'); 
 ok($node->attributes->{attr});
+($node) = $selector->select('/xml/parent[@attr=\'val\']'); 
+ok($node->attributes->{attr});
+($node) = $selector->select('/xml/parent[@attr=val]/blah'); # this tests predicates support within C library
+is ($node->value, "SECOND");
+($node) = $selector->select('/xml/qtest[@qattr="&quot;qval&quot;"]'); # this tests predicates support within C library
+is ($node->value, "TEST");
+($node) = $selector->select('//qtest[@qattr="&quot;qval&quot;"]');
+is ($node->value, "TEST");

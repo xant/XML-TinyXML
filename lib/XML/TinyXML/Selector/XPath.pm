@@ -84,6 +84,11 @@ sub _parse_predicate {
         $value = substr($value, 1, length($value)-2)
                 if ($value =~ /^([\"'])(?:\\\1|.)*?\1$/);
         $res{attr} = $attr;
+        $value =~ s/&quot;/"/g;
+        $value =~ s/&apos;/'/g;
+        $value =~ s/&amp;/&/g;
+        $value =~ s/&gt;/>/g;
+        $value =~ s/&lt;/</g;
         $res{attr_value} = $value;
     } elsif (($attr) = $predicate =~ /^\@(\S+)$/) {
         $res{attr} = $attr; 
@@ -177,8 +182,9 @@ sub select {
                     last; # break
                 } else {
                     my ($predicate_string) = $tag =~ /\[(.*?)\]$/;
-                    # some predicates are already supported by the underlying C library
-                    my $predicate = ($predicate_string && $predicate_string !~ /^[0-9]+$/) 
+                    # some predicates are already supported by the underlying C library.
+                    # it supports any of : [num], [@attr] and [@attr=value]
+                    my $predicate = ($predicate_string && $predicate_string !~ /^(\@\S+|[0-9]+)$/) 
                                   ? $self->_parse_predicate($predicate_string)
                                   : undef;
                     if ($cnode) {

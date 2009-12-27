@@ -11,7 +11,7 @@ $txml->addRootNode("nodelabel", "some'&'value", { attr1 => 'v>1', attr2 => 'v<2'
 #print $txml->dump;
 ok ( $txml->dump eq 
 q~<?xml version="1.0"?>
-<nodelabel attr1="v&#62;1" attr2="v&#60;2">some&#39;&#38;&#39;value</nodelabel>
+<nodelabel attr1="v&gt;1" attr2="v&lt;2">some&apos;&amp;&apos;value</nodelabel>
 ~, 'escaping');
 
 
