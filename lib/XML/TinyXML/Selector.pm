@@ -34,7 +34,7 @@ Selector base class
 package XML::TinyXML::Selector;
 
 use strict;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =item * new ($xml, $type)
 

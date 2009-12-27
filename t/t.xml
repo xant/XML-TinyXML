@@ -10,7 +10,7 @@
 		<child2/>
 		<child3/>
 	</parent>
-	<parent>
+	<parent attr="val">
 		<blah>SECOND</blah>
 	</parent>
 </xml>

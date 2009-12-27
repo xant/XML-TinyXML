@@ -1107,28 +1107,57 @@ XmlNode
 {
     XmlNode *child;
     unsigned int i = 0;
+    char *attrName = NULL;
+    char *attrVal = NULL;
+    char *nodeName = NULL;
+    int nameLen = 0;
     char *p;
-    int nameLen = strlen(name);
+
     if(!node)
         return NULL;
 
-    if (name[nameLen-1] == ']') {
-        p = strchr(name, '[');
+    nodeName = strdup(name);
+    nameLen = strlen(nodeName);
+
+    if (nodeName[nameLen-1] == ']') {
+        p = strchr(nodeName, '[');
         *p = 0;
         p++;
-        if (sscanf(p, "%d]", &i) != 1) {
-            return NULL;
+        if (sscanf(p, "%d]", &i) == 1) {
+            i--;
+        } else if (*p == '@') {
+            p++;
+            p[strlen(p)-1] = 0;
+            attrName = p;
+            attrVal = strchr(p, '=');
+            if (attrVal) {
+                *attrVal = 0;
+                attrVal++;
+            }
         }
-        i--;
     }
 
     TAILQ_FOREACH(child, &node->children, siblings) {
-        if(strcmp(child->name, name) == 0)
-            if (i == 0)
+        if(strcmp(child->name, nodeName) == 0) {
+            if (attrName) {
+                XmlNodeAttribute *attr = XmlGetAttributeByName(child, attrName);
+                if (attr) {
+                    if (attrVal) {
+                        if (strcmp(attr->value, attrVal) != 0) 
+                            continue; // the attr value doesn't match .. let's skip to next matching node
+                    }
+                    free(nodeName);
+                    return child;
+                }
+            } else if (i == 0) {
+                free(nodeName);
                 return child;
-            else
+            } else {
                 i--;
+            }
+        }
     }
+    free(nodeName);
     return NULL;
 }
 

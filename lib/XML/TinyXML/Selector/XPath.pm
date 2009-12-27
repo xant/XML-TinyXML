@@ -63,7 +63,7 @@ package XML::TinyXML::Selector::XPath;
 
 use strict;
 use base qw(XML::TinyXML::Selector);
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =item * init ()
 
@@ -73,6 +73,29 @@ sub init {
     return $self;
 }
 
+
+sub _parse_predicate {
+    my ($self, $predicate) = @_;
+    my ($attr, $value);
+    my %res;
+    if ($predicate =~ /^([0-9]+)$/) {
+        $res{idx} = $1;
+    } elsif (($attr, $value) = $predicate =~ /^\@(\S+)\s*=\s*(.*)\s*$/) {
+        $value = substr($value, 1, length($value)-2)
+                if ($value =~ /^([\"'])(?:\\\1|.)*?\1$/);
+        $res{attr} = $attr;
+        $res{attr_value} = $value;
+    } elsif (($attr) = $predicate =~ /^\@(\S+)$/) {
+        $res{attr} = $attr; 
+    }
+    # TODO - support all predicates
+    return wantarray?%res:\%res;
+}
+
+
+=item * select ($expr, [ $cnode ])
+
+=cut
 sub select {
     my ($self, $expr, $cnode) = @_;
     my @path = split('/', $expr);
@@ -83,18 +106,18 @@ sub select {
         $cnode = $self->{_xml}->cNode;
     }
     while (@path) {
+        my ($attr, $value);
         my $tag = shift(@path);
         if (!$tag) {
-            my $idx;
             my @found;
             $tag = $path[0];
-            if ($tag =~ s/\[(.*?)\]$//) {
-                my $predicate = $1;
-                if ($predicate =~ /^[0-9]$/) {
-                    $idx = $predicate;
-                }
-                # TODO - support all predicates
-            }
+            my $predicate_string = $tag =~ s/\[(.*?)\]$//
+                                 ? $1
+                                 : undef;
+            my $predicate = $predicate_string
+                          ? $self->_parse_predicate($predicate_string)
+                          : undef;
+            my $idx = $predicate?$predicate->{idx}:0;
             $tag =~ s/\*/\.\*/g;
             foreach my $child ($cnode?$cnode->children:$self->{_xml}->rootNodes) {
                 my @selection;
@@ -111,8 +134,24 @@ sub select {
                 }
                 push (@found, @selection) if (@selection);
             }
-            if ($idx && caller() ne __PACKAGE__) { # XXX - there should be a better way
-                push(@set, $found[$idx-1]) if ($found[$idx-1]);
+
+            # check if we are the first, or if we are still inside the recursion 
+            # XXX - there should be a better way
+            if (caller() ne __PACKAGE__ && $predicate) {
+                if ($idx) {
+                    push(@set, $found[$idx-1]) if ($found[$idx-1]);
+                } elsif ($predicate->{attr}) {
+                    foreach my $n (@found) {
+                        push (@set, $n) if (
+                            (
+                             $predicate 
+                             && defined($predicate->{attr_value})
+                             && defined($n->attributes->{$predicate->{attr}})
+                            ) ? $n->attributes->{$predicate->{attr}} eq $predicate->{attr_value} 
+                              : defined($n->attributes->{$predicate->{attr}})
+                        );
+                    }
+                }
             } else {
                 push(@set, @found);
             }
@@ -125,7 +164,7 @@ sub select {
                 $cnode = $cnode->parent;
             } else {
                 if ($tag =~ s/\*/\.\*/g) {
-                    foreach my $child ($cnode?$cnode->children:$self->{_xml}->rootNodes) {
+                    foreach my $child ($cnode ? $cnode->children : $self->{_xml}->rootNodes) {
                         if ($child->name =~ /^$tag$/) {
                             if (@path) {
                                 my @selection = $self->select(join('/', @path), $child);
@@ -137,6 +176,11 @@ sub select {
                     }
                     last; # break
                 } else {
+                    my ($predicate_string) = $tag =~ /\[(.*?)\]$/;
+                    # some predicates are already supported by the underlying C library
+                    my $predicate = ($predicate_string && $predicate_string !~ /^[0-9]+$/) 
+                                  ? $self->_parse_predicate($predicate_string)
+                                  : undef;
                     if ($cnode) {
                         $cnode = $cnode->getChildNodeByName($tag);
                     } else {

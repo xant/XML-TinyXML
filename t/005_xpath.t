@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 14;
+use Test::More tests => 17;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
@@ -36,3 +36,10 @@ is ($res[0]->name, "xml");
 is ($res[0]->name, "parent");
 @res = $selector->select('//blah/.');
 is ($res[0]->name, "blah");
+
+my ($node) = $selector->select('//parent[2]');
+ok($node->attributes->{attr});
+($node) = $selector->select('//parent[@attr]');
+ok($node->attributes->{attr});
+($node) = $selector->select('//parent[@attr=val]');
+ok($node->attributes->{attr});
