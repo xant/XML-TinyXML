@@ -15,6 +15,8 @@
 #define XML_ELEMENT_END 3
 #define XML_ELEMENT_UNIQUE 4
 
+int TXML_ALLOW_MULTIPLE_ROOTNODES = 0; // XXX - find a better way
+
 static char *
 dexmlize(char *string)
 {
@@ -298,6 +300,10 @@ XmlAddRootNode(TXml *xml, XmlNode *node)
 {
     if(!node)
         return XML_BADARGS;
+
+    if (!TAILQ_EMPTY(&xml->rootElements) && !TXML_ALLOW_MULTIPLE_ROOTNODES) {
+        return XML_MROOT_ERR;
+    }
 
     TAILQ_INSERT_TAIL(&xml->rootElements, node, siblings);
     return XML_NOERR;
@@ -1117,7 +1123,16 @@ XmlRemoveNode(TXml *xml, char *path)
 XmlErr
 XmlRemoveBranch(TXml *xml, unsigned long index)
 {
-    /* XXX - UNIMPLEMENTED */
+    int count = 1;
+    XmlNode *branch, *tmp;
+    TAILQ_FOREACH_SAFE(branch, &xml->rootElements, siblings, tmp) {
+        if (count == index) {
+            TAILQ_REMOVE(&xml->rootElements, branch, siblings);
+            XmlDestroyNode(branch);
+            return XML_NOERR;
+        }
+        count++;
+    }
     return XML_GENERIC_ERR;
 }
 
