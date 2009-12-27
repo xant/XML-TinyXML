@@ -352,8 +352,8 @@ Dump the xml structure represented internally in the form of an hashref
 sub toHash {
     my ($self) = shift;
     # only first branch will be parsed ... This means that if multiple root 
-    # nodes are present, only the first one will be parsed and translated 
-    # into an hashred
+    # nodes are present (which is anyway not allowed by the xml spec), only 
+    # the first one will be parsed and translated into an hashref
     my $node = $self->getRootNode(1);
     return $node->toHash;
 }
@@ -537,6 +537,10 @@ sub save {
     return XmlSave($self->{_ctx}, $path);
 }
 
+sub allowMultipleRootNodes {
+    my ($self, $val) = @_;
+    return TXML_ALLOW_MULTIPLE_ROOTNODES($val);
+}
 sub DESTROY {
     my $self = shift;
     XmlDestroyContext($self->{_ctx})
@@ -564,6 +568,7 @@ None by default.
   XML_PARSER_GENERIC_ERR
   XML_UPDATE_ERR
   XML_BAD_CHARS
+  XML_MROOT_ERR
   XML_NODETYPE_SIMPLE
   XML_NODETYPE_COMMENT
   XML_NODETYPE_CDATA
