@@ -7,9 +7,25 @@
 
 #include "const-c.inc"
 
+extern int TXML_ALLOW_MULTIPLE_ROOTNODES;
+
 MODULE = XML::TinyXML        PACKAGE = XML::TinyXML        
 
 INCLUDE: const-xs.inc
+
+int 
+TXML_ALLOW_MULTIPLE_ROOTNODES(__value = NO_INIT)
+    UV __value
+    PROTOTYPE: $
+    CODE:
+    RETVAL = TXML_ALLOW_MULTIPLE_ROOTNODES;
+    if (items > 0) {
+        TXML_ALLOW_MULTIPLE_ROOTNODES = __value;
+    }
+    OUTPUT:
+    RETVAL
+
+
 
 int
 XmlAddAttribute(node, name, val)
