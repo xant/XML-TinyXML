@@ -49,9 +49,11 @@ my $ref = $txml->rootNodes;
 is(ref($ref), "ARRAY");
 is(scalar(@$ref), 2);
 
-# test switching ALLOW_MULTIPLE_ROOTNODES again
+# can we remove an entire branch ?
 $txml->removeRootNode(1);
 is($txml->countRootNodes, 1);
+
+# test switching ALLOW_MULTIPLE_ROOTNODES again
 $txml->allowMultipleRootNodes(0);
 $txml->addRootNode('xml2');
 is($txml->countRootNodes, 1);
