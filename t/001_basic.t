@@ -5,9 +5,8 @@
 
 # change 'tests => 2' to 'tests => last_test_to_print';
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 BEGIN { use_ok('XML::TinyXML') };
-
 
 my $fail = 0;
 foreach my $constname (qw(
@@ -55,5 +54,6 @@ is($txml->countRootNodes, 1);
 
 # test switching ALLOW_MULTIPLE_ROOTNODES again
 $txml->allowMultipleRootNodes(0);
-$txml->addRootNode('xml2');
+my $rc = $txml->addRootNode('xml2');
+is($rc, XML_MROOT_ERR);
 is($txml->countRootNodes, 1);
