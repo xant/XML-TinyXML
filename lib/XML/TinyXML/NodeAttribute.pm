@@ -29,7 +29,7 @@ Node representation for the TinyXML API
 
 =over 4
 
-=item * _node
+=item * _attr
 
 Reference to the underlying XmlNodeAttributePtr object (which is a binding to the XmlNode C structure)
 
@@ -73,3 +73,28 @@ sub value {
 }
 
 1;
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+XML::TinyXML::Node XML::TinyXML
+
+=back
+
+=head1 AUTHOR
+
+xant, E<lt>xant@cpan.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2008 by xant
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.8 or,
+at your option, any later version of Perl 5 you may have available.
+
+
+=cut
