@@ -65,9 +65,9 @@ use strict;
 use base qw(XML::TinyXML::Selector);
 use XML::TinyXML::Selector::XPath::Context;
 use XML::TinyXML::Selector::XPath::Functions;
-use XML::TinyXML::Selector::XPath::Axis;
+use XML::TinyXML::Selector::XPath::Axes;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 
 sub unimplemented
@@ -115,7 +115,7 @@ my @NUMBER_FUNCTIONS = qw(
 
 our @AllFunctions = (@NODE_FUNCTIONS, @STRING_FUNCTIONS, @NUMBER_FUNCTIONS);
 
-our @Axis = qw(
+our @Axes = qw(
     child
     descendant
     parent
@@ -197,7 +197,7 @@ sub _expand_axis {
             return undef;
         }
         $axis =~ s/-/_/g;
-        return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
+        return XML::TinyXML::Selector::XPath::Axes->$axis($self->{context});
     }
 }
 

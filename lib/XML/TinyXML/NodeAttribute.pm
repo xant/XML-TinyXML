@@ -45,6 +45,8 @@ package XML::TinyXML::NodeAttribute;
  
 use strict;
 
+our $VERSION = "0.15";
+
 sub new {
     my ($class, $attr) = @_;
     return undef unless(UNIVERSAL::isa($attr, "XmlNodeAttributePtr"));
