@@ -111,7 +111,7 @@ my @NUMBER_FUNCTIONS = qw(
     round
 );
 
-our @Functions = (@NODE_FUNCTIONS, @STRING_FUNCTIONS, @NUMBER_FUNCTIONS);
+our @AllFunctions = (@NODE_FUNCTIONS, @STRING_FUNCTIONS, @NUMBER_FUNCTIONS);
 
 our @Axis = qw(
     child
@@ -157,10 +157,15 @@ sub context {
     return $self->{context};
 }
 
+sub functions {
+    my $self = shift;
+    return wantarray?@AllFunctions:__PACKAGE__."::Functions";
+}
+
 ###### PRIVATE METHODS ######
 sub _exec_function {
     my ($self, $fun, @args) = @_;
-    unless(grep(/^$fun$/, @Functions)) {
+    unless(grep(/^$fun$/, @AllFunctions)) {
         # TODO - Error messages
         return undef;
     }
