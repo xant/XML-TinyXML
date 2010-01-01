@@ -55,8 +55,8 @@ sub following_sibling {
 
 sub preceding_sibling {
     my ($class, $context) = @_;
+    my @res;
     foreach my $node (@{$context->items}) {
-        my @res;
         while ($node) {
             my $prev = $node->prevSibling;
             push (@res, $prev) if $prev;
