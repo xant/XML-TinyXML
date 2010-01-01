@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 22;
+use Test::More tests => 28;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
@@ -55,3 +55,10 @@ is ($node->value, "SECOND");
 is ($node->value, "TEST");
 ($node) = $selector->select('//qtest[@qattr="&quot;qval&quot;"]');
 is ($node->value, "TEST");
+
+is($XML::TinyXML::Selector::XPath::Operators{'+'}->(5, 6), 11);
+is($XML::TinyXML::Selector::XPath::Operators{'-'}->(6, 5), 1);
+is($XML::TinyXML::Selector::XPath::Operators{'and'}->(1, 0), 0);
+is($XML::TinyXML::Selector::XPath::Operators{'and'}->(1, 1), 1);
+is($XML::TinyXML::Selector::XPath::Operators{'mod'}->(5, 4), 1);
+is($XML::TinyXML::Selector::XPath::Operators{'div'}->(10, 2), 5);

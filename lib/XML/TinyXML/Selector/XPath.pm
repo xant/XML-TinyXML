@@ -72,6 +72,21 @@ sub unimplemented
 }
 
 our @ExprTokens = ('(', ')', '[', ']', '.', '..', '@', ',', '::');
+our %Operators = (
+ '+'   => sub {  $_[0] +  $_[1]  },
+ '-'   => sub {  $_[0] -  $_[1]  },
+ '='   => sub { ($_[0] == $_[1]) }, 
+ '!='  => sub { ($_[0] != $_[1]) },
+ '<'   => sub { ($_[0] <  $_[1]) },
+ '<='  => sub { ($_[0] <= $_[1]) },
+ '>'   => sub { ($_[0] >  $_[1]) },
+ '>='  => sub { ($_[0] >= $_[1]) },
+ '*'   => sub {  $_[0] *  $_[1]  },
+ 'and' => sub { ($_[0] && $_[1]) },
+ 'or'  => sub { ($_[0] || $_[1]) },
+ 'mod' => sub { ($_[0] %  $_[1]) },
+ 'div' => sub {  $_[0] /  $_[1]  }
+);
 
 my @NODE_FUNCTIONS = qw(
     last
@@ -136,6 +151,21 @@ sub init {
     return $self;
 }
 
+=item * select ($expr, [ $cnode ])
+
+=cut
+sub select {
+    my ($self, $expr) = @_;
+    my $set;
+    if ($expr =~ /::/) { # unabbreviated
+        $set = $self->_select_unabbreviated($expr);
+    } else {
+        $set = $self->_select_abbreviated($expr);
+    }
+    return wantarray?@$set:$set if ($set);
+}
+
+###### PRIVATE METHODS ######
 sub _exec_function {
     my ($self, $fun, @args) = @_;
     unless(grep(/^$fun$/, @Functions)) {
@@ -146,6 +176,7 @@ sub _exec_function {
     return XML::TinyXML::Selector::XPath::Functions->$fun($self->{context}, @args);
 }
 
+# Priveate method
 sub _expand_axis {
     my ($self, $axis) = @_;
     unless(grep(/^$axis$/, @Axis)) {
@@ -156,6 +187,7 @@ sub _expand_axis {
     return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
 }
 
+# Priveate method
 sub _parse_predicate {
     my ($self, $predicate) = @_;
     my ($attr, $value);
@@ -281,19 +313,6 @@ sub _select_abbreviated {
     return wantarray?@set:\@set;
 }
 
-=item * select ($expr, [ $cnode ])
-
-=cut
-sub select {
-    my ($self, $expr) = @_;
-    my $set;
-    if ($expr =~ /::/) { # unabbreviated
-        $set = $self->_select_unabbreviated($expr);
-    } else {
-        $set = $self->_select_abbreviated($expr);
-    }
-    return wantarray?@$set:$set if ($set);
-}
 
 1;
 

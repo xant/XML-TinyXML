@@ -1,6 +1,6 @@
 package XML::TinyXML::Selector::XPath::Functions;
 
-use POSIX qw(ceil floor);
+use POSIX qw(:sys_types_h);
 
 # NODE FUNCTIONS
 
@@ -28,7 +28,7 @@ sub id {
         if ($child->attributes->{id} and $child->attributes->{id} eq $id) {
             return $child;
         }
-        return &id($context, $child);
+        return id($class, $context, $child);
     }
 }
 
@@ -78,6 +78,12 @@ sub substring_after {
 
 sub substring {
     my ($class, $context, $str, $offset, $length) = @_;
+    $offset = round($class, $context, $offset) 
+        if ($offset =~ /\./);
+    $length = round($class, $context, $length) 
+        if ($length and $length =~ /\./);
+    $length-- if ($length and $offset == 0);
+    $offset-- if ($offset > 0);
     return defined($length)
             ? substr($str, $offset, $length)
             : substr($str, $offset);
@@ -100,7 +106,11 @@ sub translate {
     my @from = split(//, $tfrom);
     my @to = split(//, $tto);
     foreach my $i (0..$#from) {
-        $str =~ s/$from[$i]/$to[$i]/g;
+        if ($to[$i]) {
+            $str =~ s/$from[$i]/$to[$i]/g;
+        } else {
+            $str =~ s/$from[$i]//g;
+        }
     }
     return $str;
 }
@@ -149,12 +159,12 @@ sub sum {
 
 sub floor {
     my ($class, $context, $number) = @_;
-    return floor($number);
+    return POSIX::floor($number);
 }
 
 sub ceil {
     my ($class, $context, $number) = @_;
-    return ceil($number);
+    return POSIX::ceil($number);
 }
 
 sub round {
