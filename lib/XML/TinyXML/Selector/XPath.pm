@@ -64,6 +64,8 @@ package XML::TinyXML::Selector::XPath;
 use strict;
 use base qw(XML::TinyXML::Selector);
 use XML::TinyXML::Selector::XPath::Context;
+use XML::TinyXML::Selector::XPath::Functions;
+use XML::TinyXML::Selector::XPath::Axis;
 
 our $VERSION = '0.14';
 
@@ -162,6 +164,11 @@ sub functions {
     return wantarray?@AllFunctions:__PACKAGE__."::Functions";
 }
 
+sub resetContext {
+    my $self = shift;
+    $self->{context} = XML::TinyXML::Selector::XPath::Context->new($self->{_xml});
+}
+
 ###### PRIVATE METHODS ######
 sub _exec_function {
     my ($self, $fun, @args) = @_;
@@ -184,23 +191,33 @@ sub _expand_axis {
     return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
 }
 
+sub _unescape {
+    my ($self, $string) = @_;
+
+    $string = substr($string, 1, length($string)-2)
+            if ($string =~ /^([\"'])(?:\\\1|.)*?\1$/);
+    $string =~ s/&quot;/"/g;
+    $string =~ s/&apos;/'/g;
+    $string =~ s/&amp;/&/g;
+    $string =~ s/&gt;/>/g;
+    $string =~ s/&lt;/</g;
+
+    return $string;
+}
+
 # Priveate method
 sub _parse_predicate {
     my ($self, $predicate) = @_;
-    my ($attr, $value);
+    my ($attr, $child, $value);
     my %res;
     if ($predicate =~ /^([0-9]+)$/) {
         $res{idx} = $1;
     } elsif (($attr, $value) = $predicate =~ /^\@(\S+)\s*=\s*(.*)\s*$/) {
-        $value = substr($value, 1, length($value)-2)
-                if ($value =~ /^([\"'])(?:\\\1|.)*?\1$/);
         $res{attr} = $attr;
-        $value =~ s/&quot;/"/g;
-        $value =~ s/&apos;/'/g;
-        $value =~ s/&amp;/&/g;
-        $value =~ s/&gt;/>/g;
-        $value =~ s/&lt;/</g;
-        $res{attr_value} = $value;
+        $res{attr_value} = $self->_unescape($value);
+    } elsif (($child, $value) = $predicate =~ /^(\S+)\s*=\s*(.*)\s*$/) {
+        $res{child} = $child;
+        $res{child_value} = $self->_unescape($value);
     } elsif (($attr) = $predicate =~ /^\@(\S+)$/) {
         $res{attr} = $attr; 
     }
@@ -209,8 +226,61 @@ sub _parse_predicate {
 }
 
 sub _select_unabbreviated {
-    warn __PACKAGE__."::_select_unabbreviated() UNIMPLEMENTED";
-    return undef;
+    my ($self, $expr, $recurse) = @_;
+    my @tokens = split('/', $expr);
+    my @set;
+    if ($expr =~ /^\// and !$recurse) { # absolute path has been requested
+        $self->{context}->{items} = [$self->{_xml}->rootNodes()];
+    }
+    #shift(@tokens)
+    #    if (!$tokens[0] and $recurse);
+    my $token = shift @tokens;
+    if ($token and $token =~ /(\w+)::(\w+|\*)(\[.*?\])?/) {
+        my $step = $1;
+        my $nodetest = $2;
+        my $predicate_string = $3;
+        @set = $self->_expand_axis($step);
+        if ($nodetest eq '*') {
+            $self->context->{items} = \@set;
+        } else {
+            $self->context->{items} = []; 
+            foreach my $node (@set) {
+                push (@{$self->context->{items}}, $node) if ($node->name eq $nodetest);
+            }
+            if ($predicate_string and $predicate_string =~ s/^\[(.*?)\]$/$1/) {
+                if ($predicate_string =~ /::/) {
+                    
+                } else {
+                    my $predicate = $self->_parse_predicate($predicate_string);
+                    if ($predicate->{attr}) {
+                    } elsif ($predicate->{child}) { 
+                        if ($predicate->{child} =~ s/\(.*?\)//) {
+                            @set = $self->_exec_function($predicate->{child});
+                        }
+                    }
+                }
+            } else {
+                # TODO - Error messages
+            }
+        }
+    } else {
+        my @newItems;
+        foreach my $node (@{$self->context->items}) {
+            if ($token) {
+                foreach my $child ($node->children) {
+                    push(@newItems, $child)
+                        if ($child->name eq $token);
+                }
+            } else {
+                push(@newItems, $node);
+            }
+        }
+        $self->context->{items} = \@newItems;
+    }
+    if (@tokens) {
+        return $self->_select_unabbreviated(join('/', @tokens), 1); # recursion here
+    }
+    return wantarray?@{$self->context->items}:$self->context->items;
 }
 
 sub _select_abbreviated {

@@ -29,7 +29,8 @@ our %Operators = (
 sub new {
     my ($class, $xml) = @_;
     my $self = { xml => $xml, 
-                 operators => \%Operators 
+                 operators => \%Operators,
+                 items => [$xml->rootNodes]
                };
     return bless $self, $class;
 }

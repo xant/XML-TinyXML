@@ -299,6 +299,15 @@ sub getChildNodeByName {
     return XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNodeByName($self->{_node}, $name));
 }
 
+=item * getChildrenByName ($name)
+
+Alias for getChildNodeByName
+
+=cut
+sub getChildrenByName {
+    return getChildNodeByName(@_);
+}
+
 =item * countChildren ()
 
 Returns the actual number of children
