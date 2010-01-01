@@ -192,7 +192,7 @@ sub _expand_axis {
         my $i2 = $self->_expand_axis($a2);
         return $self->context->operators->{$op}->($i1, $i2);
     } else {
-        unless(grep(/^$axis$/, @Axis)) {
+        unless(grep(/^$axis$/, @Axes)) {
             warn "Unsupported Axis: '$axis'";
             return undef;
         }
@@ -260,6 +260,7 @@ sub _select_unabbreviated {
             if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/) {
                 my @predicates = $full_predicate;
                 my $op;
+                # TODO - implement full support for complex boolean expression
                 if ($full_predicate =~ /^(.*)\s+(and|or|not)\s+(.*)$/) {
                     @predicates = ($1, $3);
                     $op = $2;
