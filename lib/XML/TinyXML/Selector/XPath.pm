@@ -63,6 +63,8 @@ package XML::TinyXML::Selector::XPath;
 
 use strict;
 use base qw(XML::TinyXML::Selector);
+use XML::TinyXML::Selector::XPath::Context;
+
 our $VERSION = '0.14';
 
 
@@ -72,21 +74,6 @@ sub unimplemented
 }
 
 our @ExprTokens = ('(', ')', '[', ']', '.', '..', '@', ',', '::');
-our %Operators = (
- '+'   => sub {  $_[0] +  $_[1]  },
- '-'   => sub {  $_[0] -  $_[1]  },
- '='   => sub { ($_[0] == $_[1]) }, 
- '!='  => sub { ($_[0] != $_[1]) },
- '<'   => sub { ($_[0] <  $_[1]) },
- '<='  => sub { ($_[0] <= $_[1]) },
- '>'   => sub { ($_[0] >  $_[1]) },
- '>='  => sub { ($_[0] >= $_[1]) },
- '*'   => sub {  $_[0] *  $_[1]  },
- 'and' => sub { ($_[0] && $_[1]) },
- 'or'  => sub { ($_[0] || $_[1]) },
- 'mod' => sub { ($_[0] %  $_[1]) },
- 'div' => sub {  $_[0] /  $_[1]  }
-);
 
 my @NODE_FUNCTIONS = qw(
     last
@@ -147,7 +134,7 @@ our @Axis = qw(
 =cut
 sub init {
     my ($self, %args) = @_;
-    $self->{context} = { xml => $self->{_xml} };
+    $self->{context} = XML::TinyXML::Selector::XPath::Context->new($self->{_xml});
     return $self;
 }
 
@@ -163,6 +150,11 @@ sub select {
         $set = $self->_select_abbreviated($expr);
     }
     return wantarray?@$set:$set if ($set);
+}
+
+sub context {
+    my $self = shift;
+    return $self->{context};
 }
 
 ###### PRIVATE METHODS ######

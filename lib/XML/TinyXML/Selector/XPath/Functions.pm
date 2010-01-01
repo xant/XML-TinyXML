@@ -56,12 +56,12 @@ sub concat {
 
 sub starts_with {
     my ($class, $context, $str1, $str2) = @_;
-    return ($str1 =~ /^$str2/);
+    return ($str1 =~ /^$str2/)?1:0;
 }
 
 sub contains {
     my ($class, $context, $str1, $str2) = @_;
-    return ($str1 =~ /$str2/);
+    return ($str1 =~ /$str2/)?1:0;
 }
 
 sub substring_before {
@@ -78,11 +78,23 @@ sub substring_after {
 
 sub substring {
     my ($class, $context, $str, $offset, $length) = @_;
-    $offset = round($class, $context, $offset) 
-        if ($offset =~ /\./);
-    $length = round($class, $context, $length) 
-        if ($length and $length =~ /\./);
-    $length-- if ($length and $offset == 0);
+    # handle edge cases as defined in XPath spec
+    # [ http://www.w3.org/TR/xpath ]
+    if ($length and $length =~ /(\w+)\s+(\w+)\s+(\w+)/) {
+        $length = $context->operators->{$2}->($1, $3);
+        return "" if(!defined($length) and $offset !~ /^-[0-9]+$/);
+    } else {      
+        $length = round($class, $context, $length) 
+            if ($length and $length =~ /\./);
+    }
+    if ($offset and $offset =~ /(\w+)\s+(\w+)\s+(\w+)/) {
+        $offset = $context->operators->{$2}->($1, $3);
+        return "" unless(defined($offset));
+    } else {
+        $offset = round($class, $context, $offset) 
+            if ($offset =~ /\./);
+        $length-- if ($length and $offset == 0);
+    }
     $offset-- if ($offset > 0);
     return defined($length)
             ? substr($str, $offset, $length)

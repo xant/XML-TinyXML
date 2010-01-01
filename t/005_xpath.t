@@ -56,9 +56,9 @@ is ($node->value, "TEST");
 ($node) = $selector->select('//qtest[@qattr="&quot;qval&quot;"]');
 is ($node->value, "TEST");
 
-is($XML::TinyXML::Selector::XPath::Operators{'+'}->(5, 6), 11);
-is($XML::TinyXML::Selector::XPath::Operators{'-'}->(6, 5), 1);
-is($XML::TinyXML::Selector::XPath::Operators{'and'}->(1, 0), 0);
-is($XML::TinyXML::Selector::XPath::Operators{'and'}->(1, 1), 1);
-is($XML::TinyXML::Selector::XPath::Operators{'mod'}->(5, 4), 1);
-is($XML::TinyXML::Selector::XPath::Operators{'div'}->(10, 2), 5);
+is($selector->context->operators->{'+'}->(5, 6), 11);
+is($selector->context->operators->{'-'}->(6, 5), 1);
+is($selector->context->operators->{'and'}->(1, 0), 0);
+is($selector->context->operators->{'and'}->(1, 1), 1);
+is($selector->context->operators->{'mod'}->(5, 4), 1);
+is($selector->context->operators->{'div'}->(10, 2), 5);
