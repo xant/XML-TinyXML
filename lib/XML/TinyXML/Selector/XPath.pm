@@ -274,7 +274,32 @@ sub _select_unabbreviated {
                     if ($predicate->{attr}) {
                     } elsif ($predicate->{child}) { 
                         if ($predicate->{child} =~ s/\(.*?\)//) {
-                            @set = $self->_exec_function($predicate->{child});
+                            my $func = $predicate->{child};
+                            @set = $self->_exec_function($func); # expand lvalue function
+                            if ($predicate->{child_value}) {
+                                my $op_string = join('|', 
+                                                     map { 
+                                                        $_ =~ s/([\-\|\+\*\<\>\=\!])/\\$1/g;
+                                                        $_;
+                                                     } keys(%{$self->context->operators})
+                                                );
+                                my $value = $predicate->{child_value};
+                                if ($value =~ s/\(.*?\)(.*)$//) {
+                                    my $extra = $1;
+                                    $value = $self->_exec_function($value); # expand rvalue function
+                                    if ($extra) {
+                                        if ($extra =~ /($op_string)(.*)$/) { # check if we must perform an extra operation
+                                            $value = $self->context->operators->{$1}->($value, $2);
+                                        }
+                                    }
+                                } elsif ($value =~ /^(.*?)($op_string)(.*)$/) { # check if we must perform an extra operation
+                                    $value = $self->context->operators->{$2}->($1, $3);
+                                }
+                                if ($func eq 'position') {
+                                    my %pos = (@set);
+                                    $self->context->{items} = [ $pos{$value} ];
+                                }
+                            }
                         } else {
                         }
                     }

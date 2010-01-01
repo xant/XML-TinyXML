@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 25;
+use Test::More tests => 33;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -72,3 +72,23 @@ $selector->resetContext;
 @set = $selector->_select_unabbreviated("child::parent[child::blah='SECOND']/attribute::attr");
 is (scalar(@set), 1);
 is_deeply ([$set[0]->name, $set[0]->value], ['attr', 'val']); # ensure it's the expected attribute (again)
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[position()=2]");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "blah");
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[position()=last()]");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "blah");
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[position()=last()-1]");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "child1");
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[position()=1+1]");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "blah");

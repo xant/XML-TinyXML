@@ -6,7 +6,7 @@ use POSIX qw(:sys_types_h);
 
 sub last {
     my ($class, $context) = @_;
-    return scalar(@{$context->{items}}) -1
+    return scalar(@{$context->{items}})
         if ($context and $context->{items} and ref($context->{items}) eq "ARRAY");
 }
 
