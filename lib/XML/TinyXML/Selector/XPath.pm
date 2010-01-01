@@ -245,10 +245,10 @@ sub _select_unabbreviated {
     #shift(@tokens)
     #    if (!$tokens[0] and $recurse);
     my $token = shift @tokens;
-    if ($token and $token =~ /([\w-]+)::([\w\(\)]+|\*)(\[.*?\])?/) {
+    if ($token and $token =~ /([\w-]+)::([\w\(\)\=]+|\*)(\[.*?\])*$/) {
         my $step = $1;
         my $nodetest = $2;
-        my $predicate_string = $3;
+        my $full_predicate = $3;
         @set = $self->_expand_axis($step);
         if ($nodetest eq '*') {
             $self->context->{items} = \@set;
@@ -257,52 +257,79 @@ sub _select_unabbreviated {
             foreach my $node (@set) {
                 push (@{$self->context->{items}}, $node) if ($node->name eq $nodetest);
             }
-            if ($predicate_string and $predicate_string =~ s/^\[(.*?)\]$/$1/) {
-                if ($predicate_string =~ /::/) {
-                    my %uniq;
-                    foreach my $node ($self->_select_unabbreviated($predicate_string ,1)) {
-                        my $parent = $node->parent;
-                        if ($parent) {
-                            $uniq{$parent->path} = $parent;
-                        } else {
-                            # TODO - Error Messages
-                        }
-                    }
-                    $self->context->{items} = [ map { $uniq{$_} } keys %uniq ];
-                } else {
-                    my $predicate = $self->_parse_predicate($predicate_string);
-                    if ($predicate->{attr}) {
-                    } elsif ($predicate->{child}) { 
-                        if ($predicate->{child} =~ s/\(.*?\)//) {
-                            my $func = $predicate->{child};
-                            @set = $self->_exec_function($func); # expand lvalue function
-                            if ($predicate->{child_value}) {
-                                my $op_string = join('|', 
-                                                     map { 
-                                                        $_ =~ s/([\-\|\+\*\<\>\=\!])/\\$1/g;
-                                                        $_;
-                                                     } keys(%{$self->context->operators})
-                                                );
-                                my $value = $predicate->{child_value};
-                                if ($value =~ s/\(.*?\)(.*)$//) {
-                                    my $extra = $1;
-                                    $value = $self->_exec_function($value); # expand rvalue function
-                                    if ($extra) {
-                                        if ($extra =~ /($op_string)(.*)$/) { # check if we must perform an extra operation
-                                            $value = $self->context->operators->{$1}->($value, $2);
-                                        }
-                                    }
-                                } elsif ($value =~ /^(.*?)($op_string)(.*)$/) { # check if we must perform an extra operation
-                                    $value = $self->context->operators->{$2}->($1, $3);
+            if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/) {
+                my @predicates = $full_predicate;
+                my $op;
+                if ($full_predicate =~ /^(.*)\s+(and|or|not)\s+(.*)$/) {
+                    @predicates = ($1, $3);
+                    $op = $2;
+                }
+                my @itemrefs;
+                # save the actual context to ensure sending the correct context to all predicates
+                my $saved_context = $self->context; 
+                foreach my $predicate_string (@predicates) {
+                    # using a temporary context while itereting over all predicates
+                    my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
+                    $tmpctx->{items} = $self->context->items;
+                    $self->{context} = $tmpctx;
+                    if ($predicate_string =~ /::/) {
+                        my ($p, $v) = split('=', $predicate_string);
+                        $v =~ s/(^['"]|['"]$)//g if ($v); # XXX - unsafe dequoting ... think more to find a better regexp
+                        my %uniq;
+                        foreach my $node ($self->_select_unabbreviated($p ,1)) {
+                            my $parent = $node->parent;
+                            if ($parent) {
+                                if ($v) {
+                                    $uniq{$parent->path} = $parent if ($node->value eq $v);
+                                } else {
+                                    $uniq{$parent->path} = $parent;
                                 }
-                                if ($func eq 'position') {
-                                    my %pos = (@set);
-                                    $self->context->{items} = [ $pos{$value} ];
-                                }
+                            } else {
+                                # TODO - Error Messages
                             }
-                        } else {
+                        }
+                        push (@itemrefs, [ map { $uniq{$_} } keys %uniq ]);
+                    } else {
+                        my $predicate = $self->_parse_predicate($predicate_string);
+                        if ($predicate->{attr}) {
+                        } elsif ($predicate->{child}) { 
+                            if ($predicate->{child} =~ s/\(.*?\)//) {
+                                my $func = $predicate->{child};
+                                @set = $self->_exec_function($func); # expand lvalue function
+                                if ($predicate->{child_value}) {
+                                    my $op_string = join('|', 
+                                                         map { 
+                                                            $_ =~ s/([\-\|\+\*\<\>=\!])/\\$1/g;
+                                                            $_;
+                                                         } keys(%{$self->context->operators})
+                                                    );
+                                    my $value = $predicate->{child_value};
+                                    if ($value =~ s/\(.*?\)(.*)$//) {
+                                        my $extra = $1;
+                                        $value = $self->_exec_function($value); # expand rvalue function
+                                        if ($extra) {
+                                            if ($extra =~ /($op_string)(.*)$/) { # check if we must perform an extra operation
+                                                $value = $self->context->operators->{$1}->($value, $2);
+                                            }
+                                        }
+                                    } elsif ($value =~ /^(.*?)($op_string)(.*)$/) { # check if we must perform an extra operation
+                                        $value = $self->context->operators->{$2}->($1, $3);
+                                    }
+                                    if ($func eq 'position') {
+                                        my %pos = (@set);
+                                        push (@itemrefs, [ $pos{$value} ]);
+                                    }
+                                }
+                            } else {
+                            }
                         }
                     }
+                    $self->{context} = $saved_context;
+                }
+                if ($op) {
+                    $self->context->{items}  = $self->context->operators->{$op}->(@itemrefs);
+                } else {
+                    $self->context->{items} = $itemrefs[0];
                 }
             } else {
                 # TODO - Error messages

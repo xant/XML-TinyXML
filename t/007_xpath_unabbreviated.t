@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 33;
+use Test::More tests => 35;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -57,8 +57,8 @@ is ($set[0]->name, "qtest");
 
 $selector->resetContext;
 @set = $selector->_select_unabbreviated("child::parent[child::blah='NOT EXISTING' or child::child1]/following-sibling::*");
-is (scalar(@set), 1);
-is ($set[0]->name, "qtest");
+is (scalar(@set), 2);
+is_deeply ([ $set[0]->name, $set[1]->name ] , [ 'parent', 'qtest' ]);
 
 @set = $selector->_select_unabbreviated("child::parent[child::blah='NOT EXISTING' and child::child1]");
 is (scalar(@set), 0);
@@ -90,5 +90,9 @@ is ($set[0]->getChildNode(1)->name, "child1");
 
 $selector->resetContext;
 @set = $selector->_select_unabbreviated("child::parent[position()=1+1]");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "blah");
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[position()>=1][position()=2]");
 is (scalar(@set), 1);
 is ($set[0]->getChildNode(1)->name, "blah");
