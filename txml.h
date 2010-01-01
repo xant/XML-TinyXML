@@ -80,12 +80,16 @@ typedef struct __XmlNode {
     TAILQ_ENTRY(__XmlNode) siblings;
 } XmlNode;
 
-typedef struct {
+TAILQ_HEAD(nodelistHead, __XmlNode);
+
+typedef struct __TXml {
     XmlNode *cNode;
     TAILQ_HEAD(,__XmlNode) rootElements;
     char *head;
 } TXml;
 
+XmlNode *XmlNextSibling(XmlNode *node);
+XmlNode *XmlPrevSibling(XmlNode *node);
 /***
     @brief allocates memory for an XmlNode. In case of errors NULL is returned 
     @arg name of the new node

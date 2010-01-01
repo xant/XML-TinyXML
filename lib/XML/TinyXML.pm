@@ -129,8 +129,10 @@ our @EXPORT = qw(
 	XmlGetChildNodeByName
 	XmlGetNode
 	XmlGetNodeValue
+        XmlNextSibling
 	XmlParseBuffer
 	XmlParseFile
+        XmlPrevSibling
 	XmlRemoveBranch
         XmlRemoveChildNode
         XmlRemoveChildNodeAtIndex

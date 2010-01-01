@@ -65,14 +65,96 @@ use strict;
 use base qw(XML::TinyXML::Selector);
 our $VERSION = '0.14';
 
+
+sub unimplemented
+{
+    die "Unimplemented";
+}
+
+our @ExprTokens = ('(', ')', '[', ']', '.', '..', '@', ',', '::');
+
+my @NODE_FUNCTIONS = qw(
+    last
+    position
+    count
+    id
+    local-name
+    namespace-uri
+    name
+);
+
+my @STRING_FUNCTIONS = qw(
+    string
+    concat
+    starts-with
+    contains
+    substring-before
+    substring-after
+    substring
+    string-length
+    normalize-space
+    translate
+    boolean
+    not
+    true
+    false
+    lang
+);
+
+my @NUMBER_FUNCTIONS = qw(
+    number
+    sum
+    floor
+    ceiling
+    round
+);
+
+our @Functions = (@NODE_FUNCTIONS, @STRING_FUNCTIONS, @NUMBER_FUNCTIONS);
+
+our @Axis = qw(
+    child
+    descendant
+    parent
+    ancestor
+    following-sibling
+    preceding-sibling
+    following
+    preceding
+    attribute
+    namespace
+    self
+    descendant-or-self
+    ancestor-or-self
+);
+
 =item * init ()
 
 =cut
 sub init {
     my ($self, %args) = @_;
+    $self->{context} = { xml => $self->{_xml} };
     return $self;
 }
 
+sub _exec_function {
+    my ($self, $fun, @args) = @_;
+    unless(grep(/^$fun$/, @Functions)) {
+        # TODO - Error messages
+        return undef;
+    }
+    $fun =~ s/-/_/g;
+    return XML::TinyXML::Selector::XPath::Functions->$fun($self->{context}, @args);
+}
+
+sub _expand_axis {
+    my ($self, $axis) = @_;
+    unless(grep(/^$axis$/, @Axis)) {
+        # TODO - Error messages
+        return undef;
+    }
+    $axis =~ s/-/_/g;
+    return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
+}
 
 sub _parse_predicate {
     my ($self, $predicate) = @_;
@@ -97,11 +179,12 @@ sub _parse_predicate {
     return wantarray?%res:\%res;
 }
 
+sub _select_unabbreviated {
+    warn __PACKAGE__."::_select_unabbreviated() UNIMPLEMENTED";
+    return undef;
+}
 
-=item * select ($expr, [ $cnode ])
-
-=cut
-sub select {
+sub _select_abbreviated {
     my ($self, $expr, $cnode) = @_;
     my @path = split('/', $expr);
     my @set;
@@ -128,21 +211,19 @@ sub select {
                 my @selection;
                 if (@path < 2) {
                     push (@found, $child) if ($child->name =~ /^$tag$/ && @path < 2);
-                    @selection = $self->select(join('/', '/', @path), $child);
+                    @selection = $self->_select_abbreviated(join('/', '/', @path), $child);
                 } else {
                     if ($child->name =~ /^$tag$/) {
                         shift(@path);
-                        @selection = $self->select(join('/', @path), $child);
+                        @selection = $self->_select_abbreviated(join('/', @path), $child);
                     } else {
-                        @selection = $self->select(join('/', '/', @path), $child);
+                        @selection = $self->_select_abbreviated(join('/', '/', @path), $child);
                     }
                 }
                 push (@found, @selection) if (@selection);
             }
 
-            # check if we are the first, or if we are still inside the recursion 
-            # XXX - there should be a better way
-            if (caller() ne __PACKAGE__ && $predicate) {
+            if (!$cnode && $predicate) {
                 if ($idx) {
                     push(@set, $found[$idx-1]) if ($found[$idx-1]);
                 } elsif ($predicate->{attr}) {
@@ -172,7 +253,7 @@ sub select {
                     foreach my $child ($cnode ? $cnode->children : $self->{_xml}->rootNodes) {
                         if ($child->name =~ /^$tag$/) {
                             if (@path) {
-                                my @selection = $self->select(join('/', @path), $child);
+                                my @selection = $self->_select_abbreviated(join('/', @path), $child);
                                 push (@set, @selection) if (@selection);
                             } else {
                                 push (@set, $child);
@@ -200,6 +281,19 @@ sub select {
     return wantarray?@set:\@set;
 }
 
+=item * select ($expr, [ $cnode ])
+
+=cut
+sub select {
+    my ($self, $expr) = @_;
+    my $set;
+    if ($expr =~ /::/) { # unabbreviated
+        $set = $self->_select_unabbreviated($expr);
+    } else {
+        $set = $self->_select_abbreviated($expr);
+    }
+    return wantarray?@$set:$set if ($set);
+}
 
 1;
 

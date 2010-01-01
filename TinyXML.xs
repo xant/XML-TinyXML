@@ -57,6 +57,14 @@ XmlAddChildNode(parent, child)
     XmlNode *parent
     XmlNode *child
 
+XmlNode *
+XmlNextSibling(node)
+    XmlNode *node
+
+XmlNode *
+XmlPrevSibling(node)
+    XmlNode *node
+
 int
 XmlAddRootNode(xml, node)
     TXml *xml

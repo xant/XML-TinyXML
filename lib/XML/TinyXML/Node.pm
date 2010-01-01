@@ -336,11 +336,21 @@ sub addChildNode {
     return XML::TinyXML::XmlAddChildNode($self->{_node}, $child->{_node});
 }
 
+=item * removeChildNode ($index)
+
+Removes child node at provided $index.
+
+=cut
 sub removeChildNode {
     my ($self, $index) = @_;
     XmlRemoveChildNode($self->{_node}, $index);
 }
 
+=item * removeAllChildren
+
+Removes all children from this node
+
+=cut
 sub removeAllChildren {
     my ($self) = @_;
     for (my $i = 1; $i <= $self->countChildren; $i++) {
@@ -356,6 +366,28 @@ Read-Only method which returns the parent node in the form of a XML::TinyXML::No
 sub parent {
     my ($self) = @_;
     return XML::TinyXML::Node->new($self->{_node}->parent);
+}
+
+=item * nextSibling ()
+
+Returns the next sibling of this node (if any),
+undef otherwise.
+
+=cut
+sub nextSibling {
+    my ($self) = @_;
+    return XmlNextSibling($self->{_node});
+}
+
+=item * prevSibling ()
+
+Returns the previous sibling of this node (if any),
+undef otherwise.
+
+=cut
+sub prevSibling {
+    my ($self) = @_;
+    return XmlPrevSibling($self->{_node});
 }
 
 =item * type ()

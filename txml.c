@@ -295,6 +295,18 @@ XmlAddChildNode(XmlNode *parent, XmlNode *child)
     return XML_NOERR;
 }
 
+XmlNode *
+XmlNextSibling(XmlNode *node)
+{
+    return TAILQ_NEXT(node, siblings);
+}
+
+XmlNode *
+XmlPrevSibling(XmlNode *node)
+{
+    return TAILQ_PREV(node, nodelistHead, siblings);
+}
+
 XmlErr
 XmlAddRootNode(TXml *xml, XmlNode *node)
 {
