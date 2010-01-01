@@ -235,7 +235,7 @@ sub _select_unabbreviated {
     #shift(@tokens)
     #    if (!$tokens[0] and $recurse);
     my $token = shift @tokens;
-    if ($token and $token =~ /(\w+)::(\w+|\*)(\[.*?\])?/) {
+    if ($token and $token =~ /([\w-]+)::([\w\(\)]+|\*)(\[.*?\])?/) {
         my $step = $1;
         my $nodetest = $2;
         my $predicate_string = $3;

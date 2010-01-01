@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 11; 
+use Test::More tests => 13;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 BEGIN { use_ok('XML::TinyXML::Selector::XPath::Functions') };
@@ -38,3 +38,9 @@ $selector->resetContext;
 @set = $selector->_select_unabbreviated("child::parent[child::blah='SECOND']");
 is (scalar(@set), 1);
 is ($set[0]->getChildNode(1)->name, "blah");
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[child::blah='SECOND']/following-sibling::*");
+is (scalar(@set), 1);
+is ($set[0]->name, "qtest");
+

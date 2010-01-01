@@ -42,8 +42,8 @@ sub ancestor {
 
 sub following_sibling {
     my ($class, $context) = @_;
+    my @res;
     foreach my $node (@{$context->items}) {
-        my @res;
         while ($node) {
             my $next = $node->nextSibling;
             push (@res, $next) if $next;

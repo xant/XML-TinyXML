@@ -362,7 +362,7 @@ Removes child node at provided $index.
 =cut
 sub removeChildNode {
     my ($self, $index) = @_;
-    XmlRemoveChildNode($self->{_node}, $index);
+    XML::TinyXML::XmlRemoveChildNode($self->{_node}, $index);
 }
 
 =item * removeAllChildren
@@ -373,7 +373,7 @@ Removes all children from this node
 sub removeAllChildren {
     my ($self) = @_;
     for (my $i = 1; $i <= $self->countChildren; $i++) {
-        XmlRemoveChildNode($self->{_node}, $i);
+        XML::TinyXML::XmlRemoveChildNode($self->{_node}, $i);
     }
 }
 
@@ -395,7 +395,7 @@ undef otherwise.
 =cut
 sub nextSibling {
     my ($self) = @_;
-    return XmlNextSibling($self->{_node});
+    return XML::TinyXML::Node->new(XML::TinyXML::XmlNextSibling($self->{_node}));
 }
 
 =item * prevSibling ()
@@ -406,7 +406,7 @@ undef otherwise.
 =cut
 sub prevSibling {
     my ($self) = @_;
-    return XmlPrevSibling($self->{_node});
+    return XML::TinyXML::Node->new(XML::TinyXML::XmlPrevSibling($self->{_node}));
 }
 
 =item * type ()
