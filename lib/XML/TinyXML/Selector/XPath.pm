@@ -173,7 +173,7 @@ sub resetContext {
 sub _exec_function {
     my ($self, $fun, @args) = @_;
     unless(grep(/^$fun$/, @AllFunctions)) {
-        # TODO - Error messages
+        warn "Unsupported Function: '$fun'";
         return undef;
     }
     $fun =~ s/-/_/g;
@@ -183,12 +183,22 @@ sub _exec_function {
 # Priveate method
 sub _expand_axis {
     my ($self, $axis) = @_;
-    unless(grep(/^$axis$/, @Axis)) {
-        # TODO - Error messages
-        return undef;
+    if ($axis =~ /(\S+)\s+(\S+)\s+(\S+)/) {
+        my $a1 = $1;
+        my $op = $2;
+        my $a2 = $3;
+
+        my $i1 = $self->_expand_axis($a1);
+        my $i2 = $self->_expand_axis($a2);
+        return $self->context->operators->{$op}->($i1, $i2);
+    } else {
+        unless(grep(/^$axis$/, @Axis)) {
+            warn "Unsupported Axis: '$axis'";
+            return undef;
+        }
+        $axis =~ s/-/_/g;
+        return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
     }
-    $axis =~ s/-/_/g;
-    return XML::TinyXML::Selector::XPath::Axis->$axis($self->{context});
 }
 
 sub _unescape {

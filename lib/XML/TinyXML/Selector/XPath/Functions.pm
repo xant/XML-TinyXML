@@ -80,14 +80,14 @@ sub substring {
     my ($class, $context, $str, $offset, $length) = @_;
     # handle edge cases as defined in XPath spec
     # [ http://www.w3.org/TR/xpath ]
-    if ($length and $length =~ /(\w+)\s+(\w+)\s+(\w+)/) {
+    if ($length and $length =~ /(\S+)\s+(\S+)\s+(\S+)/) {
         $length = $context->operators->{$2}->($1, $3);
         return "" if(!defined($length) and $offset !~ /^-[0-9]+$/);
     } else {      
         $length = round($class, $context, $length) 
             if ($length and $length =~ /\./);
     }
-    if ($offset and $offset =~ /(\w+)\s+(\w+)\s+(\w+)/) {
+    if ($offset and $offset =~ /(\S+)\s+(\S+)\s+(\S+)/) {
         $offset = $context->operators->{$2}->($1, $3);
         return "" unless(defined($offset));
     } else {

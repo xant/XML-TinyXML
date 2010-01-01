@@ -1,5 +1,8 @@
 package XML::TinyXML::Selector::XPath::Axis;
 
+use strict;
+use XML::TinyXML::NodeAttribute;
+
 sub child {
     my ($class, $context) = @_;
     return map { $_->children } @{$context->items};
@@ -13,7 +16,7 @@ sub descendant {
         $newctx->{items} = \@res;
         push (@res, descendant($class, $newctx));
     }
-    return wantarray?@res:\$res;
+    return wantarray?@res:\@res;
 }
 
 sub parent {
@@ -68,7 +71,7 @@ sub preceding_sibling {
 
 sub attribute {
     my ($class, $context) = @_;
-    return map { $_->attributes } @{$context->items};
+    return map { $_->getAttributes } @{$context->items};
 }
 
 sub self {

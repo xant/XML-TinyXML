@@ -271,9 +271,30 @@ sub path {
     return $self->{_node}->path;
 }
 
+=item * getAttribute ($index)
+
+=cut
+sub getAttribute {
+    my ($self, $index) = @_;
+    my $attr = XML::TinyXML::XmlGetAttribute($self->{_node}, $index);
+    return XML::TinyXML::NodeAttribute->new($attr) if ($attr);
+}
+
+=item * getAttributes ()
+
+=cut
+sub getAttributes {
+    my ($self) = shift;
+    my @res;
+    for(my $i = 1; $i <= XML::TinyXML::XmlCountAttributes($self->{_node}); $i++) {
+        push @res, XML::TinyXML::NodeAttribute->new(XML::TinyXML::XmlGetAttribute($self->{_node}, $i));
+    }
+    return wantarray?@res:\@res;
+}
+
 =item * attributes ()
 
-Read-Only method to obtain an hashref to the attributes of this node
+Read-Only method to obtain an hashref of the attributes in this node
 
 =cut
 sub attributes {
