@@ -261,6 +261,16 @@ sub value {
     return $self->{_node}->value;
 }
 
+=item * vpath ()
+
+Get the absolute path of a node.
+
+=cut
+sub path {
+    my $self = shift;
+    return $self->{_node}->path;
+}
+
 =item * attributes ()
 
 Read-Only method to obtain an hashref to the attributes of this node

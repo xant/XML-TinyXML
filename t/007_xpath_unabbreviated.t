@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 7;
+use Test::More tests => 11; 
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 BEGIN { use_ok('XML::TinyXML::Selector::XPath::Functions') };
@@ -28,3 +28,13 @@ is ($node->name, "blah");
 
 @set = map { $_->name } $selector->_select_unabbreviated("/parent/blah/ancestor::*");
 is_deeply(\@set, [ 'parent', 'xml' ]);
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[child::child1]");
+is (scalar(@set), 1);
+is ($set[0]->path, "/xml/parent");
+
+$selector->resetContext;
+@set = $selector->_select_unabbreviated("child::parent[child::blah='SECOND']");
+is (scalar(@set), 1);
+is ($set[0]->getChildNode(1)->name, "blah");

@@ -186,7 +186,8 @@ XmlSetNodePath(XmlNode *node, XmlNode *parent)
             sprintf(node->path, "%s/%s", parent->name, node->name);
         }
     } else { /* root node */
-        node->path = strdup(node->name);
+        node->path = (char *)calloc(1, strlen(node->name)+2);
+        sprintf(node->path, "/%s", node->name);
     }
 
 }

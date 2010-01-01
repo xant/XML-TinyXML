@@ -249,13 +249,23 @@ sub _select_unabbreviated {
             }
             if ($predicate_string and $predicate_string =~ s/^\[(.*?)\]$/$1/) {
                 if ($predicate_string =~ /::/) {
-                    
+                    my %uniq;
+                    foreach my $node ($self->_select_unabbreviated($predicate_string ,1)) {
+                        my $parent = $node->parent;
+                        if ($parent) {
+                            $uniq{$parent->path} = $parent;
+                        } else {
+                            # TODO - Error Messages
+                        }
+                    }
+                    $self->context->{items} = [ map { $uniq{$_} } keys %uniq ];
                 } else {
                     my $predicate = $self->_parse_predicate($predicate_string);
                     if ($predicate->{attr}) {
                     } elsif ($predicate->{child}) { 
                         if ($predicate->{child} =~ s/\(.*?\)//) {
                             @set = $self->_exec_function($predicate->{child});
+                        } else {
                         }
                     }
                 }
