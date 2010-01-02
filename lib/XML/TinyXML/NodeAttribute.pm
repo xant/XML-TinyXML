@@ -74,6 +74,11 @@ sub value {
     return $value;
 }
 
+sub node {
+    my $self = shift;
+    return XML::TinyXML::Node->new($self->{_attr}->node);
+}
+
 sub path {
     my $self = shift;
     return sprintf("%s[\@%s]", $self->{_attr}->node->path, $self->name);

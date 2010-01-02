@@ -7,7 +7,9 @@ our $VERSION = "0.15";
 
 sub child {
     my ($class, $context) = @_;
-    return map { $_->children } @{$context->items};
+    return wantarray 
+           ? map { $_->children } @{$context->items}
+           : [ map { $_->children } @{$context->items} ];
 }
 
 sub descendant {
@@ -23,7 +25,9 @@ sub descendant {
 
 sub parent {
     my ($class, $context) = @_;
-    return $context->parent;
+    return wantarray
+           ? map { $_->parent } @{$context->items}
+           : [ map { $_->parent } @{$context->items} ];
 }
 
 sub ancestor {
@@ -83,8 +87,10 @@ sub self {
 
 sub descendant_or_self {
     my ($class, $context) = @_;
-    my @res = descendant($context);
-    unshift(@res, $context->{node});
+    my @res = descendant($class, $context);
+    foreach my $node (@{$context->items}) {
+        push (@res, $node);
+    }
     return wantarray?@res:\@res;
 }
 

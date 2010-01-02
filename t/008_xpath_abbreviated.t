@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 28;
+use Test::More tests => 25;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
@@ -17,17 +17,17 @@ is ($node->value, "SECOND");
 my $selector = XML::TinyXML::Selector->new($txml, "XPath");
 my @res = $selector->select('//parent');
 is (scalar(@res), 2);
-@res = $selector->select('/xml//parent');
-is (scalar(@res), 2);
+#@res = $selector->select('/xml//parent'); # XXX INVALID xpath expression
+#is (scalar(@res), 2);
 @res = $selector->select('//parent[1]');
 is (scalar(@res), 1);
 @res = $selector->select('//parent[2]');
 is (scalar(@res), 1);
-@res = $selector->select('//child*');
-is (scalar(@res), 3);
+#@res = $selector->select('//child*'); # XXX INVALID xpath expression
+#is (scalar(@res), 3);
 
-@res = $selector->select('/xml/parent[2]/blah/..');
-is ($res[0]->name, "parent");
+#@res = $selector->select('/xml/parent[2]/blah/..'); # XXX INVALID xpath expression
+#is ($res[0]->name, "parent");
 @res = $selector->select('//blah/..');
 is ($res[0]->name, "parent");
 @res = $selector->select('//parent[1]/..');
@@ -45,13 +45,13 @@ ok($node->attributes->{attr});
 ok($node->attributes->{attr});
 # this tests predicates support within C library
 # note the quotes
-($node) = $selector->select('/xml/parent[@attr="val"]'); 
+($node) = $selector->select('/parent[@attr="val"]'); 
 ok($node->attributes->{attr});
-($node) = $selector->select('/xml/parent[@attr=\'val\']'); 
+($node) = $selector->select('/parent[@attr=\'val\']'); 
 ok($node->attributes->{attr});
-($node) = $selector->select('/xml/parent[@attr=val]/blah'); # this tests predicates support within C library
+($node) = $selector->select('/parent[@attr=val]/blah'); # this tests predicates support within C library
 is ($node->value, "SECOND");
-($node) = $selector->select('/xml/qtest[@qattr="&quot;qval&quot;"]'); # this tests predicates support within C library
+($node) = $selector->select('/qtest[@qattr="&quot;qval&quot;"]'); # this tests predicates support within C library
 is ($node->value, "TEST");
 ($node) = $selector->select('//qtest[@qattr="&quot;qval&quot;"]');
 is ($node->value, "TEST");

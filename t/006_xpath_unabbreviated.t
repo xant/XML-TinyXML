@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 40;
+use Test::More tests => 39;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -100,10 +100,9 @@ is ($set[0]->getChildNode(1)->name, "blah");
 $selector->resetContext;
 @set = $selector->_select_unabbreviated("descendant::*[attribute::attr]");
 is (scalar(@set), 2);
-is_deeply ([ map { $_->name } @set ], [qw(attr attr)]);
-is_deeply ([ map { $_->value } @set ], [qw(val2 val)]);
+is_deeply ([ map { $_->name } @set ], [qw(parent blah)]);
 
 $selector->resetContext;
 @set = $selector->_select_unabbreviated("descendant::*[attribute::attr='val2']");
 is (scalar(@set), 1);
-is_deeply ([ $set[0]->name, $set[0]->value  ], [qw(attr val2)]);
+is_deeply ([ $set[0]->name, $set[0]->value  ], [qw(blah SECOND)]);
