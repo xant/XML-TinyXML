@@ -2,7 +2,6 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <linklist.h>
 #include <txml.h>
 
 #include "const-c.inc"

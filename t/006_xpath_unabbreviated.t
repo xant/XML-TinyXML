@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 39;
+use Test::More tests => 40;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -60,8 +60,13 @@ $selector->resetContext;
 is (scalar(@set), 2);
 is_deeply ([ map { $_->name } @set ], [ 'parent', 'qtest' ]);
 
+$selector->resetContext;
 @set = $selector->select("child::parent[child::blah='NOT EXISTING' and child::child1]");
 is (scalar(@set), 0);
+
+$selector->resetContext;
+@set = $selector->select("child::parent[(child::blah='NOT EXISTING' and child::child1) or child::child2]");
+is (scalar(@set), 1);
 
 $selector->resetContext;
 @set = $selector->select("child::parent[child::blah='SECOND']/attribute::*");

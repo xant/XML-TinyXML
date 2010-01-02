@@ -1,3 +1,4 @@
+# Internal use only
 package XML::TinyXML::Selector::XPath::Functions;
 
 use POSIX qw(:sys_types_h);

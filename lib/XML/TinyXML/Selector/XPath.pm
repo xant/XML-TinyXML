@@ -288,10 +288,13 @@ sub _select_unabbreviated {
 
             my $saved_context = $self->context; 
             my %all_sets;
-            while ($full_predicate =~  /\([^()]+\s+(?:and|or)\s+[^()]+\)/ or 
+            while ($full_predicate =~  /\(([^()]+)\s+(and|or)\s+([^()]+)\)/ or 
                    $full_predicate !~ /^(?:__SET\:\S+__)$/) 
             {
-                my $inner_predicate = $+;
+                my $tmpctx2 = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
+                $tmpctx2->{items} = $saved_context->items;
+                $self->{context} = $tmpctx2;
+                my $inner_predicate = ($1 and $2 and $3)?"$1 $2 $3":$full_predicate;
                 $inner_predicate =~ s/(^\(|\)$)//g;
 
                 # TODO - implement full support for complex boolean expression
@@ -301,10 +304,11 @@ sub _select_unabbreviated {
                 }
                 my @itemrefs;
                 # save the actual context to ensure sending the correct context to all predicates
+                my $saved_context2 = $self->context; 
                 foreach my $predicate_string (@predicates) {
                     # using a temporary context while itereting over all predicates
                     my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
-                    $tmpctx->{items} = $self->context->items;
+                    $tmpctx->{items} = $saved_context2->items;
                     $self->{context} = $tmpctx;
                     if ($predicate_string =~ /^__SET:(\S+)__$/) {
                         push(@itemrefs, $all_sets{$1});
@@ -370,7 +374,7 @@ sub _select_unabbreviated {
                             push (@itemrefs, [ @{$self->context->items}[$predicate->{idx}-1] ]);
                         }
                     }
-                    $self->{context} = $saved_context;
+                    $self->{context} = $saved_context2;
                 }
                 if ($op) {
                     $self->context->{items}  = $self->context->operators->{$op}->(@itemrefs);
@@ -379,14 +383,18 @@ sub _select_unabbreviated {
                 }
                 my $id = scalar($self->context->{items});
                 $all_sets{$id} = $self->context->{items};
-                last if ($inner_predicate eq $full_predicate);
+                if ($inner_predicate eq $full_predicate) {
+                    $full_predicate = "";
+                    last;
+                }
                 last unless ($inner_predicate);
                 $inner_predicate =~ s/([()=])/\\$1/g;
                 $full_predicate =~ s/\(?$inner_predicate\)?/__SET\:${id}__/;
-                last unless($full_predicate =~ /\S/);
             } # while ($full_predicate =~ /\(([^()]+)\)/)
             if ($full_predicate =~ /__SET:(\S+)__/) {
                 $self->context->{items} = $all_sets{$1};
+            } else {
+                # XXX - should I restore previous context ?
             }
         } # if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/)  
         else {
