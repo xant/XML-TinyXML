@@ -74,6 +74,15 @@ sub value {
     return $value;
 }
 
+sub path {
+    my $self = shift;
+    return sprintf("%s[\@%s]", $self->{_attr}->node->path, $self->name);
+}
+
+sub type {
+    return "ATTRIBUTE";
+}
+
 1;
 
 =back

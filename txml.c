@@ -333,6 +333,7 @@ XmlAddAttribute(XmlNode *node, char *name, char *val)
     attr = calloc(1, sizeof(XmlNodeAttribute));
     attr->name = strdup(name);
     attr->value = val?strdup(val):strdup("");
+    attr->node = node;
 
     TAILQ_INSERT_TAIL(&node->attributes, attr, list);
     return XML_NOERR;

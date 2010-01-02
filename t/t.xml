@@ -11,7 +11,7 @@
 		<child3/>
 	</parent>
 	<parent attr="val">
-		<blah>SECOND</blah>
+		<blah attr="val2">SECOND</blah>
 	</parent>
 	<qtest qattr="&quot;qval&quot;">TEST</qtest>
 </xml>

@@ -230,6 +230,15 @@ value(THIS, __value = NO_INIT)
     OUTPUT:
     RETVAL
 
+XmlNode *
+node(THIS)
+    XmlNodeAttribute *THIS
+    PROTOTYPE: $
+    CODE:
+    RETVAL = THIS->node;
+    OUTPUT:
+    RETVAL
+
 MODULE = XML::TinyXML        PACKAGE = XmlNode        
 
 XmlNode *

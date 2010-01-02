@@ -56,6 +56,8 @@
 
 #endif // WIN32
 
+struct __XmlNode;
+
 /**
     @type XmlNodeAttribute
     @brief One attribute associated to an element 
@@ -63,6 +65,7 @@
 typedef struct __XmlNodeAttribute {
     char *name; ///< the attribute name
     char *value; ///< the attribute value
+    struct __XmlNode *node;
     TAILQ_ENTRY(__XmlNodeAttribute) list;
 } XmlNodeAttribute;
 
