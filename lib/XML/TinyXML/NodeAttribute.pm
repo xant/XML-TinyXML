@@ -47,15 +47,23 @@ use strict;
 
 our $VERSION = "0.15";
 
+=item new ($attr)
+
+Wrap the XmlNodeAttributePtr C structure exposing accessor to its members
+
+=cut
 sub new {
     my ($class, $attr) = @_;
     return undef unless(UNIVERSAL::isa($attr, "XmlNodeAttributePtr"));
     my $self = bless({ _attr => $attr }, $class);
-    # XXX - get  rid of this dirty hack done for retro-compatibility
-    $self->{$attr->name} = $attr->value;
     return $self;
 }
 
+=item name ([$newName])
+
+Get/Set the name of the attribute
+
+=cut
 sub name {
     my ($self, $newName) = @_;
     my $name = $self->{_attr}->name;
@@ -65,6 +73,11 @@ sub name {
     return $name;
 }
 
+=item value ([$newName])
+
+Get/Set the value of the attribute
+
+=cut
 sub value {
     my ($self, $newValue) = @_;
     my $value = $self->{_attr}->value;
@@ -74,16 +87,37 @@ sub value {
     return $value;
 }
 
+=item value ([$newName])
+
+Get/Set the XML::TinyXML::Node to which this attribute belongs
+
+=cut
 sub node {
     my $self = shift;
     return XML::TinyXML::Node->new($self->{_attr}->node);
 }
 
+=item path ()
+
+Returns the unique path identifying this attribute
+
+(can be used in xpath expressions)
+
+=cut
 sub path {
     my $self = shift;
-    return sprintf("%s[\@%s]", $self->{_attr}->node->path, $self->name);
+    return sprintf("%s/\@%s", $self->{_attr}->node->path, $self->name);
 }
 
+=item type ()
+
+Returns the type of this node
+
+(at the moment it will return always the string : "ATTRIBUTE" 
+ which can be used to distinguish attribute-nodes from xml-nodes
+ in @sets returned by xpath selections)
+
+=cut
 sub type {
     return "ATTRIBUTE";
 }

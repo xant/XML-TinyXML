@@ -144,12 +144,8 @@ sub init {
 =cut
 sub select {
     my ($self, $expr) = @_;
-    my $set;
-    if ($expr =~ /::/) { # unabbreviated
-        $set = $self->_select_unabbreviated($expr);
-    } else {
-        $set = $self->_select_abbreviated($expr);
-    }
+    my $expanded_expr = $self->_expand_abbreviated($expr);
+    my $set = $self->_select_unabbreviated($expanded_expr);
     return wantarray?@$set:$set if ($set);
 }
 
