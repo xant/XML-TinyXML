@@ -22,7 +22,7 @@ if  (eval {require ExtUtils::Constant; 1}) {
 		 XML_NOERR XML_OPEN_FILE_ERR XML_PARSER_GENERIC_ERR XML_MROOT_ERR
 		 XML_UPDATE_ERR XML_NODETYPE_SIMPLE XML_NODETYPE_COMMENT XML_NODETYPE_CDATA));
   ExtUtils::Constant::WriteConstants(
-                                     NAME         => 'TinyXML',
+                                     NAME         => 'XML::TinyXML',
                                      NAMES        => \@names,
                                      DEFAULT_TYPE => 'IV',
                                      C_FILE       => 'const-c.inc',
