@@ -3,7 +3,7 @@ package XML::TinyXML::Selector::XPath::Axes;
 use strict;
 use XML::TinyXML::NodeAttribute;
 
-our $VERSION = "0.15";
+our $VERSION = "0.16";
 
 sub child {
     my ($class, $context) = @_;

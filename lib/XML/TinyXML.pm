@@ -142,7 +142,7 @@ our @EXPORT = qw(
 	XmlSubstBranch
 );
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()

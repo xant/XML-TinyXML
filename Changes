@@ -40,3 +40,5 @@ Revision history for Perl extension TinyXML.
       - introducing XML::TinyXML::NodeAttribute API 
         (as wrapper to the XmlNodeAttribute C structure)
       - better testunits 
+0.16  - bugfix in expression-parsing logic 
+        (used to parse nested boolean expressions within predicates)
