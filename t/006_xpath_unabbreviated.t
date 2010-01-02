@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 40;
+use Test::More tests => 42;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -44,7 +44,7 @@ is ($set[0]->name, "foo");
 $selector->resetContext;
 @set = $selector->select("child::parent[child::blah='SECOND']");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah");
+is ($set[0]->getChildNode(1)->name, "blah"); # tests both last selection and getChildNode
 @set = $selector->select("attribute::*"); # reusing last context node
 is (scalar(@set), 1);
 is_deeply ([$set[0]->name, $set[0]->value], ['attr', 'val']); # ensure it's the expected attribute
@@ -67,6 +67,8 @@ is (scalar(@set), 0);
 $selector->resetContext;
 @set = $selector->select("child::parent[(child::blah='NOT EXISTING' and child::child1) or child::child2]");
 is (scalar(@set), 1);
+is ($set[0]->name, 'parent');
+ok ($set[0]->getChildNodeByName('child2')->name, "child2"); # tests both last selection and getChildNodeByName 
 
 $selector->resetContext;
 @set = $selector->select("child::parent[child::blah='SECOND']/attribute::*");
@@ -111,3 +113,4 @@ $selector->resetContext;
 @set = $selector->select("descendant::*[attribute::attr='val2']");
 is (scalar(@set), 1);
 is_deeply ([ $set[0]->name, $set[0]->value  ], [qw(blah SECOND)]);
+
