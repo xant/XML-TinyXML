@@ -260,79 +260,101 @@ sub _select_unabbreviated {
             if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/) {
                 my @predicates = $full_predicate;
                 my $op;
-                # TODO - implement full support for complex boolean expression
-                if ($full_predicate =~ /^(.*)\s+(and|or|not)\s+(.*)$/) {
-                    @predicates = ($1, $3);
-                    $op = $2;
-                }
-                my @itemrefs;
-                # save the actual context to ensure sending the correct context to all predicates
+
                 my $saved_context = $self->context; 
-                foreach my $predicate_string (@predicates) {
-                    # using a temporary context while itereting over all predicates
-                    my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
-                    $tmpctx->{items} = $self->context->items;
-                    $self->{context} = $tmpctx;
-                    if ($predicate_string =~ /::/) {
-                        my ($p, $v) = split('=', $predicate_string);
-                        $v =~ s/(^['"]|['"]$)//g if ($v); # XXX - unsafe dequoting ... think more to find a better regexp
-                        my %uniq;
-                        foreach my $node ($self->_select_unabbreviated($p ,1)) {
-                            my $parent = $node->parent;
-                            if ($parent) {
-                                if ($v) {
-                                    $uniq{$parent->path} = $parent if ($node->value eq $v);
-                                } else {
-                                    $uniq{$parent->path} = $parent;
-                                }
-                            } else {
-                                # TODO - Error Messages
-                            }
-                        }
-                        push (@itemrefs, [ map { $uniq{$_} } keys %uniq ]);
-                    } else {
-                        my $predicate = $self->_parse_predicate($predicate_string);
-                        if ($predicate->{attr}) {
-                        } elsif ($predicate->{child}) { 
-                            if ($predicate->{child} =~ s/\(.*?\)//) {
-                                my $func = $predicate->{child};
-                                @set = $self->_exec_function($func); # expand lvalue function
-                                if ($predicate->{child_value}) {
-                                    my $op_string = join('|', 
-                                                         map { 
-                                                            $_ =~ s/([\-\|\+\*\<\>=\!])/\\$1/g;
-                                                            $_;
-                                                         } keys(%{$self->context->operators})
-                                                    );
-                                    my $value = $predicate->{child_value};
-                                    if ($value =~ s/\(.*?\)(.*)$//) {
-                                        my $extra = $1;
-                                        $value = $self->_exec_function($value); # expand rvalue function
-                                        if ($extra) {
-                                            if ($extra =~ /($op_string)(.*)$/) { # check if we must perform an extra operation
-                                                $value = $self->context->operators->{$1}->($value, $2);
-                                            }
-                                        }
-                                    } elsif ($value =~ /^(.*?)($op_string)(.*)$/) { # check if we must perform an extra operation
-                                        $value = $self->context->operators->{$2}->($1, $3);
-                                    }
-                                    if ($func eq 'position') {
-                                        my %pos = (@set);
-                                        push (@itemrefs, [ $pos{$value} ]);
-                                    }
-                                }
-                            } else {
-                            }
-                        }
+                my %all_sets;
+                while ($full_predicate =~  /\([^()]+\s+(?:and|or)\s+[^()]+\)/ or 
+                       $full_predicate !~ /^(?:__SET\:\S+__)$/) 
+                {
+                    my $inner_predicate = $+;
+                    $inner_predicate =~ s/(^\(|\)$)//g;
+
+                    # TODO - implement full support for complex boolean expression
+                    if ($inner_predicate =~ /^(.*?)\s+(and|or)\s+(.*)$/) {
+                        @predicates = ($1, $3);
+                        $op = $2;
                     }
-                    $self->{context} = $saved_context;
+                    my @itemrefs;
+                    # save the actual context to ensure sending the correct context to all predicates
+                    foreach my $predicate_string (@predicates) {
+                        # using a temporary context while itereting over all predicates
+                        my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
+                        $tmpctx->{items} = $self->context->items;
+                        $self->{context} = $tmpctx;
+                        if ($predicate_string =~ /^__SET:(\S+)__$/) {
+                            push(@itemrefs, $all_sets{$1});
+                        } elsif ($predicate_string =~ /::/) {
+                            my ($p, $v) = split('=', $predicate_string);
+                            $v =~ s/(^['"]|['"]$)//g if ($v); # XXX - unsafe dequoting ... think more to find a better regexp
+                            my %uniq;
+                            foreach my $node ($self->_select_unabbreviated($p ,1)) {
+                                my $parent = $node->parent;
+                                if ($parent) {
+                                    if ($v) {
+                                        $uniq{$parent->path} = $parent if ($node->value eq $v);
+                                    } else {
+                                        $uniq{$parent->path} = $parent;
+                                    }
+                                } else {
+                                    # TODO - Error Messages
+                                }
+                            }
+                            push (@itemrefs, [ map { $uniq{$_} } keys %uniq ]);
+                        } else {
+                            my $predicate = $self->_parse_predicate($predicate_string);
+                            if ($predicate->{attr}) {
+                            } elsif ($predicate->{child}) { 
+                                if ($predicate->{child} =~ s/\(.*?\)//) {
+                                    my $func = $predicate->{child};
+                                    @set = $self->_exec_function($func); # expand lvalue function
+                                    if ($predicate->{child_value}) {
+                                        my $op_string = join('|', 
+                                                             map { 
+                                                                $_ =~ s/([\-\|\+\*\<\>=\!])/\\$1/g;
+                                                                $_;
+                                                             } keys(%{$self->context->operators})
+                                                        );
+                                        my $value = $predicate->{child_value};
+                                        if ($value =~ s/\(.*?\)(.*)$//) {
+                                            my $extra = $1;
+                                            $value = $self->_exec_function($value); # expand rvalue function
+                                            if ($extra) {
+                                                if ($extra =~ /($op_string)(.*)$/) { # check if we must perform an extra operation
+                                                    $value = $self->context->operators->{$1}->($value, $2);
+                                                }
+                                            }
+                                        } elsif ($value =~ /^(.*?)($op_string)(.*)$/) { # check if we must perform an extra operation
+                                            $value = $self->context->operators->{$2}->($1, $3);
+                                        }
+                                        if ($func eq 'position') {
+                                            my %pos = (@set);
+                                            push (@itemrefs, [ $pos{$value} ]);
+                                        }
+                                    }
+                                } else {
+                                }
+                            }
+                        }
+                        $self->{context} = $saved_context;
+                    }
+                    if ($op) {
+                        $self->context->{items}  = $self->context->operators->{$op}->(@itemrefs);
+                    } else {
+                        $self->context->{items} = $itemrefs[0];
+                    }
+                    my $id = scalar($self->context->{items});
+                    $all_sets{$id} = $self->context->{items};
+                    last if ($inner_predicate eq $full_predicate);
+                    last unless ($inner_predicate);
+                    $inner_predicate =~ s/([()=])/\\$1/g;
+                    $full_predicate =~ s/\(?$inner_predicate\)?/__SET\:${id}__/;
+                    last unless($full_predicate =~ /\S/);
+                } # while ($full_predicate =~ /\(([^()]+)\)/)
+                if ($full_predicate =~ /__SET:(\S+)__/) {
+                    $self->context->{items} = $all_sets{$1};
                 }
-                if ($op) {
-                    $self->context->{items}  = $self->context->operators->{$op}->(@itemrefs);
-                } else {
-                    $self->context->{items} = $itemrefs[0];
-                }
-            } else {
+            } # if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/)  
+            else {
                 # TODO - Error messages
             }
         }
