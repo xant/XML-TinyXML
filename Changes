@@ -35,3 +35,8 @@ Revision history for Perl extension TinyXML.
          optional behaviour which makes sense to take into account when 
          exporting)
 0.13  - switched to macro-based linklist implementation 
+0.14  - preliminary xpath (unabbreviated-only) implementation
+0.15  - full xpath support
+      - introducing XML::TinyXML::NodeAttribute API 
+        (as wrapper to the XmlNodeAttribute C structure)
+      - better testunits 
