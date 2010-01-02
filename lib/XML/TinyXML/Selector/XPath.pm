@@ -169,6 +169,27 @@ sub resetContext {
 }
 
 ###### PRIVATE METHODS ######
+
+sub _expand_abbreviated {
+    my ($self, $expr) = @_;
+
+    $expr =~ s/\/\//\/descendant-or-self::node()\//g;
+    my @tokens = split('/', $expr);
+
+    foreach my $i (0..$#tokens) {
+        my $t = $tokens[$i];
+        next unless ($t);
+        if($t !~ /::/) {
+            $t = "child::$tokens[$i]" if ($t !~ /\./);
+            $t =~ s/\@/attribute::/g;
+            $t =~ s/\.\./parent::node()/g;
+            $t =~ s/\./self::node()/g;
+            $tokens[$i] = $t;
+        }
+    }
+    join('/', @tokens);
+}
+
 sub _exec_function {
     my ($self, $fun, @args) = @_;
     unless(grep(/^$fun$/, @AllFunctions)) {
