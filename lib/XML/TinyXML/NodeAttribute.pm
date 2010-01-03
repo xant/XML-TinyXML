@@ -45,7 +45,7 @@ package XML::TinyXML::NodeAttribute;
  
 use strict;
 
-our $VERSION = "0.20";
+our $VERSION = "0.21";
 
 =item new ($attr)
 
@@ -140,7 +140,7 @@ xant, E<lt>xant@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by xant
+Copyright (C) 2008-2010 by xant
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

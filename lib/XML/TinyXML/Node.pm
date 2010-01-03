@@ -19,7 +19,12 @@ XML::TinyXML::Node - Tinyxml Node object
   ... [ some code ] ...
   $parent_node->addChildNode($child_node);
 
-  # or if we want to create a childnode in a single statemnet
+  # or you can do everything in one go using :
+  $parent_node->addChildNode("child", "somevalue", { attr1 => v1, attr2 => v2 });
+  # the new node will be implicitly created within the addChildNode() method
+
+  # or you can do the other way round, creating the instance of the new childnode 
+  # and passing the parent to the constructor which will take care of calling addChildNode()
   $child_node = XML::TinyXML::Node->new("child", "somevalue", $attrs, $parent_node);
 
   # we can later retrive the "child" node by calling:
@@ -60,7 +65,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -367,17 +372,26 @@ sub children {
     return wantarray?@children:\@children;
 }
 
-=item * addChildNode ($child)
+=item * addChildNode ($child [, $value [, $attrs ] ])
 
 Adds a new child node.
 
-$child MUST be a XML::TinyXML::Node object
+If $child is an XML::TinyXML::Node object , this will be attached to our children list
+
+If $child is a string (not a reference) a new node will be created passing $child and the
+optional $value and $attrs arguments to the constructor and than attached to the children list
 
 =cut
 sub addChildNode {
-    my ($self, $child) = @_;
-    return undef unless($child && UNIVERSAL::isa($child, "XML::TinyXML::Node"));
-    return XML::TinyXML::XmlAddChildNode($self->{_node}, $child->{_node});
+    my ($self, $child, $value, $attrs) = @_;
+    if ($child && UNIVERSAL::isa($child, "XML::TinyXML::Node")) {
+        return XML::TinyXML::XmlAddChildNode($self->{_node}, $child->{_node});
+    } elsif ($child and !ref($child)) {
+        my $node = XML::TinyXML::Node->new($child, $value, $attrs, $self);
+        if ($node) {
+            return $self->addChildNode($node);
+        }
+    }
 }
 
 =item * removeChildNode ($index)
@@ -474,7 +488,7 @@ xant, E<lt>xant@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by xant
+Copyright (C) 2008-2010 by xant
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

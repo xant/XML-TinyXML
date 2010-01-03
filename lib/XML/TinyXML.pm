@@ -10,13 +10,13 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   $xml = XML::TinyXML->new();
     
   # and add a root node
-  $xml->addRootNode("nodelabel", "somevalue", { attr1 => v1, attr2 => v2 });
+  $xml->addRootNode('nodelabel', 'somevalue', { attr1 => v1, attr2 => v2 });
 
   # if you want to reuse a previously created node object ...
   #
   # ( you can create one calling :
   #    * %attrs = ( attr1 => v1, attr2 => v2 );
-  #    * $node = XML::TinyXML::Node->new("nodelabel", param => "somevalue", attrs => \%attrs);
+  #    * $node = XML::TinyXML::Node->new('nodelabel', param => 'somevalue', attrs => \%attrs);
   # )
   #
   # the new XML Context can be created giving the root node directly to the constructor
@@ -25,17 +25,31 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   ######
   
   # A better (and easier) option is also to let the context constructor create the rootnode for you:
-  $xml = XML::TinyXML->new("rootnode", param => "somevalue", attrs => { attr1 => v1, attr2 => v2 });
+  $xml = XML::TinyXML->new('rootnode', param => 'somevalue', attrs => { attr1 => v1, attr2 => v2 });
 
   # an empty root node can be created as well:
-  $xml = XML::TinyXML->new("rootnode");
+  $xml = XML::TinyXML->new('rootnode');
 
   # You can later obtain a reference to the node object using the getNode() method
-  $node = $xml->getNode("/rootnode");
+  $node = $xml->getNode('/rootnode'); 
 
   # the leading '/' is optional ... since all paths will be considered absolute and 
   # first element is assumed to be always a root node
-  $node = $xml->getNode("rootnode");
+  $node = $xml->getNode('rootnode');
+
+  # xpath-like predicates are also supported so you can also do something like
+  $node->addChildNode('child', 'value1');
+  $node->addChildNode('child', 'value2');
+  $child2 = $xml->getNode('/rootnode/child[2]');
+
+  # or even 
+  $node->addChildNode('child', 'value3', { attr => 'val' });
+  # the 3rd 'child' has an attribute
+  $child3 = $xml->getNode('/rootnode/child[@attr='val']');
+
+  #### IMPORTANT NOTE: #### 
+  # this is not xpath syntax. use XML::TinyXML::Selector::XPath 
+  # if you want to use an xpath-compliant syntax
 
   # see XML::TinyXML::Node documentation for further details on possible
   # operations on a node reference
@@ -165,7 +179,7 @@ our @EXPORT = qw(
 	XmlSubstBranch
 );
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -648,7 +662,7 @@ xant, E<lt>xant@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by xant
+Copyright (C) 2008-2010 by xant
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

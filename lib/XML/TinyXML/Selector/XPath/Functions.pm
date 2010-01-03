@@ -3,20 +3,20 @@ package XML::TinyXML::Selector::XPath::Functions;
 
 use POSIX qw(:sys_types_h);
 
-our $VERSION = "0.20";
+our $VERSION = "0.21";
 
 # NODE FUNCTIONS
 
 sub last {
     my ($class, $context) = @_;
-    return scalar(@{$context->{items}})
-        if ($context and $context->{items} and ref($context->{items}) eq "ARRAY");
+    return scalar(@{$context->items})
+        if ($context);
 }
 
 sub position {
     my ($class, $context) = @_;
     my $cnt = 0;
-    return map { ++$cnt => $_ } @{$context->{items}};
+    return map { ++$cnt => $_ } @{$context->items};
 }
 
 sub count {
@@ -37,7 +37,7 @@ sub id {
 
 sub local_name {
     my ($class, $context, $items) = @_;
-    return map { $_->name } $items?@$items:($context->{node});
+    return map { $_->name } $items?@$items:@{$context->items};
 }
 
 sub name {
@@ -49,7 +49,7 @@ sub name {
 
 sub string {
     my ($class, $context, $items) = @_;
-    return map { $_->value } $items?@$items:($context->{node});
+    return map { $_->value } $items?@$items:@{$context->items};
 }
 
 sub concat {

@@ -3,13 +3,12 @@ package XML::TinyXML::Selector::XPath::Axes;
 use strict;
 use XML::TinyXML::NodeAttribute;
 
-our $VERSION = "0.20";
+our $VERSION = "0.21";
 
 sub child {
     my ($class, $context) = @_;
-    return wantarray 
-           ? map { $_->children } @{$context->items}
-           : [ map { $_->children } @{$context->items} ];
+    my @res = map { $_->children } grep { defined } @{$context->items};
+    return wantarray?@res:\@res;
 }
 
 sub descendant {
@@ -25,9 +24,8 @@ sub descendant {
 
 sub parent {
     my ($class, $context) = @_;
-    return wantarray
-           ? map { $_->parent } @{$context->items}
-           : [ map { $_->parent } @{$context->items} ];
+    my @res = map { $_->parent } grep { defined } @{$context->items};
+    return wantarray?@res:\@res;
 }
 
 sub ancestor {
@@ -77,7 +75,8 @@ sub preceding_sibling {
 
 sub attribute {
     my ($class, $context) = @_;
-    return map { $_->getAttributes } @{$context->items};
+    my @res =  map { $_->getAttributes } grep { defined } @{$context->items};
+    return wantarray?@res:\@res;
 }
 
 sub self {
