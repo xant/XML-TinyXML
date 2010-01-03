@@ -348,7 +348,7 @@ sub loadHash {
     return $cur->loadHash($hash);
 }
 
-=item * toHAsh ()
+=item * toHash ()
 
 Dump the xml structure represented internally in the form of an hashref
 
