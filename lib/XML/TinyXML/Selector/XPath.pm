@@ -67,7 +67,7 @@ use XML::TinyXML::Selector::XPath::Context;
 use XML::TinyXML::Selector::XPath::Functions;
 use XML::TinyXML::Selector::XPath::Axes;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 
 sub unimplemented
@@ -151,7 +151,7 @@ sub select {
                ? @$set
                : (scalar(@$set > 1)
                  ? $set
-                 : @$set[0]) 
+                 : @$set[0])
     }
 }
 
@@ -251,7 +251,7 @@ sub _parse_predicate {
         $res{child} = $child;
         $res{child_value} = $self->_unescape($value);
     } elsif (($attr) = $predicate =~ /^\@(\S+)$/) {
-        $res{attr} = $attr; 
+        $res{attr} = $attr;
     }
     # TODO - support all predicates
     return wantarray?%res:\%res;
@@ -275,7 +275,7 @@ sub _select_unabbreviated {
         if ($nodetest eq '*') {
             $self->context->{items} = \@set;
         } else {
-            $self->context->{items} = []; 
+            $self->context->{items} = [];
             foreach my $node (@set) {
                 if ($nodetest =~ /\(\)/) {
                     if ($nodetest eq 'node()') {
@@ -292,12 +292,12 @@ sub _select_unabbreviated {
             my @predicates = $full_predicate;
             my $op;
 
-            my $saved_context = $self->context; 
+            my $saved_context = $self->context;
             my %all_sets;
-            while ($full_predicate =~  /\(([^()]+)\s+(and|or)\s+([^()]+)\)/ or 
-                   $full_predicate !~ /^(?:__SET\:\S+__)$/) 
+            while ($full_predicate =~  /\(([^()]+)\s+(and|or)\s+([^()]+)\)/ or
+                   $full_predicate !~ /^(?:__SET\:\S+__)$/)
             {
-                my $tmpctx2 = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
+                my $tmpctx2 = XML::TinyXML::Selector::XPath::Context->new($self->{_xml});
                 $tmpctx2->{items} = $saved_context->items;
                 $self->{context} = $tmpctx2;
                 my $inner_predicate = ($1 and $2 and $3)?"$1 $2 $3":$full_predicate;
@@ -310,10 +310,10 @@ sub _select_unabbreviated {
                 }
                 my @itemrefs;
                 # save the actual context to ensure sending the correct context to all predicates
-                my $saved_context2 = $self->context; 
+                my $saved_context2 = $self->context;
                 foreach my $predicate_string (@predicates) {
                     # using a temporary context while itereting over all predicates
-                    my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml}); 
+                    my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml});
                     $tmpctx->{items} = $saved_context2->items;
                     $self->{context} = $tmpctx;
                     if ($predicate_string =~ /^__SET:(\S+)__$/) {
@@ -326,7 +326,7 @@ sub _select_unabbreviated {
                             if ($node->type eq "ATTRIBUTE") {
                                 if ($v) {
                                     $uniq{$node->node->path} = $node->node
-                                        if ($node->value eq $self->_unescape($v)); 
+                                        if ($node->value eq $self->_unescape($v));
                                 } else {
                                    $uniq{$node->node->path} = $node->node;
                                 }
@@ -348,13 +348,13 @@ sub _select_unabbreviated {
                     } else {
                         my $predicate = $self->_parse_predicate($predicate_string);
                         if ($predicate->{attr}) {
-                        } elsif ($predicate->{child}) { 
+                        } elsif ($predicate->{child}) {
                             if ($predicate->{child} =~ s/\(.*?\)//) {
                                 my $func = $predicate->{child};
                                 @set = $self->_exec_function($func); # expand lvalue function
                                 if ($predicate->{child_value}) {
-                                    my $op_string = join('|', 
-                                                         map { 
+                                    my $op_string = join('|',
+                                                         map {
                                                             $_ =~ s/([\-\|\+\*\<\>=\!])/\\$1/g;
                                                             $_;
                                                          } keys(%{$self->context->operators})
@@ -402,7 +402,7 @@ sub _select_unabbreviated {
             if ($full_predicate =~ /__SET:(\S+)__/) {
                 $self->context->{items} = $all_sets{$1};
             }
-        } # if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/)  
+        } # if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/)
         else {
             warn "Bad predicate format : '$full_predicate'"
                 if ($full_predicate);
@@ -412,7 +412,7 @@ sub _select_unabbreviated {
         foreach my $node (@{$self->context->items}) {
             if ($token) {
                 # TODO - handle properly, C api has only partial support for predicates
-                if ($token =~ /\[.*?\]/) { 
+                if ($token =~ /\[.*?\]/) {
                     my $child = $node->getChildNodeByName($token);
                     push (@newItems, $child) if ($child);
                 } else {

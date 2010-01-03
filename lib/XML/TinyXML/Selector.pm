@@ -17,7 +17,7 @@ XML::TinyXML::Selector - Tinyxml Selector base class
   $selector = XML::TinyXML::Selector->new($xml, "XPath"); # create an xpath selector;
 
   my @attributes = $selector->select("attribute::*");
-  or 
+  or
   my $attr2 = $selector->select("attribute::attr2");
 
   # Check XML::TinyXML::Selector::XPath documentation for more xpath-specific examples
@@ -42,7 +42,7 @@ Selector base class
 package XML::TinyXML::Selector;
 
 use strict;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =item * new ($xml, $type, %args)
 
@@ -74,7 +74,7 @@ sub new {
 
 sub init {
     my $self = shift;
-    # this is an optional method. Just return $self 
+    # this is an optional method. Just return $self
     # if not overridden by a subclass implementation
     return $self;
 }

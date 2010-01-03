@@ -35,7 +35,7 @@ XML::TinyXML::Node - Tinyxml Node object
   # <rootnode>
   #   <child>othervalue</child>
   # </rootnode>
-  
+
 =back
 
 =head1 DESCRIPTION
@@ -60,21 +60,21 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =item * new ($entity, $value, $parent, %attrs)
 
 Creates a new XML::TinyXML::Node object.
 
 $entity can be either a scalar or an XmlNodePtr object.
-    - if it's a scalar , it will be intepreted as the entity name 
+    - if it's a scalar , it will be intepreted as the entity name
     - if it's an XmlNodePtr, it will be used as the underlying object
       and will be incapsulated in the newly created XML::TinyXML::Node object.
 
 $value is the optianal string value of the newly created node (the "content" of
 the xml node)
 
-if $parent isn't undef the newly created node will be directly attached to 
+if $parent isn't undef the newly created node will be directly attached to
 the specified parent node. $parent can be either a XML::TinyXML::Node object
 or a XmlNodePtr one.
 
@@ -102,8 +102,8 @@ sub new {
         }
         if($pnode) {
             XML::TinyXML::XmlAddChildNode($pnode, $node);
-        } 
-    } 
+        }
+    }
     my $self = {};
     bless($self, $class);
     $self->{_node} = $node;
@@ -140,7 +140,7 @@ sub removeAttribute {
 
 Loads an hashref and represent it as an xml subbranch.
 
-$hashref 
+$hashref
 
 if $childname is specified, newly created childnodes will use it as their name
 
@@ -182,7 +182,7 @@ sub toHash {
     foreach my $child ($self->children) {
         my $key = $child->name;
         my $value = $child->value;
-        if($child->countChildren) { 
+        if($child->countChildren) {
             $value = $child->toHash($hashref);
         }
         if($hashref->{$key}) {
@@ -213,7 +213,7 @@ sub toHash {
 
 Updates all attributes.
 
-This method simply clean all current attributes and replace them with 
+This method simply clean all current attributes and replace them with
 the ones specified in the %attrs hash
 
 =cut
@@ -238,13 +238,13 @@ sub addAttributes {
 =item * name ([$newname])
 
 Set/Get the name of a node.
-if $newname is specified it will be used as the new name, 
+if $newname is specified it will be used as the new name,
 otherwise the current name is returned
 
 =cut
-sub name { 
+sub name {
     my ($self, $newname) = @_;
-    $self->{_node}->name($newname) 
+    $self->{_node}->name($newname)
         if($newname);
     return $self->{_node}->name;
 }
@@ -252,13 +252,13 @@ sub name {
 =item * value ([$newval])
 
 Set/Get the vlue of a node.
-if $newval is specified it will be used as the new value, 
+if $newval is specified it will be used as the new value,
 otherwise the current value is returned
 
 =cut
 sub value {
     my ($self, $newval) = @_;
-    $self->{_node}->value($newval) 
+    $self->{_node}->value($newval)
         if($newval);
     return $self->{_node}->value;
 }
@@ -302,11 +302,11 @@ sub getAttributes {
 
 Returns an hashref copy of all attributes in this node.
 
-The returned hashref must be considered read-only, 
+The returned hashref must be considered read-only,
 any change won't be reflected in the underlying document.
 
 If you want to modify the name or the value of an attribute,
-use the XML::TinyXML::NodeAttribute api by calling 
+use the XML::TinyXML::NodeAttribute api by calling
 getAttributes() or getAttribute() instead.
 
 =cut
