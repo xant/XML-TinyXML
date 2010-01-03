@@ -110,8 +110,10 @@ XmlDump(xml)
     SV   *sv = &PL_sv_undef;
     CODE:
     dump = XmlDump(xml, &outlen);
-    if (dump)
+    if (dump) {
         sv = newSVpv(dump, outlen);
+        free(dump);
+    }
     RETVAL = sv;
     OUTPUT:
     RETVAL
