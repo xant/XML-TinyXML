@@ -14,4 +14,3 @@ q~<?xml version="1.0" encoding="utf-8"?>
 <nodelabel attr1="v&gt;1" attr2="v&lt;2">some&apos;&amp;&apos;value</nodelabel>
 ~, 'escaping');
 
-

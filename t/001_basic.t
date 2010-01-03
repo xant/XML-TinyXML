@@ -57,3 +57,4 @@ $txml->allowMultipleRootNodes(0);
 my $rc = $txml->addRootNode('xml2');
 is($rc, XML_MROOT_ERR);
 is($txml->countRootNodes, 1);
+
