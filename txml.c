@@ -1102,7 +1102,7 @@ XmlDump(TXml *xml, int *outlen)
             free(branch);
         }
     }
-    if (outlen)
+    if (outlen) // check if we need to report the output size
         *outlen = strlen(dump);
     if (doConversion) {
         iconv_t ich;
@@ -1111,8 +1111,12 @@ XmlDump(TXml *xml, int *outlen)
         char *iconvIn;
         char *iconvOut;
         ilen = strlen(dump);
-        olen = ilen *4;
-        if (outlen)
+        // the most expensive conversion would be from ascii to utf-32/ucs-4
+        // ( 4 bytes for each char )
+        olen = ilen *4; 
+        // we still don't know how big the output buffer is going to be
+        // we will update outlen later once iconv tell us the size
+        if (outlen) 
             *outlen = olen;
         out = calloc(1, olen);
         ich = iconv_open (xml->outputEncoding, xml->documentEncoding);
@@ -1132,9 +1136,9 @@ XmlDump(TXml *xml, int *outlen)
             return NULL;
         }
         iconv_close(ich);
-        free(dump);
+        free(dump); // release the old buffer (in the original encoding)
         dump = out;
-        if (outlen)
+        if (outlen) // update the outputsize if we have to
             *outlen -= olen;
     }
     return(dump);

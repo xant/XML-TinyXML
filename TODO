@@ -1,7 +1,7 @@
+- enforce using utf-8 internally 
+  (which means: force conversion to utf-8 when loading existing documents)
 - complete documentation
-- support different encodings when importing/exporting data
 - write a more exhaustive example.pl
-- implement XPath unabbreviated syntax
 - in TinyXML::getNode() return an array of nodes instead of the first one when
   multiple nodes match a given 'path'
 - handle doctype and let user define it at object construction
