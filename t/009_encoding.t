@@ -20,3 +20,10 @@ $utf8_output =~ s/utf-8/UTF-16/;
 my $converted = $iconv->convert($utf8_output);
 
 is( $utf16_output, $converted );
+
+$txml->setOutputEncoding("UTF-8"); # set it back to utf-8
+$utf8_output = $txml->dump;
+my $txml2 = XML::TinyXML->new();
+$txml2->loadFile("./t/t-ucs2.xml");
+my $out = $txml2->dump;
+ok( $out eq $utf8_output, "import/export" );
