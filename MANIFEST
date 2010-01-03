@@ -16,8 +16,9 @@ t/005_xpath_functions.t
 t/006_xpath_unabbreviated.t
 t/007_xpath_abbreviated2unabbreviated.t
 t/008_xpath_abbreviated.t
-t/TinyXML.t
+t/009_encoding.t
 t/t.xml
+t/t-ucs2.xml
 fallback/const-c.inc
 fallback/const-xs.inc
 lib/XML/TinyXML/Node.pm

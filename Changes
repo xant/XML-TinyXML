@@ -44,3 +44,7 @@ Revision history for Perl extension TinyXML.
         (used to parse nested boolean expressions within predicates)
 0.17  - support encodings through iconv
 0.18  - fix (hopefully) build on solaris
+0.19  - fixed MANIFEST to include encoding testunits
+      - setting doConversion when necessary also for generated documents
+        and not only when dumping an imported (and possibly modified) document
+      - documentation
