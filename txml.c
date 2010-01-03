@@ -11,10 +11,10 @@
 #include "iconv.h"
 #include "errno.h"
 
-#define XML_ELEMENT_NONE 0
-#define XML_ELEMENT_START 1
-#define XML_ELEMENT_VALUE 2
-#define XML_ELEMENT_END 3
+#define XML_ELEMENT_NONE   0
+#define XML_ELEMENT_START  1
+#define XML_ELEMENT_VALUE  2
+#define XML_ELEMENT_END    3
 #define XML_ELEMENT_UNIQUE 4
 
 enum {

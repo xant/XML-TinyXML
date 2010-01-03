@@ -66,7 +66,7 @@ WriteMakefile(
     AUTHOR         => 'xant <xant@cpan.org>',
     LIBS              => $config{LIBS},
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
-    INC               => '-I.', # e.g., '-I. -I/usr/include/other'
+    INC               => "-I. $config{INC}",
     OBJECT            => '$(O_FILES)', # link all the C files too
 );
 if  (eval {require ExtUtils::Constant; 1}) {

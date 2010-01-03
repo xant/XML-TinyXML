@@ -60,7 +60,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -341,15 +341,6 @@ sub getChildNodeByName {
     my ($self, $name) = @_;
     return undef unless($name);
     return XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNodeByName($self->{_node}, $name));
-}
-
-=item * getChildrenByName ($name)
-
-Alias for getChildNodeByName
-
-=cut
-sub getChildrenByName {
-    return getChildNodeByName(@_);
 }
 
 =item * countChildren ()
