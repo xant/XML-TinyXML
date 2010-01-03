@@ -22,8 +22,10 @@ XML::TinyXML::Node - Tinyxml Node object
   # or if we want to create a childnode in a single statemnet
   $child_node = XML::TinyXML::Node->new("child", "somevalue", $attrs, $parent_node);
 
-  # we can later retrive the "child" node by calling
+  # we can later retrive the "child" node by calling:
   $child_node = $xml->getNode("/nodelabel/child");
+  # and possibly modify its value by doing:
+  $child_node->value("othervalue");
 
   # at this point , calling :
   print $xml->dump;
@@ -273,6 +275,8 @@ sub path {
 
 =item * getAttribute ($index)
 
+Returns the attribute (XML::TinyXML::NodeAttribute) at index $index
+
 =cut
 sub getAttribute {
     my ($self, $index) = @_;
@@ -281,6 +285,8 @@ sub getAttribute {
 }
 
 =item * getAttributes ()
+
+Returns all attribute (array/arrayref of XML::TinyXML::NodeAttribute objects) for this node
 
 =cut
 sub getAttributes {
@@ -294,7 +300,14 @@ sub getAttributes {
 
 =item * attributes ()
 
-Read-Only method to obtain an hashref of the attributes in this node
+Returns an hashref copy of all attributes in this node.
+
+The returned hashref must be considered read-only, 
+any change won't be reflected in the underlying document.
+
+If you want to modify the name or the value of an attribute,
+use the XML::TinyXML::NodeAttribute api by calling 
+getAttributes() or getAttribute() instead.
 
 =cut
 sub attributes {

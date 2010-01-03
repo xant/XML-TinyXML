@@ -16,7 +16,7 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   #
   # ( you can create one calling :
   #    * %attrs = ( attr1 => v1, attr2 => v2 );
-  #    * $node = XML::TinyXML::Node->new("nodelabel", "somevalue", \%attrs);
+  #    * $node = XML::TinyXML::Node->new("nodelabel", param => "somevalue", attrs => \%attrs);
   # )
   #
   # the new XML Context can be created giving the root node directly to the constructor

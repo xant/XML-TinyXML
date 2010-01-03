@@ -11,7 +11,7 @@ XML::TinyXML::Selector::XPath - XPath-compliant selector for XML::TinyXML
   use XML::TinyXML;
 
   # first obtain an xml context:
-  $xml = XML::TinyXML->new("rootnode", "somevalue", { attr1 => v1, attr2 => v2 });
+  $xml = XML::TinyXML->new("rootnode", param => "somevalue", attrs => { attr1 => v1, attr2 => v2 });
 
   $selector = XML::TinyXML::Selector->new($xml, "XPath");
 
@@ -34,9 +34,9 @@ XML::TinyXML::Selector::XPath - XPath-compliant selector for XML::TinyXML
   </xml>
   #####
 
-  @res = $selector->select('/xml//parent');
+  @res = $selector->select('//parent');
   @res = $selector->select('//child*');
-  @res = $selector->select('/xml/parent[2]/blah/..');
+  @res = $selector->select('/parent[2]/blah/..');
   @res = $selector->select('//blah/..');
   @res = $selector->select('//parent[1]/..');
   @res = $selector->select('//parent[1]/.');
@@ -146,7 +146,13 @@ sub select {
     my ($self, $expr) = @_;
     my $expanded_expr = $self->_expand_abbreviated($expr);
     my $set = $self->_select_unabbreviated($expanded_expr);
-    return wantarray?@$set:$set if ($set);
+    if ($set) {
+        return wantarray
+               ? @$set
+               : (scalar(@$set > 1)
+                 ? $set
+                 : @$set[0]) 
+    }
 }
 
 sub context {
@@ -256,7 +262,7 @@ sub _select_unabbreviated {
     my @tokens = split('/', $expr);
     my @set;
     if ($expr =~ /^\// and !$recurse) { # absolute path has been requested
-        $self->{context}->{items} = [$self->{_xml}->rootNodes()];
+        $self->context->{items} = [$self->{_xml}->rootNodes()];
     }
     #shift(@tokens)
     #    if (!$tokens[0] and $recurse);

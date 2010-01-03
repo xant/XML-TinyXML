@@ -10,9 +10,17 @@ XML::TinyXML::Selector - Tinyxml Selector base class
 =over 4
 
   use XML::TinyXML;
+  use XML::TinyXML::Selector;
 
   # first obtain an xml context:
-  $xml = XML::TinyXML->new("rootnode", "somevalue", { attr1 => v1, attr2 => v2 });
+  $xml = XML::TinyXML->new("rootnode", param => "somevalue", attrs => { attr1 => "v1", attr2 => "v2" });
+  $selector = XML::TinyXML::Selector->new($xml, "XPath"); # create an xpath selector;
+
+  my @attributes = $selector->select("attribute::*");
+  or 
+  my $attr2 = $selector->select("attribute::attr2");
+
+  # Check XML::TinyXML::Selector::XPath documentation for more xpath-specific examples
 
 =back
 
@@ -36,12 +44,15 @@ package XML::TinyXML::Selector;
 use strict;
 our $VERSION = '0.18';
 
-=item * new ($xml, $type)
+=item * new ($xml, $type, %args)
 
 Creates a new XML::TinyXML::Selector::$type object.
 
 $xml must be a valid XML::TinyXML instance
 $type must be a known selector $type
+%args will be passed to the specific selector initializer
+      (for instance to XML::TinyXML::Selector::XPath
+       if using the xpath selector)
 
 Returns a valid XML::TinyXML::Node object
 Returns undef is $type is not known or if $xml is not a valid instance
@@ -59,6 +70,17 @@ sub new {
         return $self->init(%args);
     }
     return undef;
+}
+
+sub init {
+    my $self = shift;
+    # this is an optional method. Just return $self 
+    # if not overridden by a subclass implementation
+    return $self;
+}
+
+sub select {
+    die __PACKAGE__." You MUST Override Me!!"
 }
 
 1;
