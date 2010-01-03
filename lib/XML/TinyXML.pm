@@ -139,6 +139,7 @@ our @EXPORT = qw(
 	XmlRemoveNode
 	XmlSave
 	XmlSetNodeValue
+        XmlSetOutputEncoding
 	XmlSubstBranch
 );
 
@@ -540,6 +541,11 @@ sub save {
     return XmlSave($self->{_ctx}, $path);
 }
 
+sub setOutputEncoding {
+    my ($self, $encoding) = @_;
+    XmlSetOutputEncoding($self->{_ctx}, $encoding);
+}
+
 sub allowMultipleRootNodes {
     my ($self, $val) = @_;
     return TXML_ALLOW_MULTIPLE_ROOTNODES($val);
@@ -599,7 +605,7 @@ None by default.
   int XmlSubstBranch(TXml *xml,unsigned long index, XmlNode *newBranch);
   int XmlParseBuffer(TXml *xml, char *buf)
   int XmlSave(TXml *xml, char *path)
-  char *XmlDump(TXml *xml)
+  char *XmlDump(TXml *xml, int *outlen)
 
 =head1 SEE ALSO
 

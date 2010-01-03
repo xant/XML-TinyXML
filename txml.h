@@ -89,10 +89,13 @@ typedef struct __TXml {
     XmlNode *cNode;
     TAILQ_HEAD(,__XmlNode) rootElements;
     char *head;
+    char outputEncoding[64];  /* XXX probably oversized, 24 or 32 should be enough */
+    char documentEncoding[64];
 } TXml;
 
 XmlNode *XmlNextSibling(XmlNode *node);
 XmlNode *XmlPrevSibling(XmlNode *node);
+void XmlSetOutputEncoding(TXml *xml, char *encoding);
 /***
     @brief allocates memory for an XmlNode. In case of errors NULL is returned 
     @arg name of the new node
@@ -225,10 +228,12 @@ XmlErr XmlParseFile(TXml *xml,char *path);
 char *XmlDumpBranch(TXml *xml,XmlNode *rNode,unsigned int depth);
 /***
     @brief dump the entire xml configuration tree that reflects the status of internal structures
+    @arg the xml context pointer
+    @arg if not NULL, here will be stored the bytelength of the returned buffer
     @return a null terminated string containing the xml representation of the configuration tree.
     The memory allocated for the dump-string must be freed by the user when no more needed
 */
-char *XmlDump(TXml *xml);
+char *XmlDump(TXml *xml, int *outlen);
 
 TXml *XmlCreateContext();
 void XmlDestroyContext(TXml *xml);

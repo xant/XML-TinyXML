@@ -319,7 +319,8 @@ sub _select_unabbreviated {
                         foreach my $node ($self->_select_unabbreviated($p ,1)) {
                             if ($node->type eq "ATTRIBUTE") {
                                 if ($v) {
-                                   $uniq{$node->node->path} = $node->node if ($node->value eq $self->_unescape($v)); 
+                                    $uniq{$node->node->path} = $node->node
+                                        if ($node->value eq $self->_unescape($v)); 
                                 } else {
                                    $uniq{$node->node->path} = $node->node;
                                 }
@@ -327,7 +328,8 @@ sub _select_unabbreviated {
                                 my $parent = $node->parent;
                                 if ($parent) {
                                     if ($v) {
-                                        $uniq{$parent->path} = $parent if ($node->value eq $v);
+                                        $uniq{$parent->path} = $parent
+                                            if ($node->value eq $v);
                                     } else {
                                         $uniq{$parent->path} = $parent;
                                     }
@@ -393,12 +395,11 @@ sub _select_unabbreviated {
             } # while ($full_predicate =~ /\(([^()]+)\)/)
             if ($full_predicate =~ /__SET:(\S+)__/) {
                 $self->context->{items} = $all_sets{$1};
-            } else {
-                # XXX - should I restore previous context ?
             }
         } # if ($full_predicate and $full_predicate =~ s/^\[(.*?)\]$/$1/)  
         else {
-            # TODO - Error messages
+            warn "Bad predicate format : '$full_predicate'"
+                if ($full_predicate);
         }
     } else {
         my @newItems;
@@ -425,15 +426,6 @@ sub _select_unabbreviated {
     }
     return wantarray?@{$self->context->items}:$self->context->items;
 }
-
-sub _select_abbreviated {
-    my ($self, $expr, $cnode) = @_;
-
-    my $expanded_expr = $self->_expand_abbreviated($expr);
-    #warn " $expr => $expanded_expr ";
-    return $self->_select_unabbreviated($expanded_expr);
-}
-
 
 1;
 

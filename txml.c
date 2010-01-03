@@ -8,6 +8,8 @@
 #include "txml.h"
 #include "string.h"
 #include "stdlib.h"
+#include "iconv.h"
+#include "errno.h"
 
 #define XML_ELEMENT_NONE 0
 #define XML_ELEMENT_START 1
@@ -16,6 +18,7 @@
 #define XML_ELEMENT_UNIQUE 4
 
 int TXML_ALLOW_MULTIPLE_ROOTNODES = 0; // XXX - find a better way
+int errno;
 
 static char *
 dexmlize(char *string)
@@ -151,7 +154,22 @@ XmlCreateContext()
     xml->cNode = NULL;
     TAILQ_INIT(&xml->rootElements);
     xml->head = NULL;
+    // default to UTF-8
+    sprintf(xml->outputEncoding, "utf-8");
+    sprintf(xml->documentEncoding, "utf-8");
     return xml;
+}
+
+void
+XmlSetDocumentEncoding(TXml *xml, char *encoding)
+{
+    strncpy(xml->documentEncoding, encoding, sizeof(xml->documentEncoding)-1);
+}
+
+void
+XmlSetOutputEncoding(TXml *xml, char *encoding)
+{
+    strncpy(xml->outputEncoding, encoding, sizeof(xml->outputEncoding)-1);
 }
 
 void
@@ -561,6 +579,7 @@ XmlParseBuffer(TXml *xml, char *buf)
     char **values = NULL;
     unsigned int nAttrs = 0;
     char *mark = NULL;
+    int quote = 0;
 
     //unsigned int offset = fileStat.st_size;
 
@@ -696,6 +715,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                     goto _parser_err;
                 }
             } else if(*p =='?') { /* head */
+                char *encoding = NULL;
                 p++;
                 mark = p;
                 p = strstr(mark, "?>");
@@ -703,6 +723,30 @@ XmlParseBuffer(TXml *xml, char *buf)
                     free(xml->head); /* XXX - should notify this behaviour? */
                 xml->head = calloc(1, p-mark+1);
                 strncpy(xml->head, mark, p-mark);
+                encoding = strstr(xml->head, "encoding=");
+                if (encoding) {
+                    encoding += 9;
+                    if (*encoding == '"' || *encoding == '\'') {
+                        int encoding_length = 0;
+                        quote = *encoding;
+                        encoding++;
+                        end = (char *)strchr(encoding, quote);
+                        if (!end) {
+                            fprintf(stderr, "Unquoted encoding string in the <?xml> section");
+                            err = XML_PARSER_GENERIC_ERR;
+                            goto _parser_err;
+                        }
+                        encoding_length = end - encoding;
+                        if (encoding_length < sizeof(xml->documentEncoding)) {
+                            strncpy(xml->documentEncoding, encoding, encoding_length);
+                            // ensure to terminate it, if we are reusing a context we 
+                            // could have still the old encoding there possibly with a 
+                            // longer name (so poisoning the buffer)
+                            xml->documentEncoding[encoding_length] = 0; 
+                        }
+                    }
+                } else {
+                }
                 p+=2;
             } else { /* start tag */
                 attrs = NULL;
@@ -734,7 +778,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                         p++;
                         SKIP_BLANKS(p);
                         if(*p == '"' || *p == '\'') {
-                            int quote = *p;
+                            quote = *p;
                             p++;
                             mark = p;
                             while(*p != 0) {
@@ -999,15 +1043,55 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
 }
 
 char *
-XmlDump(TXml *xml)
+XmlDump(TXml *xml, int *outlen)
 {
     char *dump;
     XmlNode *rNode;
     char *branch;
     unsigned int i;
-    char *head;
+    int doConversion = 0;
+    char head[256]; // should be enough
 
-    head = xml->head?xml->head:"xml version=\"1.0\"";
+    memset(head, 0, sizeof(head));
+    if (xml->head) {
+        int quote;
+        char *start, *end, *encoding;
+        char *initial = strdup(xml->head);
+        start = strstr(initial, "encoding=");
+        if (start) {
+            *start = 0;
+            encoding = start+9;
+            if (*encoding == '"' || *encoding == '\'') {
+                quote = *encoding;
+                encoding++;
+                end = (char *)strchr(encoding, quote);
+                if (!end) {
+                    /* TODO - Error Messages */
+                } else if ((end-encoding) >= sizeof(xml->outputEncoding)) {
+                    /* TODO - Error Messages */
+                }
+                *end = 0;
+                // check if document encoding matches
+                if (strncasecmp(encoding, xml->documentEncoding, end-encoding) != 0) {
+                    /* TODO - Error Messages */
+                } 
+                if (strncasecmp(encoding, xml->outputEncoding, end-encoding) != 0) {
+                    snprintf(head, sizeof(head), "%sencoding=\"%s\"%s",
+                        initial, xml->outputEncoding, ++end);
+                    doConversion = 1;
+                } else {
+                    snprintf(head, sizeof(head), "%s", xml->head);
+                }
+            }
+        } else {
+            snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
+                xml->outputEncoding?xml->outputEncoding:"utf-8");
+        }
+        free(initial);
+    } else {
+        snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
+            xml->outputEncoding?xml->outputEncoding:"utf-8");
+    }
     dump = malloc(strlen(head)+6);
     sprintf(dump, "<?%s?>\n", head);
     TAILQ_FOREACH(rNode, &xml->rootElements, siblings) {
@@ -1017,6 +1101,41 @@ XmlDump(TXml *xml)
             strcat(dump, branch);
             free(branch);
         }
+    }
+    if (outlen)
+        *outlen = strlen(dump);
+    if (doConversion) {
+        iconv_t ich;
+        size_t ilen, olen, cb;
+        char *out;
+        char *iconvIn;
+        char *iconvOut;
+        ilen = strlen(dump);
+        olen = ilen *4;
+        if (outlen)
+            *outlen = olen;
+        out = calloc(1, olen);
+        ich = iconv_open (xml->outputEncoding, xml->documentEncoding);
+        if (ich == (iconv_t)(-1)) {
+            free(dump);
+            free(out);
+            fprintf(stderr, "Can't init iconv: %s\n", strerror(errno));
+            return NULL;
+        }
+        iconvIn = dump;
+        iconvOut = out;
+        cb = iconv(ich, &iconvIn, &ilen, &iconvOut, &olen);
+        if (cb == -1) {
+            free(dump);
+            free(out);
+            fprintf(stderr, "Error from iconv: %s\n", strerror(errno));
+            return NULL;
+        }
+        iconv_close(ich);
+        free(dump);
+        dump = out;
+        if (outlen)
+            *outlen -= olen;
     }
     return(dump);
 }
@@ -1072,7 +1191,7 @@ XmlSave(TXml *xml, char *xmlFile)
             free(backup);
         } /* end of backup */
     }
-    dump = XmlDump(xml);
+    dump = XmlDump(xml, NULL);
      if(dump) {
         saveFile = fopen(xmlFile, "w+");
         if(saveFile) {

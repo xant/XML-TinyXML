@@ -1,5 +1,61 @@
-use ExtUtils::MakeMaker;
 use 5.008;
+use ExtUtils::MakeMaker;
+use Config
+
+my %config;
+my $ok;
+my $devnull = File::Spec->devnull();
+
+# GOT FROM Text::Iconv makefile 
+###############################################################################
+# Check for iconv.
+
+if ($config{LIBS} or $config{INC})
+{
+   print "Your settings:\n",
+       "  LIBS: ", $config{LIBS}, "\n", "  INC:  ", $config{INC}, "\n";
+}
+
+print 'Checking for iconv ... ';
+
+if (linktest($config{LIBS}, $config{INC}))
+{
+   $ok = 1;
+   print "ok (iconv apparently in libc)\n";
+}
+elsif ($config{LIBS} !~ /-liconv/)
+{
+   $config{LIBS} .= ' -liconv';
+
+   if (linktest($config{LIBS}, $config{INC}))
+   {
+      $ok = 1;
+      print "ok (added -liconv)\n";
+   }
+}
+
+if ($ok)
+{
+   print <<EOT;
+
+NOTE: If you have multiple iconv implementations installed, you might
+      want to make sure that I've found the one you want to use.
+      If necessary, you can explicitly specify paths like this:
+
+      $^X Makefile.PL LIBS='-L/path/to/lib' INC='-I/path/to/include'
+
+EOT
+}
+else
+{
+   print "fail\n";
+
+   print "Failed to find iconv, please check your settings and re-run as:\n";
+   print "$^X Makefile.PL LIBS='-L/path/to/lib' INC='-I/path/to/include'\n";
+   exit 1;
+}
+
+###############################################################################
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
@@ -8,7 +64,7 @@ WriteMakefile(
     PREREQ_PM         => { }, # e.g., Module::Name => 1.1
     ABSTRACT_FROM  => 'lib/XML/TinyXML.pm', # retrieve abstract from module
     AUTHOR         => 'xant <xant@cpan.org>',
-    LIBS              => [''], # e.g., '-lm'
+    LIBS              => ['-liconv'], # e.g., '-lm'
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
     INC               => '-I.', # e.g., '-I. -I/usr/include/other'
     OBJECT            => '$(O_FILES)', # link all the C files too
@@ -37,4 +93,69 @@ else {
     my $fallback = File::Spec->catfile('fallback', $file);
     copy ($fallback, $file) or die "Can't copy $fallback to $file: $!";
   }
+}
+
+sub linktest
+{
+   my $libs = shift;
+   my $incs = shift;
+
+   my $file = 'linktest';
+   my $obj_ext = $Config{_o};
+
+   my $prog = <<EOT;
+#include <iconv.h>
+
+int main(void)
+{
+   (void) iconv_open("", "");
+}
+EOT
+
+   my $compile;
+
+   unless ($^O eq 'VMS')
+   {
+      # It is admittedly a bit simplistic to simply concatenate all
+      # flags, but it seems to work in most cases.
+      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags},
+	  $Config{ldflags}, $libs;
+   }
+   else
+   {
+      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags}, $libs;
+   }
+
+   if (exists $config{verbose})
+   {
+      print "\nCompiler: '$compile'\n";
+   }
+
+   open  LINKTEST, '>', "$file.c" or die "Can't create test file '$file.c'.";
+   print LINKTEST $prog;
+   close LINKTEST;
+
+   my $compile_line = "$compile -o $file $file.c $libs 2> $devnull";
+
+   if ($^O eq 'VMS')
+   {
+      $compile_line = "pipe $compile $file.c $libs 2> NL:";
+   }
+
+   if (exists $config{verbose})
+   {
+      print "\nCompiler command line: '$compile_line'\n";
+   }
+
+   my $result = system($compile_line) / 256;
+   unlink $file, "$file.c", "$file$obj_ext";
+
+   if ($result == 0)
+   {
+      return 1;
+   }
+   else
+   {
+      return 0;
+   }
 }

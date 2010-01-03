@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 42;
+use Test::More tests => 43;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -99,6 +99,12 @@ $selector->resetContext;
 @set = $selector->select("child::parent[position()=1+1]");
 is (scalar(@set), 1);
 is ($set[0]->getChildNode(1)->name, "blah");
+
+# now check if using "2 mod 3" instead of "1+1" produces the same result
+$selector->resetContext;
+my @set2 = $selector->select("child::parent[position()=2 mod 3]");
+is_deeply(\@set, \@set2);
+
 $selector->resetContext;
 @set = $selector->select("child::parent[position()>=1][position()=2]");
 is (scalar(@set), 1);

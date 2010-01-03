@@ -10,7 +10,7 @@ $txml = XML::TinyXML->new();
 $txml->addRootNode("nodelabel", "some'&'value", { attr1 => 'v>1', attr2 => 'v<2' });
 #print $txml->dump;
 ok ( $txml->dump eq 
-q~<?xml version="1.0"?>
+q~<?xml version="1.0" encoding="utf-8"?>
 <nodelabel attr1="v&gt;1" attr2="v&lt;2">some&apos;&amp;&apos;value</nodelabel>
 ~, 'escaping');
 

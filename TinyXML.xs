@@ -24,7 +24,10 @@ TXML_ALLOW_MULTIPLE_ROOTNODES(__value = NO_INIT)
     OUTPUT:
     RETVAL
 
-
+void
+XmlSetOutputEncoding(xml, encoding)
+    TXml *xml
+    char *encoding
 
 int
 XmlAddAttribute(node, name, val)
@@ -98,9 +101,20 @@ void
 XmlDestroyNode(node)
     XmlNode *node
 
-char *
+SV *
 XmlDump(xml)
     TXml *xml
+    PREINIT:
+    char *dump;
+    int outlen;
+    SV   *sv = &PL_sv_undef;
+    CODE:
+    dump = XmlDump(xml, &outlen);
+    if (dump)
+        sv = newSVpv(dump, outlen);
+    RETVAL = sv;
+    OUTPUT:
+    RETVAL
 
 char *
 XmlDumpBranch(xml, rNode, depth)
