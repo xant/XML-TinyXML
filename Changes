@@ -42,3 +42,5 @@ Revision history for Perl extension TinyXML.
       - better testunits 
 0.16  - bugfix in expression-parsing logic 
         (used to parse nested boolean expressions within predicates)
+0.17  - support encodings through iconv
+0.18  - fix (hopefully) build on solaris
