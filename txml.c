@@ -17,6 +17,52 @@
 #define XML_ELEMENT_END 3
 #define XML_ELEMENT_UNIQUE 4
 
+enum {
+    ENCODING_UTF8,
+    ENCODING_UTF16LE,
+    ENCODING_UTF16BE,
+    ENCODING_UTF32LE,
+    ENCODING_UTF32BE,
+    ENCODING_UTF7
+} XML_ENCODING;
+
+static int
+detect_encoding(char *buffer) {
+    if (buffer[0] == (char)0xef &&
+        buffer[1] == (char)0xbb &&
+        buffer[2] == (char)0xbf) 
+    {
+        return ENCODING_UTF8;
+    } else if (buffer[0] == (char)0xff && 
+               buffer[1] == (char)0xfe && 
+               buffer[3] != (char)0x00)
+    {
+        return ENCODING_UTF16LE; // utf-16le
+    } else if (buffer[0] == (char)0xfe && 
+               buffer[1] == (char)0xff)
+    {
+        return ENCODING_UTF16BE; // utf-16be
+    } else if (buffer[0] == (char)0xff &&
+               buffer[1] == (char)0xfe &&
+               buffer[2] == (char)0x00 &&
+               buffer[3] == (char)0x00)
+    {
+        return ENCODING_UTF32LE; //utf-32le
+    } else if (buffer[0] == 0 &&
+               buffer[1] == 0 &&
+               buffer[2] == (char)0xfe &&
+               buffer[3] == (char)0xff)
+    {
+        return ENCODING_UTF32BE; //utf-32be
+    } else if (buffer[0] == (char)0x2b &&
+               buffer[1] == (char)0x2f &&
+               buffer[2] == (char)0x76)
+    {
+        return ENCODING_UTF7;
+    }
+    return -1;
+}
+
 int TXML_ALLOW_MULTIPLE_ROOTNODES = 0; // XXX - find a better way
 int errno;
 
@@ -888,15 +934,64 @@ XmlParseFile(TXml *xml, char *path)
     if(fileStat.st_size>0) {
         inFile = fopen(path, "r");
         if(inFile) {
+            iconv_t ich;
+            size_t cb, ilen, olen;
+            char *out, *iconvIn, *iconvOut;
+            char *encoding_from = NULL;
+
             if(XmlFileLock(inFile) != XML_NOERR) {
                 fprintf(stderr, "Can't lock %s for opening ", path);
                 return -1;
             }
-            buffer = (char *)malloc(fileStat.st_size+1);
-            fread(buffer, 1, fileStat.st_size, inFile);
-            buffer[fileStat.st_size] = 0;
+            olen = ilen = fileStat.st_size;
+            buffer = (char *)malloc(ilen+1);
+            fread(buffer, 1, ilen, inFile);
+            buffer[ilen] = 0;
+            switch(detect_encoding(buffer)) {
+                case ENCODING_UTF16LE:
+                    encoding_from = "UTF-16LE";
+                    break;
+                case ENCODING_UTF16BE:
+                    encoding_from = "UTF-16BE";
+                    break;
+                case ENCODING_UTF32LE:
+                    encoding_from = "UTF-32LE";
+                    break;
+                case ENCODING_UTF32BE:
+                    encoding_from = "UTF-32BE";
+                    break;
+                case ENCODING_UTF7:
+                    encoding_from = "UTF-7";
+                    olen = ilen*2; // we need a bigger output buffer
+                    break;
+            }
+            if (encoding_from) {
+                ich = iconv_open ("UTF-8", encoding_from);
+                if (ich == (iconv_t)(-1)) {
+                    fprintf(stderr, "Can't init iconv: %s\n", strerror(errno));
+                    free(buffer);
+                    XmlFileUnlock(inFile);
+                    fclose(inFile);
+                    return -1;
+                }
+                out = calloc(1, olen);
+                iconvIn = buffer;
+                iconvOut = out;
+                cb = iconv(ich, &iconvIn, &ilen, &iconvOut, &olen);
+                if (cb == -1) {
+                    fprintf(stderr, "Can't convert encoding: %s\n", strerror(errno));
+                    free(buffer);
+                    free(out);
+                    XmlFileUnlock(inFile);
+                    fclose(inFile);
+                    return -1;
+                }
+                free(buffer); // release initial buffer
+                buffer = out; // point to the converted buffer
+                iconv_close(ich);
+            }
             err = XmlParseBuffer(xml, buffer);
-            free(buffer);
+            free(buffer); // release either the initial or the converted buffer
             XmlFileUnlock(inFile);
             fclose(inFile);
         }
