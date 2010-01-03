@@ -61,16 +61,38 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
 =head1 DESCRIPTION
 
 Since in some environments it could be desirable to avoid installing 
-Expat, XmlParser and blahblahblah , needed by most XML-related perl modules,.
-my main scope was to obtain a fast xml library usable from perl
-(so with a powerful interface) but without the need to install 
+Expat, XmlParser and blahblahblah , needed by most XML-related perl modules.
+My main scope was to obtain a fast xml library usable from perl
+(so with the possibility to expose a powerful api) but without the need to install 
 a lot of other modules (or even C libraries) to have it working.
-Once I discovered XS I started porting a very little and efficent
-xml library I wrote in C some years ago.
 
-The interesting part of porting it in perl is that now it's really easy
-to improve the interface and I was almost always pissed off of installing 
-more than 10 modules to have a simple xml implementation.
+The actualy version of the this (0.18 when I'm writing this) 
+implements an xpath selector and supports encoding conversions (throgh iconv)
+
+The OO Tree-based api allows to :
+    - create a new document programmaticaly
+    - import an existing document from a file
+    - import an existing document by parsing a memory buffer
+    - modify the loaded/created document programmatically
+    - export the document to an xml file
+    - bidirectional conversion between xml documents and perl hashrefs
+
+There are other "no-dependencies" tiny xml implementations on CPAN.
+Notably : XML::Easy and XML::Tiny but both are still missing some key
+features which are actually implemented in this module
+(in particular : an OO api to allow changing and re-exporting the xml document,
+ a bidirectional xml<->hashref conversion and encoding-conversion capabilities)
+The underlying xml implementation resides in txml.c and is imported in the perl
+context through XS. It uses a linkedlist implementation took out of freebsd kernel
+and is supposed to be fast enough to reprent and access 'not-huge' xml trees.
+If at some stage there will be need for more preformance in accessing the xml data
+(especially when using the xpath selector) an hash-table based index could be built
+on top of the tree structure to faster access to inner parts of the tree when using
+paths.
+
+An Event-based api is actually missing, but will be provided in future releases.
+
+=head1 METHODS
 
 =over
 
@@ -196,7 +218,7 @@ if $arg is an HASHREF or a scalar
               * if $root is a scalar, this will be 
                   the value of the root node.
     attrs =>  attributes of the 'contextually added' $root node 
-    encoding => 
+    encoding => output encoding to use (among iconv supported ones)
 );
 
 =cut
@@ -205,6 +227,8 @@ sub new {
     my $self = {} ;
     bless($self, $class);
 
+    # default encoding (the same used as default in the C library
+    $self->{_encoding} = "utf-8"; 
     $self->{_ctx} = XmlCreateContext();
     if($root) {
         if(UNIVERSAL::isa($root, "XML::TinyXML::Node")) {
@@ -217,6 +241,7 @@ sub new {
             $self->addRootNode($root, $params{param}, $params{attrs});
         }
     }
+    $self->setOutputEncoding($params{encoding}) if ($params{encoding});
     return $self;
 }
 
@@ -543,6 +568,7 @@ sub save {
 
 sub setOutputEncoding {
     my ($self, $encoding) = @_;
+    $self->{_encoding} = $encoding;
     XmlSetOutputEncoding($self->{_ctx}, $encoding);
 }
 
@@ -612,6 +638,9 @@ None by default.
   XML::TinyXML::Node
 
 You should also see libtinyxml documentation (mostly txml.h, redistributed with this module)
+
+If you need a more complete and featureful XML implementation try looking at 
+XML::LibXML XML::Parser XML::API XML::XPath or other modules based on either expat or libxml2
 
 =head1 AUTHOR
 
