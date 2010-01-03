@@ -261,7 +261,7 @@ sub value {
     return $self->{_node}->value;
 }
 
-=item * vpath ()
+=item * path ()
 
 Get the absolute path of a node.
 
