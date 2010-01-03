@@ -64,7 +64,7 @@ WriteMakefile(
     PREREQ_PM         => { }, # e.g., Module::Name => 1.1
     ABSTRACT_FROM  => 'lib/XML/TinyXML.pm', # retrieve abstract from module
     AUTHOR         => 'xant <xant@cpan.org>',
-    LIBS              => ['-liconv'], # e.g., '-lm'
+    LIBS              => $config{LIBS},
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
     INC               => '-I.', # e.g., '-I. -I/usr/include/other'
     OBJECT            => '$(O_FILES)', # link all the C files too
