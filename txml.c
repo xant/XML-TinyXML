@@ -1179,11 +1179,15 @@ XmlDump(TXml *xml, int *outlen)
                 }
             }
         } else {
+            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0)
+                doConversion = 1;
             snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
                 xml->outputEncoding?xml->outputEncoding:"utf-8");
         }
         free(initial);
     } else {
+        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0)
+            doConversion = 1;
         snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
             xml->outputEncoding?xml->outputEncoding:"utf-8");
     }
