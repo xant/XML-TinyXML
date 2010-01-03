@@ -1150,6 +1150,7 @@ XmlSave(TXml *xml, char *xmlFile)
     struct stat fileStat;
     FILE *saveFile = NULL;
     char *dump = NULL;
+    int dumpLen = 0;
     char *backup = NULL;
     char *backupPath = NULL;
     FILE *backupFile = NULL;
@@ -1195,8 +1196,8 @@ XmlSave(TXml *xml, char *xmlFile)
             free(backup);
         } /* end of backup */
     }
-    dump = XmlDump(xml, NULL);
-     if(dump) {
+    dump = XmlDump(xml, &dumpLen);
+     if(dump && dumpLen) {
         saveFile = fopen(xmlFile, "w+");
         if(saveFile) {
             if(XmlFileLock(saveFile) != XML_NOERR) {
@@ -1204,7 +1205,7 @@ XmlSave(TXml *xml, char *xmlFile)
                 free(dump);
                 return XML_GENERIC_ERR;
             }
-            fwrite(dump, 1, strlen(dump), saveFile);
+            fwrite(dump, 1, dumpLen, saveFile);
             free(dump);
             XmlFileUnlock(saveFile);
             fclose(saveFile);
