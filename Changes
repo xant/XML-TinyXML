@@ -50,3 +50,5 @@ Revision history for Perl extension TinyXML.
       - documentation
 0.20  - fixed a bug in Makefile.PL which was preventing it from being
         properly built as port on freebsd
+0.21  - fixed a searious memory leak in the XS wrapper to XmlDump()
+      - updated more documentation

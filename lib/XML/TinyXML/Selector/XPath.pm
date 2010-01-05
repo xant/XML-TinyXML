@@ -42,6 +42,19 @@ XML::TinyXML::Selector::XPath - XPath-compliant selector for XML::TinyXML
   @res = $selector->select('//parent[1]/.');
   @res = $selector->select('//blah/.');
 
+  # or using the unabbreviated syntax:
+
+  @res = $selector->select('/descendant-or-self::node()/child::parent');
+  @res = $selector->select('/descendant-or-self::node()/child::child*');
+  @res = $selector->select('/child::parent[2]/child::blah/parent::node()');
+  @res = $selector->select('/descendant-or-self::node()/child::blah/parent::node()');
+  @res = $selector->select('/descendant-or-self::node()/child::parent[1]/parent::node()');
+  @res = $selector->select('/descendant-or-self::node()/child::parent[1]/self::node()');
+  @res = $selector->select('/descendant-or-self::node()/child::blah/self::node()');
+
+
+  # refer to XPath documentation for further examples and details on the supported syntax:
+  # ( http://www.w3.org/TR/xpath )
 =back
 
 =head1 DESCRIPTION
@@ -69,13 +82,8 @@ use XML::TinyXML::Selector::XPath::Axes;
 
 our $VERSION = '0.21';
 
-
-sub unimplemented
-{
-    die "Unimplemented";
-}
-
 #our @ExprTokens = ('(', ')', '[', ']', '.', '..', '@', ',', '::');
+
 my @NODE_FUNCTIONS = qw(
     last
     position
