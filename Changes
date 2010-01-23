@@ -52,3 +52,4 @@ Revision history for Perl extension TinyXML.
         properly built as port on freebsd
 0.21  - fixed a searious memory leak in the XS wrapper to XmlDump()
       - updated more documentation
+0.22  - introducing support for namespaces
