@@ -260,22 +260,77 @@ void XmlClearAttributes(XmlNode *node);
     @brief save the configuration stored in the xml file containing the current profile
     the xml file name is obtained appending '.xml' to the category name . The xml file is stored 
     in the repository directory specified during object construction.
+    @arg a valid xml context
+    @arg the path where to save the file
     @return an XmlErr error status (XML_NOERR if buffer was parsed successfully)
 */
 XmlErr XmlSave(TXml *xml,char *path);
 
-XmlErr XmlFileLock(FILE *file);
-XmlErr XmlFileUnlock(FILE *file);
-
-
+/***
+    @brief allocate resources for a new namespace 
+    @arg the shortname of the new namespace
+    @arg the complete uri of the new namspace
+    @return a valid XmlNamespace pointer on success, NULL otherwise
+*/
 XmlNamespace *XmlCreateNamespace(char *nsName, char *nsUri);
+
+/***
+ 
+*/
 void XmlDestroyNamespace(XmlNamespace *ns);
+
+/***
+    @brief search for a specific namespace defined within the current document
+    @arg a valid xml context
+    @arg the shortname of the new namespace
+*/
 XmlNamespace *XmlGetNamespaceByName(TXml *xml, char *nsName);
+
+/***
+    @brief search for a specific namespace defined within the current document
+    @arg a valid xml context
+    @arg the complete uri of the new namspace
+    @return a valid XmlNamespace pointer if found, NULL otherwise
+*/
 XmlNamespace *XmlGetNamespaceByUri(TXml *xml, char *nsUri);
+
+/***
+    @brief create a new namespace and link it to current document/context
+    @arg a valid xml context
+    @arg the shortname of the new namespace
+    @arg the complete uri of the new namspace
+    @return a valid XmlNamespace pointer if found, NULL otherwise
+*/
 XmlNamespace *XmlAddNamespace(TXml *xml, char *nsName, char *nsUri);
+
+/***
+    @brief get the namespace of a node , if any
+    @arg a valid xmlnode
+    @return the namespace of the node if defined or inherited, NULL otherwise
+*/
 XmlNamespace *XmlGetNodeNamespace(XmlNode *node);
+
+/***
+    @brief set the namespace of a node
+    @arg a valid xmlnode
+    @return XML_NOERR on success, any other xml error code otherwise
+*/ 
 XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
+
+/***
+    @brief set the default namespace of a node (which will be inherited by all children)
+    @arg a valid xmlnode
+    @arg a valid xmlnamespace
+    @return XML_NOERR on success, any other xml error code otherwise
+*/ 
 XmlErr XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns);
+
+/***
+    @brief set the default namespace for the current node (xml->cNode)
+    @arg a valid xmlnode
+    @arg the namespace uri
+    @return XML_NOERR on success, any other xml error code otherwise
+*/ 
 XmlErr XmlSetCurrentNamespace(TXml *xml, char *nsuri);
 
 #endif

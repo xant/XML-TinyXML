@@ -955,6 +955,43 @@ _parser_err:
     return err;
 }
 
+static XmlErr
+XmlFileLock(FILE *file)
+{
+    int tries = 0;
+    if(file) {
+#ifdef WIN32
+        while(W32LockFile(file) != 0) {
+#else
+        while(ftrylockfile(file) != 0) {
+#endif
+    // warning("can't obtain a lock on xml file %s... waiting (%d)", xmlFile, tries);
+            tries++;
+            if(tries>5) {
+                fprintf(stderr, "sticky lock on xml file!!!");
+                return XML_GENERIC_ERR;
+            }
+            sleep(1);
+        }
+        return XML_NOERR;
+    }
+    return XML_GENERIC_ERR;
+}
+
+static XmlErr
+XmlFileUnlock(FILE *file)
+{
+    if(file) {
+#ifdef WIN32
+        if(W32UnlockFile(file) == 0)
+#else
+        funlockfile(file);
+
+#endif
+        return XML_NOERR;
+    }
+    return XML_GENERIC_ERR;
+}
 
 XmlErr
 XmlParseFile(TXml *xml, char *path)
@@ -1810,41 +1847,4 @@ __exit:
     return res;
 }
 #endif // #ifdef WIN32
-
-XmlErr
-XmlFileLock(FILE *file)
-{
-    int tries = 0;
-    if(file) {
-#ifdef WIN32
-        while(W32LockFile(file) != 0) {
-#else
-        while(ftrylockfile(file) != 0) {
-#endif
-    // warning("can't obtain a lock on xml file %s... waiting (%d)", xmlFile, tries);
-            tries++;
-            if(tries>5) {
-                fprintf(stderr, "sticky lock on xml file!!!");
-                return XML_GENERIC_ERR;
-            }
-            sleep(1);
-        }
-        return XML_NOERR;
-    }
-    return XML_GENERIC_ERR;
-}
-
-XmlErr XmlFileUnlock(FILE *file)
-{
-    if(file) {
-#ifdef WIN32
-        if(W32UnlockFile(file) == 0)
-#else
-        funlockfile(file);
-
-#endif
-        return XML_NOERR;
-    }
-    return XML_GENERIC_ERR;
-}
 
