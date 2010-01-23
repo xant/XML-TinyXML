@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xml xmlns:foo="foo://bar">
+<xml xmlns="foo://bar" xmlns:bar="bar://foo">
 	<!-- commento1 -->
 	<hello>world</hello>
 	<foo>
 		<![CDATA[ this should unescape <&; etc... :) ]]>
 	</foo>
-	<parent>
+	<bar:parent>
 		<child1/>
 		<child2/>
 		<child3/>
-	</parent>
+	</bar:parent>
 	<parent attr="val">
 		<blah attr="val2">SECOND</blah>
 	</parent>
