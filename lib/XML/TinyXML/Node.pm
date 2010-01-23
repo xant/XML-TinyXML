@@ -448,6 +448,12 @@ sub prevSibling {
     return XML::TinyXML::Node->new(XML::TinyXML::XmlPrevSibling($self->{_node}));
 }
 
+sub nameSpace {
+    my ($self) = @_;
+    return XML::TinyXML::XmlGetNodeNamespace($self->{_node});
+}
+
+
 =item * type ()
 
 Returns the "type" of a XML::TinyXML::Node object.
