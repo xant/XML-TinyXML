@@ -58,6 +58,12 @@
 
 struct __XmlNode;
 
+typedef struct __XmlNamespace {
+    char *name;
+    char *uri;
+    TAILQ_ENTRY(__XmlNamespace) list;
+} XmlNamespace;
+
 /**
     @type XmlNodeAttribute
     @brief One attribute associated to an element 
@@ -80,6 +86,8 @@ typedef struct __XmlNode {
 #define XML_NODETYPE_COMMENT 1
 #define XML_NODETYPE_CDATA 2
     char type;
+    XmlNamespace *ns;
+    XmlNamespace *cns;
     TAILQ_ENTRY(__XmlNode) siblings;
 } XmlNode;
 
@@ -88,6 +96,7 @@ TAILQ_HEAD(nodelistHead, __XmlNode);
 typedef struct __TXml {
     XmlNode *cNode;
     TAILQ_HEAD(,__XmlNode) rootElements;
+    TAILQ_HEAD(,__XmlNamespace) nameSpaces;
     char *head;
     char outputEncoding[64];  /* XXX probably oversized, 24 or 32 should be enough */
     char documentEncoding[64];
@@ -257,4 +266,12 @@ XmlErr XmlSave(TXml *xml,char *path);
 XmlErr XmlFileLock(FILE *file);
 XmlErr XmlFileUnlock(FILE *file);
 
+
+XmlNamespace *XmlGetNamespaceByName(TXml *xml, char *nsName);
+XmlNamespace *XmlGetNamespaceByUri(TXml *xml, char *nsUri);
+XmlNamespace *XmlAddNamespace(TXml *xml, char *nsName, char *nsUri);
+XmlNamespace *XmlGetNodeNamespace(XmlNode *node);
+XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
+XmlErr XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns);
+XmlErr XmlSetCurrentNamespace(TXml *xml, char *nsuri);
 #endif

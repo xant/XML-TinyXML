@@ -506,7 +506,8 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
     XmlNode *newNode = NULL;
     unsigned int offset = 0;
     XmlErr res = XML_NOERR;
-    char *nodename;
+    char *nodename = NULL;
+    char *nssep = NULL;
 
     if(!element || strlen(element) == 0)
         return XML_BADARGS;
@@ -516,7 +517,20 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
     if (!nodename)
         return XML_BAD_CHARS;
 
-    newNode = XmlCreateNode(nodename, NULL, xml->cNode);
+    if ((nssep = strchr(nodename, ':'))) { // a namespace is defined
+        XmlNamespace *ns;
+        *nssep = 0;
+        newNode = XmlCreateNode(nssep+1, NULL, xml->cNode);
+        // nodename now starts with the null-terminated namespace 
+        // followed by the real name (nssep + 1)
+        ns = XmlGetNamespaceByName(xml, nodename);
+        if (!ns) { 
+            // TODO - Error condition
+        }
+        newNode->ns = ns;
+    } else {
+        newNode = XmlCreateNode(nodename, NULL, xml->cNode);
+    }
     free(nodename);
     if(!newNode || !newNode->name)
     {
@@ -528,11 +542,23 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
     {
         while(attr_names[offset] != NULL)
         {
+            char *nsp = NULL;
             res = XmlAddAttribute(newNode, attr_names[offset], attr_values[offset]);
             if(res != XML_NOERR)
             {
                 XmlDestroyNode(newNode);
                 goto _start_done;
+            }
+            if ((nsp = strcasestr(attr_names[offset], "xmlns"))) {
+                if ((nssep = strchr(nsp, ':'))) {  // declaration of a new namespace
+                    *nssep = 0;
+                    XmlAddNamespace(xml, nssep+1, attr_values[offset]);
+                } else { // definition of the default ns
+                    XmlNamespace *ns = XmlGetNamespaceByUri(xml, attr_values[offset]);
+                    if (!ns)
+                        ns = XmlAddNamespace(xml, NULL, attr_values[offset]);
+                    XmlSetNodeCNamespace(xml->cNode, ns);
+                }
             }
             offset++;
         }
@@ -632,8 +658,10 @@ XmlParseBuffer(TXml *xml, char *buf)
 #define XML_FREE_ATTRIBUTES \
     if(nAttrs>0) {\
         for(i = 0; i < nAttrs; i++) {\
-            if(attrs[i]) free(attrs[i]);\
-            if(values[i]) free(values[i]);\
+            if(attrs[i]) \
+                free(attrs[i]);\
+            if(values[i]) \
+                free(values[i]);\
         }\
         free(attrs);\
         attrs = NULL;\
@@ -656,9 +684,9 @@ XmlParseBuffer(TXml *xml, char *buf)
 
     while(*p != 0) {
         SKIP_BLANKS(p);
-        if(*p == '<') {
+        if(*p == '<') { // an xml entity starts here
             p++;
-            if(*p == '/') {
+            if(*p == '/') { // check if this is a closing node
                 p++;
                 SKIP_BLANKS(p);
                 mark = p;
@@ -891,7 +919,7 @@ XmlParseBuffer(TXml *xml, char *buf)
             mark = p;
             while(*p != '<' && *p != 0)
                 p++;
-            if(*p == '<') {
+            if(*p == '<') { // p now points to the beginning of next node
                 char *value = (char *)malloc(p-mark+1);
                 strncpy(value, mark, p-mark);
                 value[p-mark] = 0;
@@ -1574,6 +1602,98 @@ XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
         cnt++;
     }
     return XML_LINKLIST_ERR;
+}
+
+XmlNamespace *
+XmlAddNamespace(TXml *xml, char *nsName, char *nsUri) {
+    XmlNamespace *newNS;
+    if (!xml || !nsUri)
+        return NULL;
+
+    newNS = calloc(1, sizeof(XmlNamespace));
+    newNS->name = strdup(nsName);
+    newNS->uri = strdup(nsUri);
+    TAILQ_INSERT_TAIL(&xml->nameSpaces, newNS, list);
+    return newNS;
+}
+
+XmlNamespace *
+XmlGetNamespaceByName(TXml *xml, char *nsName) {
+    XmlNamespace *ns;
+    TAILQ_FOREACH(ns, &xml->nameSpaces, list) {
+        if (strcmp(ns->name, nsName) == 0)
+            return ns;
+    }
+    return NULL;
+}
+
+XmlNamespace *
+XmlGetNamespaceByUri(TXml *xml, char *nsUri) {
+    XmlNamespace *ns;
+    TAILQ_FOREACH(ns, &xml->nameSpaces, list) {
+        if (strcmp(ns->uri, nsUri) == 0)
+            return ns;
+    }
+    return NULL;
+}
+
+XmlNamespace *
+XmlGetNodeNamespace(XmlNode *node) {
+    XmlNode *p = node->parent;
+    if (node->ns)
+        return node->ns;
+    if (node->cns)
+        return node->cns;
+    while (p) { // search for a default naspace defined in our hierarchy
+        if (p->cns)
+            return p->cns;
+        p = p->parent;
+    }
+    return NULL;
+}
+
+XmlErr
+XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns) {
+    if (!node || !ns)
+        return XML_BADARGS;
+    
+    if (node->cns) {
+        if (node->cns->name)
+            free(node->cns->name);
+        if (node->cns->uri);
+            free(node->cns->uri);
+        free(node->cns);
+    }
+    node->cns = ns;
+    return XML_NOERR;
+}
+
+XmlErr
+XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns) {
+    if (!node || !ns)
+        return XML_BADARGS;
+    
+    if (node->ns) {
+        if (node->ns->name)
+            free(node->ns->name);
+        if (node->ns->uri);
+            free(node->ns->uri);
+        free(node->ns);
+    }
+    node->ns = ns;
+    return XML_NOERR;
+}
+
+XmlErr
+XmlSetCurrentNamespace(TXml *xml, char *nsUri) {
+    XmlNamespace *ns = NULL;
+    XmlNode *node = xml->cNode;
+    if (!node)
+        return XML_GENERIC_ERR;
+    ns = XmlGetNamespaceByUri(xml, nsUri);
+    if (!ns)
+        ns = XmlAddNamespace(xml, NULL, nsUri);
+    return XmlSetNodeCNamespace(node, ns);
 }
 
 #ifdef WIN32
