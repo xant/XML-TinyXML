@@ -222,6 +222,19 @@ XmlResetContext(TXml *xml)
     }
     if(xml->head)
         free(xml->head);
+    xml->head = NULL;
+}
+
+TXml *
+XmlGetContext(XmlNode *node)
+{
+    XmlNode *p = node;
+    do {
+        if (!p->parent)
+            return p->context;
+        p = p->parent;
+    } while (p);
+    return NULL; // should never arrive here
 }
 
 void
@@ -278,7 +291,7 @@ XmlCreateNode(char *name, char *value, XmlNode *parent)
 
     TAILQ_INIT(&node->attributes);
     TAILQ_INIT(&node->children);
-    node->parent = parent;
+    //node->parent = parent;
     node->name = strdup(name);
 
     if (parent)
@@ -357,17 +370,61 @@ XmlRemoveChildNode(XmlNode *parent, XmlNode *child)
     }
 }
 
+// update the hinerited namespace across a branch.
+// This happens if a node (which all its childnodes) is moved across
+// 2 different documents. The hinerited namespace must be updated
+// accordingly to the new context, so we traverse the branches
+// under the moved node to update the the hinerited namespace where
+// necessary (if a node defines a new default itself, it's not necessary
+// to go deeper in that same branch)
+static void
+XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns, TXml *srcCtx, TXml *dstCtx)
+{
+    XmlNode *child;
+    if (node->hns != ns) // skip update if not necessary
+        node->hns = ns; 
+    
+    if (srcCtx != dstCtx) {
+        if (node->ns) {
+            XmlNamespace *nsDst = XmlGetNamespaceByUri(dstCtx, node->ns->uri);
+            if (!nsDst) {
+                XmlNamespace *newNS = XmlAddNamespace(dstCtx, node->ns->name, node->ns->uri);
+                XmlSetNodeNamespace(node, newNS);
+            } else if (nsDst != node->ns) {
+                XmlSetNodeNamespace(node, nsDst);
+            }
+        }
+        TAILQ_FOREACH(child, &node->children, siblings)
+            XmlUpdateBranchNamespace(child, node->cns?node->cns:node->hns, srcCtx, dstCtx); // recursion here
+    } else {
+        if (!node->cns)
+            TAILQ_FOREACH(child, &node->children, siblings)
+                XmlUpdateBranchNamespace(child, ns, srcCtx, dstCtx); // recursion here
+    }
+}
+
 XmlErr
 XmlAddChildNode(XmlNode *parent, XmlNode *child)
 {
+    TXml *srcCtx, *dstCtx;
     if(!child)
         return XML_BADARGS;
 
+    // the following two statements MUST be called before 
+    // updating the parent pointer
+    // TODO - optimize
+    srcCtx = XmlGetContext(child);
+    dstCtx = XmlGetContext(parent);
+
+    // now we can update the parent
     if (child->parent)
         XmlRemoveChildNode(child->parent, child);
-
     TAILQ_INSERT_TAIL(&parent->children, child, siblings);
     child->parent = parent;
+
+    // udate/propagate the default namespace (if any) 
+    // to the newly attached node (and all its descendants)
+    XmlUpdateBranchNamespace(child, parent->cns?parent->cns:parent->hns, srcCtx, dstCtx);
     XmlSetNodePath(child, parent);
     return XML_NOERR;
 }
@@ -395,6 +452,7 @@ XmlAddRootNode(TXml *xml, XmlNode *node)
     }
 
     TAILQ_INSERT_TAIL(&xml->rootElements, node, siblings);
+    node->context = xml;
     return XML_NOERR;
 }
 
@@ -1303,7 +1361,7 @@ XmlDump(TXml *xml, int *outlen)
         ilen = strlen(dump);
         // the most expensive conversion would be from ascii to utf-32/ucs-4
         // ( 4 bytes for each char )
-        olen = ilen *4; 
+        olen = ilen * 4; 
         // we still don't know how big the output buffer is going to be
         // we will update outlen later once iconv tell us the size
         if (outlen) 
@@ -1726,11 +1784,14 @@ XmlGetNamespaceByUri(TXml *xml, char *nsUri) {
 XmlNamespace *
 XmlGetNodeNamespace(XmlNode *node) {
     XmlNode *p = node->parent;
-    if (node->ns)
+    if (node->ns) // my namespace
         return node->ns;
-    if (node->cns)
-        return node->cns;
-    while (p) { // search for a default naspace defined in our hierarchy
+    if (node->hns) // hinerited namespace
+        return node->hns;
+    // search for a default naspace defined in our hierarchy
+    // this should happen only if a node has been moved across 
+    // multiple documents and it's hinerited namespace has been lost
+    while (p) { 
         if (p->cns)
             return p->cns;
         p = p->parent;

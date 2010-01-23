@@ -57,6 +57,7 @@
 #endif // WIN32
 
 struct __XmlNode;
+struct __Txml;
 
 typedef struct __XmlNamespace {
     char *name;
@@ -86,9 +87,11 @@ typedef struct __XmlNode {
 #define XML_NODETYPE_COMMENT 1
 #define XML_NODETYPE_CDATA 2
     char type;
-    XmlNamespace *ns;
-    XmlNamespace *cns;
+    XmlNamespace *ns;  // namespace of this node (if any)
+    XmlNamespace *cns; // new default namespace defined by this node
+    XmlNamespace *hns; // hinerited namespace (if any)
     TAILQ_ENTRY(__XmlNode) siblings;
+    struct __TXml *context; // set only if rootnode (otherwise it's always NULL)
 } XmlNode;
 
 TAILQ_HEAD(nodelistHead, __XmlNode);
@@ -258,8 +261,8 @@ void XmlClearAttributes(XmlNode *node);
 
 /***
     @brief save the configuration stored in the xml file containing the current profile
-    the xml file name is obtained appending '.xml' to the category name . The xml file is stored 
-    in the repository directory specified during object construction.
+           the xml file name is obtained appending '.xml' to the category name . The xml file is stored 
+           in the repository directory specified during object construction.
     @arg a valid xml context
     @arg the path where to save the file
     @return an XmlErr error status (XML_NOERR if buffer was parsed successfully)
@@ -318,7 +321,8 @@ XmlNamespace *XmlGetNodeNamespace(XmlNode *node);
 XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
 
 /***
-    @brief set the default namespace of a node (which will be inherited by all children)
+    @brief set the default namespace of a node 
+           (which will be inherited by all descendant, unless overridden)
     @arg a valid xmlnode
     @arg a valid xmlnamespace
     @return XML_NOERR on success, any other xml error code otherwise
