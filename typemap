@@ -5,6 +5,9 @@ XmlNode						T_OPAQUE_STRUCT
 XmlNode *					T_PTROBJ
 XmlNodeAttribute				T_OPAQUE_STRUCT
 XmlNodeAttribute *				T_PTROBJ
+XmlNamespace					T_OPAQUE_STRUCT
+XmlNamespace *					T_PTROBJ
+XmlErr						T_IV
 __int32_t					T_IV
 __mbstate_t					T_OPAQUE_STRUCT
 __mbstate_t *					T_PTROBJ
@@ -14,7 +17,7 @@ const char *					T_PTROBJ
 const fpos_t *					T_PTROBJ
 const unsigned char *				T_PTROBJ
 const unsigned char **				T_PTROBJ
-char **		                		T_PTROBJ
+char **						T_PTROBJ
 const void *					T_PTROBJ
 const wchar_t *					T_PTROBJ
 dev_t						T_IV

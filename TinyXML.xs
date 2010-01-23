@@ -24,6 +24,51 @@ TXML_ALLOW_MULTIPLE_ROOTNODES(__value = NO_INIT)
     OUTPUT:
     RETVAL
 
+
+XmlNamespace *
+XmlCreateNamespace(nsName, nsUri)
+    char *nsName
+    char *nsUri
+
+void
+XmlDestroyNamespace(ns)
+    XmlNamespace *ns
+
+XmlNamespace *
+XmlGetNamespaceByName(xml, nsName)
+    TXml *xml
+    char *nsName
+
+XmlNamespace *
+XmlGetNamespaceByUri(xml, nsUri)
+    TXml *xml
+    char *nsUri
+
+XmlNamespace *
+XmlAddNamespace(xml, nsName, nsUri)
+    TXml *xml
+    char *nsName
+    char *nsUri
+
+XmlNamespace *
+XmlGetNodeNamespace(node)
+    XmlNode *node
+
+XmlErr
+XmlSetNodeNamespace(node, ns)
+    XmlNode *node
+    XmlNamespace *ns
+
+XmlErr
+XmlSetNodeCNamespace(node, ns)
+    XmlNode *node
+    XmlNamespace *ns
+
+XmlErr
+XmlSetCurrentNamespace(xml, ns)
+    TXml *xml
+    char *ns
+
 void
 XmlSetOutputEncoding(xml, encoding)
     TXml *xml
@@ -87,15 +132,19 @@ XmlCountChildren(node)
 TXml *
 XmlCreateContext()
 
+void
+XmlResetContext(xml)
+    TXml *xml
+
+void
+XmlDestroyContext(xml)
+    TXml *xml
+
 XmlNode *
 XmlCreateNode(name, val, parent = NULL)
     char *name
     char *val
     XmlNode *parent
-
-void
-XmlDestroyContext(xml)
-    TXml *xml
 
 void
 XmlDestroyNode(node)
@@ -183,6 +232,68 @@ XmlSubstBranch(xml, index, newBranch)
     TXml *xml
     unsigned long    index
     XmlNode *newBranch
+
+MODULE = XML::TinyXML        PACKAGE = XmlNamespace
+
+XmlNamespace *
+_to_ptr(THIS)
+    XmlNamespace THIS = NO_INIT
+    PROTOTYPE: $
+    CODE:
+    if (sv_derived_from(ST(0), "XmlNamespace")) {
+        STRLEN len;
+        char *s = SvPV((SV*)SvRV(ST(0)), len);
+        if (len != sizeof(THIS))
+        croak("Size %d of packed data != expected %d",
+            len, sizeof(THIS));
+        RETVAL = (XmlNamespace *)s;
+    }
+    else
+        croak("THIS is not of type XmlNamespace");
+    OUTPUT:
+    RETVAL
+
+XmlNamespace
+new(CLASS)
+    char *CLASS = NO_INIT
+    PROTOTYPE: $
+    CODE:
+    Zero((void*)&RETVAL, sizeof(RETVAL), char);
+    OUTPUT:
+    RETVAL
+
+MODULE = XML::TinyXML        PACKAGE = XmlNamespacePtr        
+
+char *
+name(THIS, __value = NO_INIT)
+    XmlNamespace *THIS
+    char *__value
+    PROTOTYPE: $;$
+    CODE:
+    if (items > 1) {
+        if(THIS->name)
+        free(THIS->name);
+        THIS->name = __value;
+    }
+    RETVAL = THIS->name;
+    OUTPUT:
+    RETVAL
+
+char *
+uri(THIS, __value = NO_INIT)
+    XmlNamespace *THIS
+    char *__value
+    PROTOTYPE: $;$
+    CODE:
+    if (items > 1) {
+        if(THIS->uri)
+        free(THIS->uri);
+        THIS->uri = __value;
+    }
+    RETVAL = THIS->uri;
+    OUTPUT:
+    RETVAL
+
 
 MODULE = XML::TinyXML        PACKAGE = XmlNodeAttribute        
 

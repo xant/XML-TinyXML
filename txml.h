@@ -100,6 +100,7 @@ typedef struct __TXml {
     char *head;
     char outputEncoding[64];  /* XXX probably oversized, 24 or 32 should be enough */
     char documentEncoding[64];
+    int useNamespaces;
 } TXml;
 
 XmlNode *XmlNextSibling(XmlNode *node);
@@ -267,6 +268,8 @@ XmlErr XmlFileLock(FILE *file);
 XmlErr XmlFileUnlock(FILE *file);
 
 
+XmlNamespace *XmlCreateNamespace(char *nsName, char *nsUri);
+void XmlDestroyNamespace(XmlNamespace *ns);
 XmlNamespace *XmlGetNamespaceByName(TXml *xml, char *nsName);
 XmlNamespace *XmlGetNamespaceByUri(TXml *xml, char *nsUri);
 XmlNamespace *XmlAddNamespace(TXml *xml, char *nsName, char *nsUri);
@@ -274,4 +277,5 @@ XmlNamespace *XmlGetNodeNamespace(XmlNode *node);
 XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
 XmlErr XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns);
 XmlErr XmlSetCurrentNamespace(TXml *xml, char *nsuri);
+
 #endif

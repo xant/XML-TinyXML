@@ -207,6 +207,23 @@ XmlCreateContext()
 }
 
 void
+XmlResetContext(TXml *xml)
+{
+    XmlNode *rNode, *tmp;
+    XmlNamespace *ns, *nstmp;
+    TAILQ_FOREACH_SAFE(rNode, &xml->rootElements, siblings, tmp) {
+        TAILQ_REMOVE(&xml->rootElements, rNode, siblings);
+        XmlDestroyNode(rNode);
+    }
+    TAILQ_FOREACH_SAFE(ns, &xml->nameSpaces, list, nstmp) {
+        TAILQ_REMOVE(&xml->nameSpaces, ns, list);
+        XmlDestroyNamespace(ns);
+    }
+    if(xml->head)
+        free(xml->head);
+}
+
+void
 XmlSetDocumentEncoding(TXml *xml, char *encoding)
 {
     strncpy(xml->documentEncoding, encoding, sizeof(xml->documentEncoding)-1);
@@ -221,13 +238,7 @@ XmlSetOutputEncoding(TXml *xml, char *encoding)
 void
 XmlDestroyContext(TXml *xml)
 {
-    XmlNode *rNode, *tmp;
-    TAILQ_FOREACH_SAFE(rNode, &xml->rootElements, siblings, tmp) {
-        TAILQ_REMOVE(&xml->rootElements, rNode, siblings);
-        XmlDestroyNode(rNode);
-    }
-    if(xml->head)
-        free(xml->head);
+    XmlResetContext(xml);
     free(xml);
 }
 
@@ -652,6 +663,8 @@ XmlParseBuffer(TXml *xml, char *buf)
     unsigned int nAttrs = 0;
     char *mark = NULL;
     int quote = 0;
+
+    XmlResetContext(xml); // reset the context if we are parsing a new document
 
     //unsigned int offset = fileStat.st_size;
 
@@ -1087,6 +1100,8 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     childDump = (char *)malloc(1);
     *childDump = 0;
 
+    if (rNode->ns && xml->useNamespaces)
+        nameLen += (unsigned int)strlen(rNode->ns->name)+1;
     startTag = (char *)malloc(depth+nameLen+7);
     memset(startTag, 0, depth+nameLen+7);
     endTag = (char *)malloc(depth+nameLen+7);
@@ -1095,6 +1110,11 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     for(n = 0; n < depth; n++)
         strcat(startTag, "\t");
     strcat(startTag, "<");
+    if (rNode->ns && xml->useNamespaces) {
+        // TODO - optimize
+        strcat(startTag, rNode->ns->name);
+        strcat(startTag, ":");
+    }
     strcat(startTag, rNode->name);
     nAttrs = XmlCountAttributes(rNode);
     if(nAttrs>0) {
@@ -1133,6 +1153,11 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             strcat(startTag, ">");
         }
         strcat(endTag, "</");
+        if (rNode->ns && xml->useNamespaces) {
+            // TODO - optimize
+            strcat(startTag, rNode->ns->name);
+            strcat(startTag, ":");
+        }
         strcat(endTag, rNode->name);
         strcat(endTag, ">\n");
         out = (char *)malloc(depth+strlen(startTag)+strlen(endTag)+
@@ -1605,15 +1630,38 @@ XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 }
 
 XmlNamespace *
-XmlAddNamespace(TXml *xml, char *nsName, char *nsUri) {
+XmlCreateNamespace(char *nsName, char *nsUri) {
     XmlNamespace *newNS;
+    newNS = calloc(1, sizeof(XmlNamespace));
+    if (nsName)
+        newNS->name = strdup(nsName);
+    newNS->uri = strdup(nsUri);
+    return newNS;
+}
+
+void
+XmlDestroyNamespace(XmlNamespace *ns)
+{
+    if (ns) {
+        if (ns->name)
+            free(ns->name);
+        if (ns->uri)
+            free(ns->uri);
+        free(ns);
+    }
+}
+
+XmlNamespace *
+XmlAddNamespace(TXml *xml, char *nsName, char *nsUri) {
+    XmlNamespace *newNS = NULL;
     if (!xml || !nsUri)
         return NULL;
 
-    newNS = calloc(1, sizeof(XmlNamespace));
-    newNS->name = strdup(nsName);
-    newNS->uri = strdup(nsUri);
-    TAILQ_INSERT_TAIL(&xml->nameSpaces, newNS, list);
+    // activate namespaces support if we start using them
+    if (!xml->useNamespaces) 
+        xml->useNamespaces = 1;
+    if ((newNS = XmlCreateNamespace(nsName, nsUri)))
+        TAILQ_INSERT_TAIL(&xml->nameSpaces, newNS, list);
     return newNS;
 }
 
@@ -1657,13 +1705,12 @@ XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns) {
     if (!node || !ns)
         return XML_BADARGS;
     
+    /* this references a namespace defined in the context
+     * we shouldn't free it 
     if (node->cns) {
-        if (node->cns->name)
-            free(node->cns->name);
-        if (node->cns->uri);
-            free(node->cns->uri);
-        free(node->cns);
+        XmlDestroyNamespace(node->cns);
     }
+    */
     node->cns = ns;
     return XML_NOERR;
 }
@@ -1673,13 +1720,12 @@ XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns) {
     if (!node || !ns)
         return XML_BADARGS;
     
+    /* this references a namespace defined in the context
+     * we shouldn't free it 
     if (node->ns) {
-        if (node->ns->name)
-            free(node->ns->name);
-        if (node->ns->uri);
-            free(node->ns->uri);
-        free(node->ns);
+        XmlDestroyNamespace(node->ns);
     }
+    */
     node->ns = ns;
     return XML_NOERR;
 }

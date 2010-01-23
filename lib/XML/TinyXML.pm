@@ -155,8 +155,9 @@ our @EXPORT = qw(
 	XmlCountBranches
 	XmlCountChildren
 	XmlCreateContext
-	XmlCreateNode
 	XmlDestroyContext
+        XmlResetContext
+	XmlCreateNode
 	XmlDestroyNode
 	XmlDump
 	XmlDumpBranch
@@ -177,6 +178,15 @@ our @EXPORT = qw(
 	XmlSetNodeValue
         XmlSetOutputEncoding
 	XmlSubstBranch
+        XmlCreateNamespace
+        XmlDestroyNamespace
+        XmlGetNamespaceByName
+        XmlGetNamespaceByUri
+        XmlAddNamespace
+        XmlGetNodeNamespace
+        XmlSetNodeNamespace
+        XmlSetNodeCNamespace
+        XmlSetCurrentNamespace
 );
 
 our $VERSION = '0.21';
