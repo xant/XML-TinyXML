@@ -189,7 +189,7 @@ our @EXPORT = qw(
         XmlSetCurrentNamespace
 );
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
