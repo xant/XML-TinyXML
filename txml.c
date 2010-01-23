@@ -1156,8 +1156,8 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         strcat(endTag, "</");
         if (rNode->ns && xml->useNamespaces) {
             // TODO - optimize
-            strcat(startTag, rNode->ns->name);
-            strcat(startTag, ":");
+            strcat(endTag, rNode->ns->name);
+            strcat(endTag, ":");
         }
         strcat(endTag, rNode->name);
         strcat(endTag, ">\n");
