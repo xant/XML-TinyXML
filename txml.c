@@ -520,6 +520,7 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
     XmlErr res = XML_NOERR;
     char *nodename = NULL;
     char *nssep = NULL;
+    char *cns = NULL;
 
     if(!element || strlen(element) == 0)
         return XML_BADARGS;
@@ -566,10 +567,7 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
                     *nssep = 0;
                     XmlAddNamespace(xml, nssep+1, attr_values[offset]);
                 } else { // definition of the default ns
-                    XmlNamespace *ns = XmlGetNamespaceByUri(xml, attr_values[offset]);
-                    if (!ns)
-                        ns = XmlAddNamespace(xml, NULL, attr_values[offset]);
-                    XmlSetNodeCNamespace(xml->cNode, ns);
+                    cns = attr_values[offset];
                 }
             }
             offset++;
@@ -594,6 +592,8 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
         }
     }
     xml->cNode = newNode;
+    if (cns)
+        XmlSetCurrentNamespace(xml, cns);
 
 _start_done:
     return res;
