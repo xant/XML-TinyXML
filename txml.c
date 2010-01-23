@@ -199,6 +199,7 @@ XmlCreateContext()
     xml = (TXml *)calloc(1, sizeof(TXml));
     xml->cNode = NULL;
     TAILQ_INIT(&xml->rootElements);
+    TAILQ_INIT(&xml->nameSpaces);
     xml->head = NULL;
     // default to UTF-8
     sprintf(xml->outputEncoding, "utf-8");
