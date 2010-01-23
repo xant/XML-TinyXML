@@ -381,15 +381,37 @@ static void
 XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns, TXml *srcCtx, TXml *dstCtx)
 {
     XmlNode *child;
+    XmlNamespace *newNS;
     if (node->hns != ns) // skip update if not necessary
         node->hns = ns; 
     
     if (srcCtx != dstCtx) {
+        XmlNodeAttribute *attr;
+
+        if (node->cns)
+            XmlAddNamespace(dstCtx, node->cns->name, node->cns->uri);
+        
+        TAILQ_FOREACH(attr, &node->attributes, list)
+            if (strncmp(attr->name, "xmlns:", 6) == 0)
+                if (!XmlGetNamespaceByName(dstCtx, attr->name + 6))
+                    XmlAddNamespace(dstCtx, attr->name + 6, attr->value);
+ 
         if (node->ns) {
             XmlNamespace *nsDst = XmlGetNamespaceByUri(dstCtx, node->ns->uri);
             if (!nsDst) {
-                XmlNamespace *newNS = XmlAddNamespace(dstCtx, node->ns->name, node->ns->uri);
+                XmlNode *root;
+                char *newAttr;
+                
+                newNS = XmlAddNamespace(dstCtx, node->ns->name, node->ns->uri);
+                newAttr = malloc(strlen(newNS->name)+7); // prefix + xmlns + :
+                root = node;
+                while (root->parent) // get our root
+                    root = root->parent;
+                sprintf(newAttr, "xmlns:%s", newNS->name);
+                // enforce the definition for our namepsace in the new context
+                XmlAddAttribute(root, newAttr, newNS->uri); 
                 XmlSetNodeNamespace(node, newNS);
+                free(newAttr);
             } else if (nsDst != node->ns) {
                 XmlSetNodeNamespace(node, nsDst);
             }
@@ -1196,7 +1218,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     childDump = (char *)malloc(1);
     *childDump = 0;
 
-    if (rNode->ns && xml->useNamespaces)
+    if (xml->useNamespaces && rNode->ns && rNode->ns->name)
         nameLen += (unsigned int)strlen(rNode->ns->name)+1;
     startTag = (char *)malloc(depth+nameLen+7);
     memset(startTag, 0, depth+nameLen+7);
@@ -1206,7 +1228,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     for(n = 0; n < depth; n++)
         strcat(startTag, "\t");
     strcat(startTag, "<");
-    if (rNode->ns && xml->useNamespaces) {
+    if (xml->useNamespaces && rNode->ns && rNode->ns->name) {
         // TODO - optimize
         strcat(startTag, rNode->ns->name);
         strcat(startTag, ":");
@@ -1249,7 +1271,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             strcat(startTag, ">");
         }
         strcat(endTag, "</");
-        if (rNode->ns && xml->useNamespaces) {
+        if (xml->useNamespaces && rNode->ns && rNode->ns->name) {
             // TODO - optimize
             strcat(endTag, rNode->ns->name);
             strcat(endTag, ":");
@@ -1765,7 +1787,7 @@ XmlNamespace *
 XmlGetNamespaceByName(TXml *xml, char *nsName) {
     XmlNamespace *ns;
     TAILQ_FOREACH(ns, &xml->nameSpaces, list) {
-        if (strcmp(ns->name, nsName) == 0)
+        if (ns->name && strcmp(ns->name, nsName) == 0)
             return ns;
     }
     return NULL;

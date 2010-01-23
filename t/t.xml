@@ -5,9 +5,9 @@
 	<foo>
 		<![CDATA[ this should unescape <&; etc... :) ]]>
 	</foo>
-	<bar:parent xmlns="bar://child">
+	<bar:parent xmlns="bar://child" xmlns:special_child="bar://special_child">
 		<child1/>
-		<child2/>
+		<special_child:child2/>
 		<child3/>
 	</bar:parent>
 	<parent attr="val">

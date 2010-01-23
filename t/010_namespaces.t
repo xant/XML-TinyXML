@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 8;
+use Test::More tests => 9;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 
@@ -28,3 +28,5 @@ is ($node->nameSpace->uri, "foo://bar");
 # the node will hinerit the default namespace of the new document
 $node2->addChildNode($node); 
 is ($node->nameSpace->uri, "bar://foo");
+$child = $txml2->getNode("/xml/parent/child2");
+is ($child->nameSpace->name, "special_child");
