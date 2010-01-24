@@ -6,24 +6,9 @@
 
 #include "const-c.inc"
 
-extern int TXML_ALLOW_MULTIPLE_ROOTNODES;
-
 MODULE = XML::TinyXML        PACKAGE = XML::TinyXML        
 
 INCLUDE: const-xs.inc
-
-int 
-TXML_ALLOW_MULTIPLE_ROOTNODES(__value = NO_INIT)
-    UV __value
-    PROTOTYPE: $
-    CODE:
-    RETVAL = TXML_ALLOW_MULTIPLE_ROOTNODES;
-    if (items > 0) {
-        TXML_ALLOW_MULTIPLE_ROOTNODES = __value;
-    }
-    OUTPUT:
-    RETVAL
-
 
 XmlNamespace *
 XmlCreateNamespace(nsName, nsUri)
@@ -259,33 +244,33 @@ new(CLASS)
 
 MODULE = XML::TinyXML        PACKAGE = XmlNamespacePtr        
 
-char *
+SV *
 name(THIS, __value = NO_INIT)
     XmlNamespace *THIS
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
         free(THIS->name);
         THIS->name = __value;
     }
-    RETVAL = THIS->name;
     OUTPUT:
     RETVAL
 
-char *
+SV *
 uri(THIS, __value = NO_INIT)
     XmlNamespace *THIS
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = newSVpv(THIS->uri, 0);
     if (items > 1) {
         if(THIS->uri)
         free(THIS->uri);
         THIS->uri = __value;
     }
-    RETVAL = THIS->uri;
     OUTPUT:
     RETVAL
 
@@ -321,33 +306,33 @@ new(CLASS)
 
 MODULE = XML::TinyXML        PACKAGE = XmlNodeAttributePtr        
 
-char *
+SV *
 name(THIS, __value = NO_INIT)
     XmlNodeAttribute *THIS
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
         free(THIS->name);
         THIS->name = __value;
     }
-    RETVAL = THIS->name;
     OUTPUT:
     RETVAL
 
-char *
+SV *
 value(THIS, __value = NO_INIT)
     XmlNodeAttribute *THIS
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = newSVpv(THIS->value, 0);
     if (items > 1) {
         if(THIS->value)
         free(THIS->value);
         THIS->value = __value;
     }
-    RETVAL = THIS->value;
     OUTPUT:
     RETVAL
 
@@ -396,24 +381,24 @@ path(THIS)
     XmlNode *THIS
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->path;
     /*if (items > 1)
         THIS->path = __value; */
-    RETVAL = THIS->path;
     OUTPUT:
     RETVAL
 
-char *
+SV *
 name(THIS, __value = NO_INIT)
     XmlNode *THIS
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
         free(THIS->name);
         THIS->name = __value;
     }
-    RETVAL = THIS->name;
     OUTPUT:
     RETVAL
 
@@ -423,9 +408,9 @@ parent(THIS, __value = NO_INIT)
     struct __XmlNode *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->parent;
     if (items > 1)
         THIS->parent = __value;
-    RETVAL = THIS->parent;
     OUTPUT:
     RETVAL
 
@@ -435,9 +420,9 @@ value(THIS, __value = NO_INIT)
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->value;
     if (items > 1)
         XmlSetNodeValue(THIS, __value);
-    RETVAL = THIS->value;
     OUTPUT:
     RETVAL
 
@@ -447,9 +432,9 @@ type(THIS, __value = NO_INIT)
     int __value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->type;
     if (items > 1)
         THIS->type = __value;
-    RETVAL = THIS->type;
     OUTPUT:
     RETVAL
 
@@ -547,9 +532,33 @@ head(THIS, __value = NO_INIT)
     char *__value
     PROTOTYPE: $;$
     CODE:
+    RETVAL = THIS->head;
     if (items > 1)
         THIS->head = __value;
-    RETVAL = THIS->head;
+    OUTPUT:
+    RETVAL
+
+int
+useNamespaces(THIS, __value = NO_INIT)
+    TXml *THIS
+    int __value
+    PROTOTYPE: $;$
+    CODE:
+    RETVAL = THIS->useNamespaces;
+    if (items > 1)
+        THIS->useNamespaces = __value;
+    OUTPUT:
+    RETVAL
+
+int
+allowMultipleRootNodes(THIS, __value = NO_INIT)
+    TXml *THIS
+    int __value
+    PROTOTYPE: $;$
+    CODE:
+    RETVAL = THIS->allowMultipleRootNodes;
+    if (items > 1)
+        THIS->allowMultipleRootNodes = __value;
     OUTPUT:
     RETVAL
 

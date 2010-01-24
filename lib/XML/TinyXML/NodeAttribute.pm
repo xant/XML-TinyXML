@@ -66,11 +66,9 @@ Get/Set the name of the attribute
 =cut
 sub name {
     my ($self, $newName) = @_;
-    my $name = $self->{_attr}->name;
-    if ($newName) {
-        $self->{_attr}->name($newName);
-    }
-    return $name;
+    return defined($newName)
+           ? $self->{_attr}->name($newName)
+           : $self->{_attr}->name;
 }
 
 =item value ([$newValue])
@@ -80,11 +78,9 @@ Get/Set the value of the attribute
 =cut
 sub value {
     my ($self, $newValue) = @_;
-    my $value = $self->{_attr}->value;
-    if ($newValue) {
-        $self->{_attr}->value($newValue);
-    }
-    return $value;
+    return defined($newValue)
+           ? $self->{_attr}->value($newValue)
+           : $self->{_attr}->value;
 }
 
 =item node (])

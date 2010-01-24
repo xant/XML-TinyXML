@@ -187,7 +187,6 @@ our @EXPORT = qw(
         XmlSetNodeNamespace
         XmlSetNodeCNamespace
         XmlSetCurrentNamespace
-        TXML_ALLOW_MULTIPLE_ROOTNODES
 );
 
 our $VERSION = '0.22';
@@ -255,6 +254,8 @@ sub new {
     # default encoding (the same used as default in the C library
     $self->{_encoding} = "utf-8"; 
     $self->{_ctx} = XmlCreateContext();
+    $self->setOutputEncoding($params{encoding}) if ($params{encoding});
+    $self->allowMultipleRootNodes($params{multipleRootNodes}) if ($params{multipleRootNodes});
     if($root) {
         if(UNIVERSAL::isa($root, "XML::TinyXML::Node")) {
             XmlAddRootNode($self->{_ctx}, $root->{_node});
@@ -267,7 +268,6 @@ sub new {
         }
     }
     
-    $self->setOutputEncoding($params{encoding}) if ($params{encoding});
     return $self;
 }
 
@@ -394,7 +394,7 @@ sub loadHash {
         $cur = $root;
     } else {
         $self->addRootNode($root);
-        $cur = TXML_ALLOW_MULTIPLE_ROOTNODES()
+        $cur = $self->allowMultipleRootNodes
              ? $self->getNode($root)
              : $self->getRootNode(1);
     }
@@ -579,7 +579,9 @@ sub getChildNodeByName {
 
 sub cNode {
     my ($self, $value) = @_;
-    return $self->{_ctx}->cNode($value);
+    return $value
+           ? $self->{_ctx}->cNode($value)
+           : $self->{_ctx}->cNode;
 }
 
 =item * save ($path)
@@ -602,7 +604,9 @@ sub setOutputEncoding {
 
 sub allowMultipleRootNodes {
     my ($self, $val) = @_;
-    return TXML_ALLOW_MULTIPLE_ROOTNODES($val);
+    return defined($val)
+           ? $self->{_ctx}->allowMultipleRootNodes($val)
+           : $self->{_ctx}->allowMultipleRootNodes;
 }
 sub DESTROY {
     my $self = shift;

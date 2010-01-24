@@ -113,6 +113,7 @@ typedef struct __TXml {
     char outputEncoding[64];  /* XXX probably oversized, 24 or 32 should be enough */
     char documentEncoding[64];
     int useNamespaces;
+    int allowMultipleRootNodes;
 } TXml;
 
 /***

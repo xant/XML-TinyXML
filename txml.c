@@ -63,7 +63,6 @@ detect_encoding(char *buffer) {
     return -1;
 }
 
-int TXML_ALLOW_MULTIPLE_ROOTNODES = 0; // XXX - find a better way
 int errno;
 
 static char *
@@ -526,7 +525,7 @@ XmlAddRootNode(TXml *xml, XmlNode *node)
     if(!node)
         return XML_BADARGS;
 
-    if (!TAILQ_EMPTY(&xml->rootElements) && !TXML_ALLOW_MULTIPLE_ROOTNODES) {
+    if (!TAILQ_EMPTY(&xml->rootElements) && !xml->allowMultipleRootNodes) {
         return XML_MROOT_ERR;
     }
 
@@ -1722,7 +1721,7 @@ XmlGetNode(TXml *xml, char *path)
 
     // check if we are allowing multiple rootnodes to determine
     // if it's included in the path or not
-    if (TXML_ALLOW_MULTIPLE_ROOTNODES) {
+    if (xml->allowMultipleRootNodes) {
         /* skip leading slashes '/' */
         while(*walk == '/')
             walk++;
