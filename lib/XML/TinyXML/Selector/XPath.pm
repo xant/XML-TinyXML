@@ -272,6 +272,9 @@ sub _select_unabbreviated {
     if ($expr =~ /^\// and !$recurse) { # absolute path has been requested
         $self->context->{items} = [$self->{_xml}->rootNodes()];
     }
+    # XPath works only in single-root mode 
+    # (which is the only allowed mode by the xml spec anyway)
+    my $state = XML::TinyXML::TXML_ALLOW_MULTIPLE_ROOTNODES(0); 
     #shift(@tokens)
     #    if (!$tokens[0] and $recurse);
     my $token = shift @tokens;
@@ -438,6 +441,7 @@ sub _select_unabbreviated {
     if (@tokens) {
         return $self->_select_unabbreviated(join('/', @tokens), 1); # recursion here
     }
+    XML::TinyXML::TXML_ALLOW_MULTIPLE_ROOTNODES($state);
     return wantarray?@{$self->context->items}:$self->context->items;
 }
 

@@ -187,6 +187,7 @@ our @EXPORT = qw(
         XmlSetNodeNamespace
         XmlSetNodeCNamespace
         XmlSetCurrentNamespace
+        TXML_ALLOW_MULTIPLE_ROOTNODES
 );
 
 our $VERSION = '0.22';
@@ -265,6 +266,7 @@ sub new {
             $self->addRootNode($root, $params{param}, $params{attrs});
         }
     }
+    
     $self->setOutputEncoding($params{encoding}) if ($params{encoding});
     return $self;
 }
@@ -392,7 +394,9 @@ sub loadHash {
         $cur = $root;
     } else {
         $self->addRootNode($root);
-        $cur = $self->getNode($root);
+        $cur = TXML_ALLOW_MULTIPLE_ROOTNODES()
+             ? $self->getNode($root)
+             : $self->getRootNode(1);
     }
     return $cur->loadHash($hash);
 }

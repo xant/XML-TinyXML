@@ -1719,41 +1719,61 @@ XmlGetNode(TXml *xml, char *path)
 
     buff = strdup(path);
     walk = buff;
-    /* skip leading slashes '/' */
-    while(*walk == '/')
-        walk++;
 
-    /* first get root node */
+    // check if we are allowing multiple rootnodes to determine
+    // if it's included in the path or not
+    if (TXML_ALLOW_MULTIPLE_ROOTNODES) {
+        /* skip leading slashes '/' */
+        while(*walk == '/')
+            walk++;
+
+        /* select the root node */
 #ifndef WIN32
-    tag  = strtok_r(walk, "/", &brkb);
+        tag  = strtok_r(walk, "/", &brkb);
 #else
-    tag = strtok(walk, "/");
+        tag = strtok(walk, "/");
 #endif
-    if(!tag) {
-        free(buff);
-        return NULL;
+        if(!tag) {
+            free(buff);
+            return NULL;
+        }
+
+        for(i = 1; i <= XmlCountBranches(xml); i++)
+        {
+            wNode = XmlGetBranch(xml, i);
+            if(strcmp(wNode->name, tag) == 0)
+            {
+                cNode = wNode;
+                break;
+            }
+        }
+        /* now cNode points to the root node ... let's find requested node */
+#ifndef WIN32
+        tag = strtok_r(NULL, "/", &brkb);
+#else
+        tag = strtok(NULL, "/");
+#endif
+    } else { // no multiple rootnodes
+        cNode = XmlGetBranch(xml, 1);
+        // TODO - this could be done in a cleaner and more efficient way
+        if (*walk != '/') {
+            buff = malloc(strlen(walk)+2);
+            sprintf(buff, "/%s", walk);
+            free(walk);
+            walk = buff;
+        }
+#ifndef WIN32
+        tag = strtok_r(walk, "/", &brkb);
+#else
+        tag = strtok(walk, "/");
+#endif
     }
 
-    for(i = 1; i <= XmlCountBranches(xml); i++)
-    {
-        wNode = XmlGetBranch(xml, i);
-        if(strcmp(wNode->name, tag) == 0)
-        {
-            cNode = wNode;
-            break;
-        }
-    }
     if(!cNode) {
         free(buff);
         return NULL;
     }
 
-    /* now cNode points to the root node ... let's find requested node */
-#ifndef WIN32
-    tag = strtok_r(NULL, "/", &brkb);
-#else
-    tag = strtok(NULL, "/");
-#endif
     while(tag)
     {
         XmlNode *tmp;

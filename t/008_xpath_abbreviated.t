@@ -1,15 +1,28 @@
 
 use strict;
-use Test::More tests => 28;
+use Test::More tests => 31;
 use XML::TinyXML;
 BEGIN { use_ok('XML::TinyXML::Selector') };
 
 my $txml = XML::TinyXML->new();
 $txml->loadFile("./t/t.xml");
 
-my $rnode = $txml->getNode("/xml");
+# default is allowMultipleRootNodes == 0
+my $rnode = $txml->getNode("/");
 is ($rnode->name, "xml");
 my $node = $rnode->getChildNodeByName("parent[2]"); # this tests predicates support within C library
+is ($node->name, "parent");
+$node = $txml->getNode("/parent[2]/blah"); # this tests predicates support within C library
+is ($node->value, "SECOND");
+
+$txml->allowMultipleRootNodes(1);
+# the following 3 tests should really be invalid ... 
+# but in multiple-root-nodes we allow to include 
+# the rootnodes in the path when using the generic 
+# getNode() method
+$rnode = $txml->getNode("/xml");
+is ($rnode->name, "xml");
+$node = $rnode->getChildNodeByName("parent[2]"); # this tests predicates support within C library
 is ($node->name, "parent");
 $node = $txml->getNode("/xml/parent[2]/blah"); # this tests predicates support within C library
 is ($node->value, "SECOND");
