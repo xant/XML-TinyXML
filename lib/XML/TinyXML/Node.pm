@@ -453,6 +453,13 @@ sub nameSpace {
     return XML::TinyXML::XmlGetNodeNamespace($self->{_node});
 }
 
+sub knownNamespaces {
+    my ($self) = @_;
+    return wantarray
+           ? @{$self->{_node}->knownNamespaces}
+           : $self->{_node}->knownNamespaces;
+}
+
 
 =item * type ()
 

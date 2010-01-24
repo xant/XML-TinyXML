@@ -453,6 +453,24 @@ type(THIS, __value = NO_INIT)
     OUTPUT:
     RETVAL
 
+AV *
+knownNamespaces(THIS)
+    XmlNode *THIS
+    PROTOTYPE: $
+    PREINIT:
+    XmlNamespaceSet *item;
+    AV *namespaces;
+    CODE:
+    namespaces = newAV();
+    TAILQ_FOREACH(item, &THIS->knownNamespaces, next) {
+        SV *ns = newRV_noinc(newSViv(item->ns));
+        HV* st = gv_stashpv("XmlNamespacePtr", 0);
+        av_push(namespaces, sv_bless(ns, st));
+    }
+    RETVAL = namespaces;
+    OUTPUT:
+    RETVAL
+
 MODULE = XML::TinyXML        PACKAGE = TXml        
 
 TXml *

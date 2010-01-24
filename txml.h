@@ -288,8 +288,6 @@ XmlNamespace *XmlCreateNamespace(char *nsName, char *nsUri);
 */
 void XmlDestroyNamespace(XmlNamespace *ns);
 
-XmlNamespaceSet *XmlGetKnownNamespaces(XmlNode *node);
-
 /***
     @brief search for a specific namespace defined within the current document
     @arg a valid xml context
