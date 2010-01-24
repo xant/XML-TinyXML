@@ -460,6 +460,20 @@ sub knownNamespaces {
            : $self->{_node}->knownNamespaces;
 }
 
+sub myNamespace {
+    my ($self) = @_;
+    return $self->{_node}->ns;
+}
+
+sub hineritedNamespace {
+    my ($self) = @_;
+    return $self->{_node}->hns;
+}
+
+sub defaultNamespace {
+    my ($self) = @_;
+    return $self->{_node}->cns;
+}
 
 =item * type ()
 

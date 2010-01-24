@@ -453,6 +453,33 @@ type(THIS, __value = NO_INIT)
     OUTPUT:
     RETVAL
 
+XmlNamespace *
+ns(THIS)
+    XmlNode *THIS
+    PROTOTYPE: $
+    CODE:
+    RETVAL = THIS->ns;
+    OUTPUT:
+    RETVAL
+
+XmlNamespace *
+cns(THIS)
+    XmlNode *THIS
+    PROTOTYPE: $
+    CODE:
+    RETVAL = THIS->cns;
+    OUTPUT:
+    RETVAL
+
+XmlNamespace *
+hns(THIS)
+    XmlNode *THIS
+    PROTOTYPE: $
+    CODE:
+    RETVAL = THIS->hns;
+    OUTPUT:
+    RETVAL
+
 AV *
 knownNamespaces(THIS)
     XmlNode *THIS
@@ -463,7 +490,7 @@ knownNamespaces(THIS)
     CODE:
     namespaces = newAV();
     TAILQ_FOREACH(item, &THIS->knownNamespaces, next) {
-        SV *ns = newRV_noinc(newSViv(item->ns));
+        SV *ns = newRV_noinc(newSViv((ssize_t)item->ns));
         HV* st = gv_stashpv("XmlNamespacePtr", 0);
         av_push(namespaces, sv_bless(ns, st));
     }
