@@ -420,15 +420,19 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         if (!TAILQ_EMPTY(&node->parent->knownNamespaces)) {
             XmlNamespaceSet *parentItem;
             TAILQ_FOREACH(parentItem, &node->parent->knownNamespaces, next) {
-                newItem = calloc(1, sizeof(XmlNamespaceSet));
-                newItem->ns = parentItem->ns;
-                TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+                if (parentItem->ns->name) { // skip the default namespace
+                    newItem = calloc(1, sizeof(XmlNamespaceSet));
+                    newItem->ns = parentItem->ns;
+                    TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+                }
             }
         } else {
             TAILQ_FOREACH(ns, &node->parent->namespaces, list) {
-                newItem = calloc(1, sizeof(XmlNamespaceSet));
-                newItem->ns = ns;
-                TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+                if (ns->name) { // skip the default namespace
+                    newItem = calloc(1, sizeof(XmlNamespaceSet));
+                    newItem->ns = ns;
+                    TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+                }
             }
         }
     }
@@ -703,7 +707,7 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
                     *nssep = 0;
                     XmlAddNamespace(newNode, nssep+1, attr_values[offset]);
                 } else { // definition of the default ns
-                    cnsUri = attr_values[offset];
+                    newNode->cns = XmlAddNamespace(newNode, NULL, attr_values[offset]);
                 }
             }
             offset++;
@@ -717,8 +721,6 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
             XmlDestroyNode(newNode);
             goto _start_done;
         }
-        if (cnsUri)
-            cns = XmlGetNamespaceByUri(xml->cNode, cnsUri);
     }
     else
     {
@@ -729,9 +731,6 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
             goto _start_done;
         }
     }
-    if (cnsUri && !cns)
-        cns = XmlAddNamespace(newNode, NULL, cnsUri);
-    newNode->cns = cns;
     xml->cNode = newNode;
 
 _start_done:
