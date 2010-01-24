@@ -448,7 +448,7 @@ sub prevSibling {
     return XML::TinyXML::Node->new(XML::TinyXML::XmlPrevSibling($self->{_node}));
 }
 
-sub nameSpace {
+sub namespace {
     my ($self) = @_;
     return XML::TinyXML::XmlGetNodeNamespace($self->{_node});
 }
