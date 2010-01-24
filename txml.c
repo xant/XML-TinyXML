@@ -415,7 +415,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         }
     }
 
-    // and now walk up in our hierarchy to add all other namespaces in scope
+    // and now import namespaces already valid in the scope of our parent
     if (node->parent) {
         if (!TAILQ_EMPTY(&node->parent->knownNamespaces)) {
             XmlNamespaceSet *parentItem;
