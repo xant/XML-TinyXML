@@ -95,8 +95,11 @@ typedef struct __XmlNode {
     XmlNamespace *ns;  // namespace of this node (if any)
     XmlNamespace *cns; // new default namespace defined by this node
     XmlNamespace *hns; // hinerited namespace (if any)
-    TAILQ_HEAD(,__XmlNamespaceSet) knownNamespaces; // all namespaces valid in this scope
-    TAILQ_HEAD(,__XmlNamespace) namespaces;
+    // all namespaces valid in this scope ( implicit namespaces )
+    TAILQ_HEAD(,__XmlNamespaceSet) knownNamespaces; 
+    // storage for newly defined namespaces 
+    // (needed keep track of allocated XmlNamspace structures for later release)
+    TAILQ_HEAD(,__XmlNamespace) namespaces; 
     TAILQ_ENTRY(__XmlNode) siblings;
     struct __TXml *context; // set only if rootnode (otherwise it's always NULL)
 } XmlNode;
@@ -112,8 +115,20 @@ typedef struct __TXml {
     int useNamespaces;
 } TXml;
 
+/***
+    @brief access next sibling of a node (if any)
+    @arg pointer to a valid XmlNode structure
+    @return pointer to next sibling if existing, NULL otherwise
+*/
 XmlNode *XmlNextSibling(XmlNode *node);
+
+/***
+    @brief access previous sibling of a node (if any)
+    @arg pointer to a valid XmlNode structure
+    @return pointer to previous sibling if existing, NULL otherwise
+*/
 XmlNode *XmlPrevSibling(XmlNode *node);
+
 void XmlSetOutputEncoding(TXml *xml, char *encoding);
 /***
     @brief allocates memory for an XmlNode. In case of errors NULL is returned 
@@ -247,21 +262,55 @@ XmlErr XmlParseFile(TXml *xml,char *path);
 char *XmlDumpBranch(TXml *xml,XmlNode *rNode,unsigned int depth);
 /***
     @brief dump the entire xml configuration tree that reflects the status of internal structures
-    @arg the xml context pointer
+    @arg pointer to a valid xml context
     @arg if not NULL, here will be stored the bytelength of the returned buffer
     @return a null terminated string containing the xml representation of the configuration tree.
     The memory allocated for the dump-string must be freed by the user when no more needed
 */
 char *XmlDump(TXml *xml, int *outlen);
 
+/***
+    @brief Create a new xml context
+    @return a point to a valid xml context
+*/
+
 TXml *XmlCreateContext();
+/***
+    @brief release all resources associated to an xml context
+    @arg pointer to a valid xml context
+*/
 void XmlDestroyContext(TXml *xml);
 
 
+/***
+    @brief get node attribute at specified index
+    @arg pointer to a valid XmlNode strucutre
+    @arg of the the attribute we want to access (starting by 1)
+    @return a pointer to a valid XmlNodeAttribute structure if found at
+    the specified offset, NULL otherwise
+*/
 XmlNodeAttribute *XmlGetAttribute(XmlNode *node,unsigned long index);
+
+/***
+    @brief get node attribute with specified name
+    @arg pointer to a valid XmlNode strucutre
+    @arg the name of the desired attribute
+    @return a pointer to a valid XmlNodeAttribute structure if found, NULL otherwise
+*/
 XmlNodeAttribute *XmlGetAttributeByName(XmlNode *node, char *name);
 
+/***
+    @brief remove attribute at specified index
+    @arg pointer to a valid XmlNode strucutre
+    @arg of the the attribute we want to access (starting by 1)
+    @return XML_NOERR on success, XML_GENERIC_ERR otherwise
+*/
 int XmlRemoveAttribute(XmlNode *node, unsigned long index);
+
+/***
+    @brief remove all attributes of a node
+    @arg pointer to a valid XmlNode structure
+*/
 void XmlClearAttributes(XmlNode *node);
 
 
@@ -269,7 +318,7 @@ void XmlClearAttributes(XmlNode *node);
     @brief save the configuration stored in the xml file containing the current profile
            the xml file name is obtained appending '.xml' to the category name . The xml file is stored 
            in the repository directory specified during object construction.
-    @arg a valid xml context
+    @arg pointer to a valid xml context
     @arg the path where to save the file
     @return an XmlErr error status (XML_NOERR if buffer was parsed successfully)
 */
@@ -290,14 +339,14 @@ void XmlDestroyNamespace(XmlNamespace *ns);
 
 /***
     @brief search for a specific namespace defined within the current document
-    @arg a valid xml context
+    @arg pointer to a valid XmlNode structure
     @arg the shortname of the new namespace
 */
 XmlNamespace *XmlGetNamespaceByName(XmlNode *node, char *nsName);
 
 /***
     @brief search for a specific namespace defined within the current document
-    @arg a valid xml context
+    @arg pointer to a valid XmlNode structure
     @arg the complete uri of the new namspace
     @return a valid XmlNamespace pointer if found, NULL otherwise
 */
@@ -305,7 +354,7 @@ XmlNamespace *XmlGetNamespaceByUri(XmlNode *node, char *nsUri);
 
 /***
     @brief create a new namespace and link it to current document/context
-    @arg a valid xml context
+    @arg pointer to a valid XmlNode structure
     @arg the shortname of the new namespace
     @arg the complete uri of the new namspace
     @return a valid XmlNamespace pointer if found, NULL otherwise
@@ -314,14 +363,14 @@ XmlNamespace *XmlAddNamespace(XmlNode *node, char *nsName, char *nsUri);
 
 /***
     @brief get the namespace of a node , if any
-    @arg a valid xmlnode
-    @return the namespace of the node if defined or inherited, NULL otherwise
+    @arg pointer to a valid XmlNode strucutre
+    @return a pointer to the XmlNamespace of the node if defined or inherited, NULL otherwise
 */
 XmlNamespace *XmlGetNodeNamespace(XmlNode *node);
 
 /***
     @brief set the namespace of a node
-    @arg a valid xmlnode
+    @arg pointer to a valid XmlNode structure
     @return XML_NOERR on success, any other xml error code otherwise
 */ 
 XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
@@ -329,15 +378,15 @@ XmlErr XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns);
 /***
     @brief set the default namespace of a node 
            (which will be inherited by all descendant, unless overridden)
-    @arg a valid xmlnode
-    @arg a valid xmlnamespace
+    @arg pointer to a valid XmlNode structure
+    @arg pointer to a valid XmlNamespace structure
     @return XML_NOERR on success, any other xml error code otherwise
 */ 
 XmlErr XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns);
 
 /***
     @brief set the default namespace for the current node (xml->cNode)
-    @arg a valid xmlnode
+    @arg pointer to a valid XmlNode structure
     @arg the namespace uri
     @return XML_NOERR on success, any other xml error code otherwise
 */ 
