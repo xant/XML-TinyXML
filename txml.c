@@ -426,7 +426,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
                     TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
                 }
             }
-        } else {
+        } else { // this shouldn't happen until knownNamespaces is properly kept synchronized
             TAILQ_FOREACH(ns, &node->parent->namespaces, list) {
                 if (ns->name) { // skip the default namespace
                     newItem = calloc(1, sizeof(XmlNamespaceSet));
