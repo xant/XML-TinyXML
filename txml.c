@@ -395,16 +395,22 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         }
     }
 
-    if (node->hns) {
+    if (node->cns) {
+        newItem = calloc(1, sizeof(XmlNamespaceSet));
+        newItem->ns = node->cns;
+        TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+    } else if (node->hns) {
         newItem = calloc(1, sizeof(XmlNamespaceSet));
         newItem->ns = node->hns;
         TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
     }
 
     TAILQ_FOREACH(ns, &node->namespaces, list) {
-        newItem = calloc(1, sizeof(XmlNamespaceSet));
-        newItem->ns = ns;
-        TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+        if (ns->name) { // skip an eventual default namespace since has been handled earlier
+            newItem = calloc(1, sizeof(XmlNamespaceSet));
+            newItem->ns = ns;
+            TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+        }
     }
     p = node->parent;
     while (p) {
