@@ -442,54 +442,44 @@ XmlUpdateKnownNamespaces(XmlNode *node)
 // necessary (if a node defines a new default itself, it's not necessary
 // to go deeper in that same branch)
 static void
-XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns, TXml *srcCtx, TXml *dstCtx)
+XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns)
 {
     XmlNode *child;
-    XmlNamespace *newNS;
-    if (node->hns != ns) // skip update if not necessary
+    XmlNamespaceSet *nsItem;
+
+    if (node->hns != ns && !node->cns) // skip update if not necessary
         node->hns = ns; 
 
     XmlUpdateKnownNamespaces(node);
-    // check if we are moving a node across two different contexes
-    // or we are attaching a new node to a context for the first time
-    // In either cases we need to scan for namespace definitions, updating
-    // either the context or any of the descendants accordingly
-    if (srcCtx != dstCtx) {
 
-        XmlNodeAttribute *attr;
+    if (node->ns) { // we are bound to a specific ns.... let's see if it's known
+        int missing = 1;
 
-        if (node->cns)
-            XmlAddNamespace(node, node->cns->name, node->cns->uri);
+        TAILQ_FOREACH(nsItem, &node->knownNamespaces, next) 
+            if (strcmp(node->ns->uri, nsItem->ns->uri) == 0) 
+                if (!(node->ns->name && !nsItem->ns->name) && strcmp(node->ns->name, nsItem->ns->name) == 0)
+                    missing = 0;
 
-        if (node->ns) {
-            // check if node's namespace is known to the document it's going to be attached
-            XmlNamespace *nsDst = XmlGetNamespaceByUri(node->parent, node->ns->uri);
-            if (!nsDst) {
-                XmlNode *root;
-                char *newAttr;
+        if (missing) {
+            XmlNamespace *newNS;
+            XmlNamespaceSet *newItem;
+            char *newAttr;
 
-                newNS = XmlAddNamespace(node, node->ns->name, node->ns->uri);
-                newAttr = malloc(strlen(newNS->name)+7); // prefix + xmlns + :
-                root = node;
-                while (root->parent) // get our root
-                    root = root->parent;
-                sprintf(newAttr, "xmlns:%s", newNS->name);
-                // enforce the definition for our namepsace in the new context
-                XmlAddAttribute(root, newAttr, newNS->uri); 
-                XmlSetNodeNamespace(node, newNS);
-                free(newAttr);
-            } else if (nsDst != node->ns) {
-                XmlSetNodeNamespace(node, nsDst);
-            }
+            newNS = XmlAddNamespace(node, node->ns->name, node->ns->uri);
+            node->ns = newNS;
+            newItem = calloc(1, sizeof(XmlNamespaceSet));
+            newItem->ns = newNS;
+            TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
+            newAttr = malloc(strlen(newNS->name)+7); // prefix + xmlns + :
+            sprintf(newAttr, "xmlns:%s", node->ns->name);
+            // enforce the definition for our namepsace in the new context
+            XmlAddAttribute(node, newAttr, node->ns->uri); 
+            free(newAttr);
         }
-        TAILQ_FOREACH(child, &node->children, siblings)
-            XmlUpdateBranchNamespace(child, node->cns?node->cns:node->hns, srcCtx, dstCtx); // recursion here
-    } else {
-        // we are within the same context
-        if (!node->cns)
-            TAILQ_FOREACH(child, &node->children, siblings)
-                XmlUpdateBranchNamespace(child, ns, srcCtx, dstCtx); // recursion here
     }
+
+    TAILQ_FOREACH(child, &node->children, siblings) // update our descendants
+        XmlUpdateBranchNamespace(child, node->cns?node->cns:node->hns); // recursion here
 }
 
 XmlErr
@@ -499,22 +489,17 @@ XmlAddChildNode(XmlNode *parent, XmlNode *child)
     if(!child)
         return XML_BADARGS;
 
-    // the following two statements MUST be called before 
-    // updating the parent pointer
-    // TODO - optimize
-    srcCtx = XmlGetContext(child);
-    dstCtx = XmlGetContext(parent);
-
     // now we can update the parent
     if (child->parent)
         XmlRemoveChildNode(child->parent, child);
+
     TAILQ_INSERT_TAIL(&parent->children, child, siblings);
     child->parent = parent;
 
     // udate/propagate the default namespace (if any) to the newly attached node 
     // (and all its descendants)
     // Also scan for unknown namespaces defined/used in the newly attached branch
-    XmlUpdateBranchNamespace(child, parent->cns?parent->cns:parent->hns, srcCtx, dstCtx);
+    XmlUpdateBranchNamespace(child, parent->cns?parent->cns:parent->hns);
     XmlSetNodePath(child, parent);
     return XML_NOERR;
 }

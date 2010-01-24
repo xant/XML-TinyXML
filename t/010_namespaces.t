@@ -20,7 +20,7 @@ $txml2->loadFile("./t/t2.xml");
 my $node2 = $txml2->getNode("/xml");
 is ($node->namespace->name, "bar");
 $node2->addChildNode($node);
-is ($node->namespace->name, "bar2"); # moving a node across different contextes
+is ($node->namespace->name, "bar"); # moving a node across different contextes
 $child = $txml2->getNode("/xml/parent/child1");
 is ($child->namespace->uri, "bar://child");
 
