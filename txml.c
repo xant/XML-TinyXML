@@ -334,7 +334,6 @@ XmlDestroyNode(XmlNode *node)
         XmlDestroyNamespace(ns);
     }
 
-
     if(node->name)
         free(node->name);
     if(node->path)
@@ -387,6 +386,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
     XmlNamespace *ns;
     XmlNamespaceSet *newItem;
     
+    // first empty actual list
     if (!TAILQ_EMPTY(&node->knownNamespaces)) {
         XmlNamespaceSet *oldItem;
         while(oldItem = TAILQ_FIRST(&node->knownNamespaces)) {
@@ -395,6 +395,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         }
     }
 
+    // than start populating the list with actual default namespace
     if (node->cns) {
         newItem = calloc(1, sizeof(XmlNamespaceSet));
         newItem->ns = node->cns;
@@ -405,6 +406,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
     }
 
+    // add all namespaces defined by this node
     TAILQ_FOREACH(ns, &node->namespaces, list) {
         if (ns->name) { // skip an eventual default namespace since has been handled earlier
             newItem = calloc(1, sizeof(XmlNamespaceSet));
@@ -412,6 +414,8 @@ XmlUpdateKnownNamespaces(XmlNode *node)
             TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
         }
     }
+
+    // and now walk up in our hierarchy to add all other namespaces in scope
     p = node->parent;
     while (p) {
         if (!TAILQ_EMPTY(&p->knownNamespaces)) {
