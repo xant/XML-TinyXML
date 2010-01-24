@@ -19,7 +19,7 @@ $txml2->loadFile("./t/t2.xml");
 my $node2 = $txml2->getNode("/xml");
 is ($node->nameSpace->name, "bar");
 $node2->addChildNode($node);
-is ($node->nameSpace->name, "bar2");
+is ($node->nameSpace->name, "bar2"); # moving a node across different contextes
 $child = $txml2->getNode("/xml/parent/child1");
 is ($child->nameSpace->uri, "bar://child");
 
@@ -30,3 +30,4 @@ $node2->addChildNode($node);
 is ($node->nameSpace->uri, "bar://foo");
 $child = $txml2->getNode("/xml/parent/child2");
 is ($child->nameSpace->name, "special_child");
+

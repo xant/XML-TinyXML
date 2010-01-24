@@ -73,7 +73,7 @@ sub name {
     return $name;
 }
 
-=item value ([$newName])
+=item value ([$newValue])
 
 Get/Set the value of the attribute
 
@@ -87,9 +87,9 @@ sub value {
     return $value;
 }
 
-=item value ([$newName])
+=item node (])
 
-Get/Set the XML::TinyXML::Node to which this attribute belongs
+Get the XML::TinyXML::Node to which this attribute belongs
 
 =cut
 sub node {

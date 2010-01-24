@@ -35,18 +35,18 @@ XmlDestroyNamespace(ns)
     XmlNamespace *ns
 
 XmlNamespace *
-XmlGetNamespaceByName(xml, nsName)
-    TXml *xml
+XmlGetNamespaceByName(node, nsName)
+    XmlNode *node
     char *nsName
 
 XmlNamespace *
-XmlGetNamespaceByUri(xml, nsUri)
-    TXml *xml
+XmlGetNamespaceByUri(node, nsUri)
+    XmlNode *node
     char *nsUri
 
 XmlNamespace *
-XmlAddNamespace(xml, nsName, nsUri)
-    TXml *xml
+XmlAddNamespace(node, nsName, nsUri)
+    XmlNode *node
     char *nsName
     char *nsUri
 
@@ -63,11 +63,6 @@ XmlErr
 XmlSetNodeCNamespace(node, ns)
     XmlNode *node
     XmlNamespace *ns
-
-XmlErr
-XmlSetCurrentNamespace(xml, ns)
-    TXml *xml
-    char *ns
 
 void
 XmlSetOutputEncoding(xml, encoding)

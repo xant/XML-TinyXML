@@ -76,6 +76,11 @@ typedef struct __XmlNodeAttribute {
     TAILQ_ENTRY(__XmlNodeAttribute) list;
 } XmlNodeAttribute;
 
+typedef struct __XmlNamespaceSet {
+    XmlNamespace *ns;
+    TAILQ_ENTRY(__XmlNamespaceSet) next;
+} XmlNamespaceSet;
+
 typedef struct __XmlNode {
     char *path;
     char *name;
@@ -90,6 +95,8 @@ typedef struct __XmlNode {
     XmlNamespace *ns;  // namespace of this node (if any)
     XmlNamespace *cns; // new default namespace defined by this node
     XmlNamespace *hns; // hinerited namespace (if any)
+    TAILQ_HEAD(,__XmlNamespaceSet) knownNamespaces; // all namespaces valid in this scope
+    TAILQ_HEAD(,__XmlNamespace) namespaces;
     TAILQ_ENTRY(__XmlNode) siblings;
     struct __TXml *context; // set only if rootnode (otherwise it's always NULL)
 } XmlNode;
@@ -99,7 +106,6 @@ TAILQ_HEAD(nodelistHead, __XmlNode);
 typedef struct __TXml {
     XmlNode *cNode;
     TAILQ_HEAD(,__XmlNode) rootElements;
-    TAILQ_HEAD(,__XmlNamespace) nameSpaces;
     char *head;
     char outputEncoding[64];  /* XXX probably oversized, 24 or 32 should be enough */
     char documentEncoding[64];
@@ -282,12 +288,14 @@ XmlNamespace *XmlCreateNamespace(char *nsName, char *nsUri);
 */
 void XmlDestroyNamespace(XmlNamespace *ns);
 
+XmlNamespaceSet *XmlGetKnownNamespaces(XmlNode *node);
+
 /***
     @brief search for a specific namespace defined within the current document
     @arg a valid xml context
     @arg the shortname of the new namespace
 */
-XmlNamespace *XmlGetNamespaceByName(TXml *xml, char *nsName);
+XmlNamespace *XmlGetNamespaceByName(XmlNode *node, char *nsName);
 
 /***
     @brief search for a specific namespace defined within the current document
@@ -295,7 +303,7 @@ XmlNamespace *XmlGetNamespaceByName(TXml *xml, char *nsName);
     @arg the complete uri of the new namspace
     @return a valid XmlNamespace pointer if found, NULL otherwise
 */
-XmlNamespace *XmlGetNamespaceByUri(TXml *xml, char *nsUri);
+XmlNamespace *XmlGetNamespaceByUri(XmlNode *node, char *nsUri);
 
 /***
     @brief create a new namespace and link it to current document/context
@@ -304,7 +312,7 @@ XmlNamespace *XmlGetNamespaceByUri(TXml *xml, char *nsUri);
     @arg the complete uri of the new namspace
     @return a valid XmlNamespace pointer if found, NULL otherwise
 */
-XmlNamespace *XmlAddNamespace(TXml *xml, char *nsName, char *nsUri);
+XmlNamespace *XmlAddNamespace(XmlNode *node, char *nsName, char *nsUri);
 
 /***
     @brief get the namespace of a node , if any
