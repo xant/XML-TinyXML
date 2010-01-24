@@ -1,6 +1,6 @@
 
 use strict;
-use Test::More tests => 13;
+use Test::More tests => 16;
 use XML::TinyXML;
 use XML::TinyXML::Selector;
 use Data::Dumper;
@@ -34,7 +34,7 @@ is ($child->namespace->name, "special_child");
 
 #my @namespaces = $txml2->getNode("/xml/hello")->knownNamespaces;
 #printf("%s -> %s\n", $_->name, $_->uri) for @namespaces;
-#warn $txml2->getNode("/xml/hello")->hineritednamespace->uri;
+#warn $txml2->getNode("/xml/hello")->hineritedNamespace->uri;
 
 $txml->loadFile("./t/ns.xml");
 $node = $txml->getNode("/root/g/p");
@@ -43,6 +43,15 @@ is ($node->namespace->uri, "http://www.example.org/a");
 $node = $txml->getNode("/root/g1/p");
 is ($node->namespace->uri, "http://www.example.org/x");
 is ($node->hineritedNamespace->uri, $node->namespace->uri);
+$node = $txml->getNode("/root/g3/div");
+is ($node->namespace->uri, "http://www.example.org/a");
+# check if resetting the default namespace works
+$node = $txml->getNode("/root/g3/reset");
+is ($node->namespace, undef);
+$node = $txml->getNode("/root/g4/p");
+ok ($node->namespace->uri eq $node->hineritedNamespace->uri);
+
+
 
 #warn $txml->dump;
 #printf("%s -> %s\n", $_->name, $_->uri) for $node->knownNamespaces;
