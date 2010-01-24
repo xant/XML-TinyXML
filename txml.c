@@ -416,23 +416,21 @@ XmlUpdateKnownNamespaces(XmlNode *node)
     }
 
     // and now walk up in our hierarchy to add all other namespaces in scope
-    p = node->parent;
-    while (p) {
-        if (!TAILQ_EMPTY(&p->knownNamespaces)) {
+    if (node->parent) {
+        if (!TAILQ_EMPTY(&node->parent->knownNamespaces)) {
             XmlNamespaceSet *parentItem;
-            TAILQ_FOREACH(parentItem, &p->knownNamespaces, next) {
+            TAILQ_FOREACH(parentItem, &node->parent->knownNamespaces, next) {
                 newItem = calloc(1, sizeof(XmlNamespaceSet));
                 newItem->ns = parentItem->ns;
                 TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
             }
         } else {
-            TAILQ_FOREACH(ns, &p->namespaces, list) {
+            TAILQ_FOREACH(ns, &node->parent->namespaces, list) {
                 newItem = calloc(1, sizeof(XmlNamespaceSet));
                 newItem->ns = ns;
                 TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
             }
         }
-        p = p->parent;
     }
 }
 
