@@ -1365,7 +1365,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         if(value && *value) { 
             if(!TAILQ_EMPTY(&rNode->children)) {
                 for(n = 0; n < depth; n++)
-                    (out[offset + n], "\t");
+                    out[offset + n] = '\t';
                 offset += depth;
                 sprintf(out + offset, "%s\n", value);
             }
