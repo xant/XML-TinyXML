@@ -286,7 +286,7 @@ XmlCreateNode(char *name, char *value, XmlNode *parent)
     TAILQ_INIT(&node->children);
     TAILQ_INIT(&node->namespaces);
     TAILQ_INIT(&node->knownNamespaces);
-    //node->parent = parent;
+
     node->name = strdup(name);
 
     if (parent)
@@ -1229,14 +1229,20 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
 {
     unsigned int i, n;
     char *out = NULL;
-    char *startTag;
-    char *endTag;
+    char *startTag, *startP;
+    int sLen = 0;
+    char *endTag, *endP;
+    int eLen = 0;
     char *childDump;
+    int cLen = 0;
     char *value = NULL;
-    int nameLen;
+    int vLen = 0;
+    int nameLen = 0;
+    int nsNameLen = 0;
     XmlNodeAttribute *attr;
     XmlNode *child;
     unsigned long nAttrs;
+    unsigned int offset;
 
 
     if (rNode->value) {
@@ -1256,54 +1262,59 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     if(rNode->type == XML_NODETYPE_COMMENT) {
         out = malloc(strlen(value)+depth+9);
         *out = 0;
-        for(n = 0; n < depth; n++) strcat(out, "\t");
-        strcat(out, "<!--");
-        strcat(out, value);
-        strcat(out, "-->\n");
+        for(n = 0; n < depth; n++) 
+            out[n] = '\t';
+        sprintf(out+depth, "<!--%s-->\n", value);
         return out;
     } else if(rNode->type == XML_NODETYPE_CDATA) {
         out = malloc(strlen(value)+depth+14);
         *out = 0;
         for(n = 0; n < depth; n++)
-            strcat(out, "\t");
-        strcat(out, "<![CDATA[");
-        strcat(out, value);
-        strcat(out, "]]>\n");
+            out[n] = '\t';
+        sprintf(out+depth, "<![CDATA[%s]]>\n", value);
         return out;
     }
 
-    childDump = (char *)malloc(1);
-    *childDump = 0;
+    childDump = (char *)calloc(1, 1);
 
     if (rNode->ns && rNode->ns->name)
-        nameLen += (unsigned int)strlen(rNode->ns->name)+1;
-    startTag = (char *)malloc(depth+nameLen+7);
-    memset(startTag, 0, depth+nameLen+7);
-    endTag = (char *)malloc(depth+nameLen+7);
-    memset(endTag, 0, depth+nameLen+7);
+        nsNameLen = (unsigned int)strlen(rNode->ns->name);
 
+    startTag = (char *)calloc(1, depth+nameLen+nsNameLen+6); // :/<>\n
+    startP = startTag;
+    endTag = (char *)calloc(1, depth+nameLen+nsNameLen+6);
+    endP = endTag;
+
+    // XXX - unsure if doing "*var++ = somevalue" is safe
+    //       could some compilers mess up instruction ordering 
+    //       ending up to invrement var before assigning its value?
     for(n = 0; n < depth; n++)
-        strcat(startTag, "\t");
-    strcat(startTag, "<");
+        *startP++ = '\t';
+    *startP++ = '<';
+
     if (rNode->ns && rNode->ns->name) {
         // TODO - optimize
-        strcat(startTag, rNode->ns->name);
-        strcat(startTag, ":");
+        sprintf(startP, "%s:", rNode->ns->name);
+        startP += nsNameLen + 1;
     }
-    strcat(startTag, rNode->name);
+    strcpy(startP, rNode->name);
+    startP += nameLen;
     nAttrs = XmlCountAttributes(rNode);
     if(nAttrs>0) {
         for(i = 1; i <= nAttrs; i++) {
             attr = XmlGetAttribute(rNode, i);
             if(attr) {
-                char *attr_value = xmlize(attr->value);
-                startTag = (char *)realloc(startTag, strlen(startTag)+
-                    strlen(attr->name)+strlen(attr_value)+8);
-                strcat(startTag, " ");
-                strcat(startTag, attr->name);
-                strcat(startTag, "=\"");
-                strcat(startTag, attr_value);
-                strcat(startTag, "\"");
+                int anLen, avLen;
+                char *attr_value;
+                
+                attr_value = xmlize(attr->value);
+                anLen = strlen(attr->name);
+                avLen = strlen (attr_value);
+                offset = startP-startTag;
+                startTag = (char *)realloc(startTag, offset + anLen + avLen + 5);
+                startP = startTag + offset; // update startP
+                sprintf(startP, " %s=\"%s\"", attr->name, attr_value);
+                startP += anLen + avLen + 4;
                 if (attr_value)
                     free(attr_value);
             }
@@ -1311,50 +1322,64 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     }
     if((value && *value) || !TAILQ_EMPTY(&rNode->children)) {
         if(!TAILQ_EMPTY(&rNode->children)) {
-            strcat(startTag, ">\n");
-            for(n = 0; n < depth; n++)
-                strcat(endTag, "\t");
+            strcpy(startP, ">\n");
+            startP += 2;
+            sLen = startP - startTag;
+            offset = 0;
             TAILQ_FOREACH(child, &rNode->children, siblings) {
                 char *childBuff = XmlDumpBranch(xml, child, depth+1); /* let's recurse */
                 if(childBuff) {
-                    childDump = (char *)realloc(childDump, strlen(childDump)+strlen(childBuff)+2);
-                    strcat(childDump, childBuff);
-                    //strcat(childDump, "\n");
+                    int childBuffLen = strlen(childBuff);
+                    childDump = (char *)realloc(childDump, offset + childBuffLen + 1);
+                    strcpy(childDump + offset, childBuff);
+                    offset += childBuffLen;
                     free(childBuff);
                 }
             }
+            cLen = offset;
+            for(n = 0; n < depth; n++)
+                endP[n] = '\t';
+            endP += depth;
         } else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
-            strcat(startTag, ">");
+            *startP++ = '>'; 
+            *startP = 0;
+            sLen = startP - startTag;
         }
-        strcat(endTag, "</");
+        strcpy(endP, "</");
+        endP += 2;
         if (rNode->ns && rNode->ns->name) {
             // TODO - optimize
-            strcat(endTag, rNode->ns->name);
-            strcat(endTag, ":");
+            sprintf(endP, "%s:", rNode->ns->name);
+            endP += nsNameLen + 1;
         }
-        strcat(endTag, rNode->name);
-        strcat(endTag, ">\n");
-        out = (char *)malloc(depth+strlen(startTag)+strlen(endTag)+
-            (value?strlen(value)+1:1)+strlen(childDump)+3);
+        sprintf(endP, "%s>\n", rNode->name);
+        endP += nameLen + 2;
+        eLen = endP - endTag;
+        vLen = value?strlen(value):0;
+        out = (char *)malloc(depth + sLen + eLen + vLen + cLen + 3);
         strcpy(out, startTag);
-        if(value && *value) { // skip also if value is an empty string (not only if it's a null pointer)
+        offset = sLen;
+        // skip also if value is an empty string 
+        // (not only if it's a null pointer)
+        if(value && *value) { 
             if(!TAILQ_EMPTY(&rNode->children)) {
                 for(n = 0; n < depth; n++)
-                    strcat(out, "\t");
-                strcat(out, value);
-                strcat(out, "\n");
+                    (out[offset + n], "\t");
+                offset += depth;
+                sprintf(out + offset, "%s\n", value);
             }
             else {
-                strcat(out, value);
-                //strcat(out, " ");
+                strcpy(out + offset, value);
             }
+            offset += vLen;
         }
-        strcat(out, childDump);
-        strcat(out, endTag);
+        sprintf(out + offset, "%s%s", childDump, endTag);
+        // not necessary since we are about to exit
+        // offset += cLen + eLen;
     }
     else {
-        strcat(startTag, "/>\n");
+        strcpy(startP, "/>\n");
         out = strdup(startTag);
     }
     free(startTag);
@@ -1374,6 +1399,8 @@ XmlDump(TXml *xml, int *outlen)
     unsigned int i;
     int doConversion = 0;
     char head[256]; // should be enough
+    int hLen;
+    unsigned int offset;
 
     memset(head, 0, sizeof(head));
     if (xml->head) {
@@ -1419,25 +1446,29 @@ XmlDump(TXml *xml, int *outlen)
         snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
             xml->outputEncoding?xml->outputEncoding:"utf-8");
     }
-    dump = malloc(strlen(head)+6);
+    hLen = strlen(head);
+    dump = malloc(hLen+6);
     sprintf(dump, "<?%s?>\n", head);
+    offset = hLen + 5;
     TAILQ_FOREACH(rNode, &xml->rootElements, siblings) {
         branch = XmlDumpBranch(xml, rNode, 0);
         if(branch) {
-            dump = (char *)realloc(dump, strlen(dump)+strlen(branch)+1);
-            strcat(dump, branch);
+            int bLen = strlen(branch);
+            dump = (char *)realloc(dump, offset + bLen + 1);
+            strcpy(dump + offset, branch);
+            offset += bLen;
             free(branch);
         }
     }
     if (outlen) // check if we need to report the output size
-        *outlen = strlen(dump);
+        *outlen = offset;
     if (doConversion) {
         iconv_t ich;
         size_t ilen, olen, cb;
         char *out;
         char *iconvIn;
         char *iconvOut;
-        ilen = strlen(dump);
+        ilen = offset;
         // the most expensive conversion would be from ascii to utf-32/ucs-4
         // ( 4 bytes for each char )
         olen = ilen * 4; 
@@ -1902,12 +1933,6 @@ XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns) {
     if (!node || !ns)
         return XML_BADARGS;
     
-    /* this references a namespace defined in the context
-     * we shouldn't free it 
-    if (node->cns) {
-        XmlDestroyNamespace(node->cns);
-    }
-    */
     node->cns = ns;
     return XML_NOERR;
 }
@@ -1917,12 +1942,6 @@ XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns) {
     if (!node || !ns)
         return XML_BADARGS;
     
-    /* this references a namespace defined in the context
-     * we shouldn't free it 
-    if (node->ns) {
-        XmlDestroyNamespace(node->ns);
-    }
-    */
     node->ns = ns;
     return XML_NOERR;
 }
