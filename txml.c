@@ -1683,7 +1683,7 @@ XmlNode
                 attrVal++;
                 if (*attrVal == '\'' || *attrVal == '"') {
                     char quote = *attrVal;
-                    int n, j;
+                    int n, j=0;
                     // s = ++attrVal could be unsafe
                     attrVal++;
                     for (n = 0; attrVal[n] != 0; n++) {
