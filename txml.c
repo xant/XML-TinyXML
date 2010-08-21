@@ -1008,17 +1008,28 @@ XmlParseBuffer(TXml *xml, char *buf)
                             mark = p;
                             while(*p != 0) {
                                 if (*p == quote) {
-                                    if (*(p+1) != quote) // handle quote escaping
+                                    if (*(p+1) != quote) { // handle quote escaping
                                         break;
-                                    else
+                                    } else {
+
                                         p++;
+                                    }
                                 }
                                 p++;
                             }
                             if(*p == quote) {
                                 char *dexmlized;
                                 char *tmpVal = (char *)malloc(p-mark+2);
+#if 0
                                 strncpy(tmpVal, mark, p-mark);
+#else
+                                int i, j=0;
+                                for (i = 0; i < p-mark; i++) {
+                                    if ( mark[i] == quote && mark[i+1] == mark[i] )
+                                        i++;
+                                    tmpVal[j++] = mark[i]; 
+                                }
+#endif
                                 tmpVal[p-mark] = 0;
                                 /* add new attribute */
                                 nAttrs++;
@@ -1684,20 +1695,21 @@ XmlNode
                 if (*attrVal == '\'' || *attrVal == '"') {
                     char quote = *attrVal;
                     int n, j=0;
-                    // s = ++attrVal could be unsafe
+                    // inplace dequoting
                     attrVal++;
                     for (n = 0; attrVal[n] != 0; n++) {
                         if (attrVal[n] == quote) {
-                            if (attrVal[n-1] == quote) { // quote escaping (XXX - perhaps out of spec)
-                                j--;
+                            if (n && attrVal[n-1] == quote) { // quote escaping (XXX - perhaps out of spec)
+                                if (j)
+                                    j--;
                             } else {
                                 attrVal[n] = 0;
                                 break;
                             }
-                            if (j != n)
-                                attrVal[j] = attrVal[n];
-                            j++;
                         }
+                        if (j != n)
+                            attrVal[j] = attrVal[n];
+                        j++;
                     }
 
                 }
