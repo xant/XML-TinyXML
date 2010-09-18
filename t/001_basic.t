@@ -5,6 +5,7 @@
 
 # change 'tests => 2' to 'tests => last_test_to_print';
 
+use strict;
 use Test::More tests => 14;
 BEGIN { use_ok('XML::TinyXML') };
 
@@ -26,7 +27,7 @@ foreach my $constname (qw(
 ok( $fail == 0 , 'Constants' );
 #########################
 
-$txml = XML::TinyXML->new();
+my $txml = XML::TinyXML->new();
 $txml->allowMultipleRootNodes(0);
 $txml->loadFile("./t/t.xml");
 is($txml->countChildren('/parent'), 3);
@@ -34,6 +35,12 @@ my $node;
 ok ($node = $txml->getNode('/parent'));
 is($txml->countChildren($node), 3);
 is($txml->countChildren($node->{_node}), 3);
+
+$node = $txml->getNode('/qtest');
+use Data::Dumper;
+my $attributes = $node->attributes;
+#warn Dumper($attributes);
+
 $txml->addRootNode('xml2');
 is($txml->countRootNodes, 1);
 $txml->allowMultipleRootNodes(1);

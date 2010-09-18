@@ -224,7 +224,7 @@ _to_ptr(THIS)
         STRLEN len;
         char *s = SvPV((SV*)SvRV(ST(0)), len);
         if (len != sizeof(THIS))
-        croak("Size %d of packed data != expected %d",
+        croak("Size %lu of packed data != expected %lu",
             len, sizeof(THIS));
         RETVAL = (XmlNamespace *)s;
     }
@@ -238,7 +238,7 @@ new(CLASS)
     char *CLASS = NO_INIT
     PROTOTYPE: $
     CODE:
-    Zero((void*)&RETVAL, sizeof(RETVAL), char);
+    memset((void *)&RETVAL, 0, sizeof(RETVAL));
     OUTPUT:
     RETVAL
 
@@ -286,7 +286,7 @@ _to_ptr(THIS)
         STRLEN len;
         char *s = SvPV((SV*)SvRV(ST(0)), len);
         if (len != sizeof(THIS))
-        croak("Size %d of packed data != expected %d",
+        croak("Size %lu of packed data != expected %lu",
             len, sizeof(THIS));
         RETVAL = (XmlNodeAttribute *)s;
     }
@@ -300,7 +300,7 @@ new(CLASS)
     char *CLASS = NO_INIT
     PROTOTYPE: $
     CODE:
-    Zero((void*)&RETVAL, sizeof(RETVAL), char);
+    memset((void *)&RETVAL, 0, sizeof(RETVAL));
     OUTPUT:
     RETVAL
 
@@ -356,7 +356,7 @@ _to_ptr(THIS)
         STRLEN len;
         char *s = SvPV((SV*)SvRV(ST(0)), len);
         if (len != sizeof(THIS))
-        croak("Size %d of packed data != expected %d",
+        croak("Size %lu of packed data != expected %lu",
             len, sizeof(THIS));
         RETVAL = (XmlNode *)s;
     }
@@ -370,7 +370,7 @@ new(CLASS)
     char *CLASS = NO_INIT
     PROTOTYPE: $
     CODE:
-    Zero((void*)&RETVAL, sizeof(RETVAL), char);
+    memset((void *)&RETVAL, 0, sizeof(RETVAL));
     OUTPUT:
     RETVAL
 
@@ -494,7 +494,7 @@ _to_ptr(THIS)
         STRLEN len;
         char *s = SvPV((SV*)SvRV(ST(0)), len);
         if (len != sizeof(THIS))
-        croak("Size %d of packed data != expected %d",
+        croak("Size %lu of packed data != expected %lu",
             len, sizeof(THIS));
         RETVAL = (TXml *)s;
     }
@@ -508,7 +508,7 @@ new(CLASS)
     char *CLASS = NO_INIT
     PROTOTYPE: $
     CODE:
-    Zero((void*)&RETVAL, sizeof(RETVAL), char);
+    memset((void *)&RETVAL, 0, sizeof(RETVAL));
     OUTPUT:
     RETVAL
 

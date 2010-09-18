@@ -65,7 +65,7 @@ Reference to the underlying XmlNodePtr object (which is a binding to the XmlNode
 package XML::TinyXML::Node;
 
 use strict;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 =item * new ($entity, $value, $parent, %attrs)
 
@@ -95,7 +95,8 @@ sub new {
     if(ref($entity) && UNIVERSAL::isa($entity, "XmlNodePtr")) {
         $node = $entity;
     } else {
-        $node = XML::TinyXML::XmlCreateNode($entity, $value || "");
+        $value = "" unless defined($value);
+        $node = XML::TinyXML::XmlCreateNode($entity, $value);
     }
     return undef unless($node);
     if(ref($parent)) {

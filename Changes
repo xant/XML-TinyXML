@@ -53,3 +53,6 @@ Revision history for Perl extension TinyXML.
 0.21  - fixed a searious memory leak in the XS wrapper to XmlDump()
       - updated more documentation
 0.22  - introducing support for namespaces
+      - optimizations in the underlying C library
+0.23  - fixed a bug in hash-import routines
+        (0-values produced empty xml nodes)

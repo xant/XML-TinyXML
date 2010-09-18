@@ -42,7 +42,7 @@ Selector base class
 package XML::TinyXML::Selector;
 
 use strict;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 =item * new ($xml, $type, %args)
 

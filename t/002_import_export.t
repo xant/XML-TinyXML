@@ -16,3 +16,5 @@ while(<IN>) {
 }
 close(IN);
 ok( $out eq $in, "import/export" );
+#warn "IN $in";
+#warn "OUT $out";

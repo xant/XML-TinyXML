@@ -76,7 +76,7 @@ if  (eval {require ExtUtils::Constant; 1}) {
   # changes.
   my @names = (qw(XML_BADARGS XML_GENERIC_ERR XML_LINKLIST_ERR XML_MEMORY_ERR
 		 XML_NOERR XML_OPEN_FILE_ERR XML_PARSER_GENERIC_ERR XML_MROOT_ERR
-		 XML_UPDATE_ERR XML_NODETYPE_SIMPLE XML_NODETYPE_COMMENT XML_NODETYPE_CDATA));
+		 XML_UPDATE_ERR XML_BAD_CHARS XML_NODETYPE_SIMPLE XML_NODETYPE_COMMENT XML_NODETYPE_CDATA));
   ExtUtils::Constant::WriteConstants(
                                      NAME         => 'XML::TinyXML',
                                      NAMES        => \@names,

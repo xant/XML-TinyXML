@@ -80,7 +80,7 @@ use XML::TinyXML::Selector::XPath::Context;
 use XML::TinyXML::Selector::XPath::Functions;
 use XML::TinyXML::Selector::XPath::Axes;
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 #our @ExprTokens = ('(', ')', '[', ']', '.', '..', '@', ',', '::');
 

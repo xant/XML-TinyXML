@@ -80,8 +80,8 @@ My main scope was to obtain a fast xml library usable from perl
 (so with the possibility to expose a powerful api) but without the need to install 
 a lot of other modules (or even C libraries) to have it working.
 
-The actualy version of the this (0.18 when I'm writing this) 
-implements an xpath selector and supports encoding conversions (throgh iconv)
+The actual version of XML::TinyXML (0.18 when I'm writing this) 
+implements an xpath selector and supports encodings (throgh iconv)
 
 The OO Tree-based api allows to :
     - create a new document programmaticaly
@@ -93,15 +93,21 @@ The OO Tree-based api allows to :
 
 There are other "no-dependencies" tiny xml implementations on CPAN.
 Notably : XML::Easy and XML::Tiny but both are still missing some key
-features which are actually implemented in this module
-(in particular : an OO api to allow changing and re-exporting the xml document,
- a bidirectional xml<->hashref conversion and encoding-conversion capabilities)
+features which are actually implemented in this module which are required 
+by the projects where I use it,
+(in particular : 
+    - an OO api to allow changing and re-exporting the xml document,
+    - an easy-to-use bidirectional xml<->hashref conversion 
+    - encoding-conversion capabilities
+    - xpath selectors
+    - small memory footprint (well... it's always a perl module)
+ )
 The underlying xml implementation resides in txml.c and is imported in the perl
 context through XS. It uses a linkedlist implementation took out of freebsd kernel
-and is supposed to be fast enough to reprent and access 'not-huge' xml trees.
+and is supposed to be fast enough to represent and access 'not-huge' xml trees.
 If at some stage there will be need for more preformance in accessing the xml data
 (especially when using the xpath selector) an hash-table based index could be built
-on top of the tree structure to faster access to inner parts of the tree when using
+on top of the tree structure to speed-up access to inner parts of the tree when using
 paths.
 
 An Event-based api is actually missing, but will be provided in future releases.
@@ -148,6 +154,8 @@ our @EXPORT = qw(
         XML_NODETYPE_SIMPLE
         XML_NODETYPE_COMMENT
         XML_NODETYPE_CDATA
+        XML_BAD_CHARS
+        XML_UPDATE_ERR
 	XXmlAddAttribute
 	XmlAddChildNode
 	XmlAddRootNode
@@ -189,7 +197,7 @@ our @EXPORT = qw(
         XmlSetCurrentNamespace
 );
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
