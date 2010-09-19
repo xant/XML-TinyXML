@@ -56,3 +56,5 @@ Revision history for Perl extension TinyXML.
       - optimizations in the underlying C library
 0.23  - fixed a bug in hash-import routines
         (0-values produced empty xml nodes)
+0.24  - reverted XmlDumpBranch optimizations becuase 
+        memory corruption was caused by the new code
