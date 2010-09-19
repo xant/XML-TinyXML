@@ -58,3 +58,4 @@ Revision history for Perl extension TinyXML.
         (0-values produced empty xml nodes)
 0.24  - reverted XmlDumpBranch optimizations becuase 
         memory corruption was caused by the new code
+0.25  - reimplemented XmlDumpBranch optimizations through safer code
