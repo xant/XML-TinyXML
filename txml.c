@@ -1238,11 +1238,16 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
 {
     unsigned int i, n;
     char *out = NULL;
+    int outOffset = 0;
     char *startTag;
+    int startOffset = 0;
     char *endTag;
+    int endOffset = 0;
     char *childDump;
+    int childOffset = 0;
     char *value = NULL;
-    int nameLen;
+    int nameLen = 0;
+    int nsNameLen = 0;
     XmlNodeAttribute *attr;
     XmlNode *child;
     unsigned long nAttrs;
@@ -1265,54 +1270,51 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     if(rNode->type == XML_NODETYPE_COMMENT) {
         out = malloc(strlen(value)+depth+9);
         *out = 0;
-        for(n = 0; n < depth; n++) strcat(out, "\t");
-        strcat(out, "<!--");
-        strcat(out, value);
-        strcat(out, "-->\n");
+        for(n = 0; n < depth; n++)
+            out[n] = '\t';
+        sprintf(out+depth, "<!--%s-->\n", value);
         return out;
     } else if(rNode->type == XML_NODETYPE_CDATA) {
         out = malloc(strlen(value)+depth+14);
         *out = 0;
         for(n = 0; n < depth; n++)
-            strcat(out, "\t");
-        strcat(out, "<![CDATA[");
-        strcat(out, value);
-        strcat(out, "]]>\n");
+            out[n] = '\t';
+        sprintf(out+depth, "<![CDATA[%s]]>\n", value);
         return out;
     }
 
-    childDump = (char *)malloc(1);
-    *childDump = 0;
+    childDump = (char *)calloc(1, 1);
 
     if (rNode->ns && rNode->ns->name)
-        nameLen += (unsigned int)strlen(rNode->ns->name)+1;
-    startTag = (char *)malloc(depth+nameLen+7);
-    memset(startTag, 0, depth+nameLen+7);
-    endTag = (char *)malloc(depth+nameLen+7);
-    memset(endTag, 0, depth+nameLen+7);
+        nsNameLen = (unsigned int)strlen(rNode->ns->name)+1;
+    startTag = (char *)calloc(1, depth+nameLen+nsNameLen+7); // :/<>\n
+    endTag = (char *)calloc(1, depth+nameLen+nsNameLen+7);
 
-    for(n = 0; n < depth; n++)
-        strcat(startTag, "\t");
-    strcat(startTag, "<");
+    for(startOffset = 0; startOffset < depth; startOffset++)
+        startTag[startOffset] = '\t';
+    startTag[startOffset++] = '<';
     if (rNode->ns && rNode->ns->name) {
         // TODO - optimize
-        strcat(startTag, rNode->ns->name);
-        strcat(startTag, ":");
+        strcpy(startTag + startOffset, rNode->ns->name);
+        startOffset += nsNameLen;
+        startTag[startOffset-1] = ':';
     }
-    strcat(startTag, rNode->name);
+    memcpy(startTag + startOffset, rNode->name, nameLen);
+    startOffset += nameLen;
     nAttrs = XmlCountAttributes(rNode);
     if(nAttrs>0) {
         for(i = 1; i <= nAttrs; i++) {
             attr = XmlGetAttribute(rNode, i);
             if(attr) {
-                char *attr_value = xmlize(attr->value);
-                startTag = (char *)realloc(startTag, strlen(startTag)+
-                    strlen(attr->name)+strlen(attr_value)+8);
-                strcat(startTag, " ");
-                strcat(startTag, attr->name);
-                strcat(startTag, "=\"");
-                strcat(startTag, attr_value);
-                strcat(startTag, "\"");
+                int anLen, avLen;
+                char *attr_value;
+
+                attr_value = xmlize(attr->value);
+                anLen = strlen(attr->name);
+                avLen = strlen (attr_value);
+                startTag = (char *)realloc(startTag, startOffset + anLen + avLen + 8);
+                sprintf(startTag + startOffset, " %s=\"%s\"", attr->name, attr_value);
+                startOffset += anLen + avLen + 4;
                 if (attr_value)
                     free(attr_value);
             }
@@ -1320,50 +1322,63 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     }
     if((value && *value) || !TAILQ_EMPTY(&rNode->children)) {
         if(!TAILQ_EMPTY(&rNode->children)) {
-            strcat(startTag, ">\n");
-            for(n = 0; n < depth; n++)
-                strcat(endTag, "\t");
+            strcpy(startTag + startOffset, ">\n");
+            startOffset += 2;
+            for(endOffset = 0; endOffset < depth; endOffset++)
+                endTag[endOffset] = '\t';
             TAILQ_FOREACH(child, &rNode->children, siblings) {
                 char *childBuff = XmlDumpBranch(xml, child, depth+1); /* let's recurse */
                 if(childBuff) {
-                    childDump = (char *)realloc(childDump, strlen(childDump)+strlen(childBuff)+2);
-                    strcat(childDump, childBuff);
-                    //strcat(childDump, "\n");
+                    int childBuffLen = strlen(childBuff);
+                    childDump = (char *)realloc(childDump, childOffset+childBuffLen+1);
+                    // ensure copying the null-terminating byte as well
+                    memcpy(childDump + childOffset, childBuff, childBuffLen + 1);
+                    childOffset += childBuffLen;
                     free(childBuff);
                 }
             }
         } else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
-            strcat(startTag, ">");
+            startTag[startOffset++] = '>';
+            startTag[startOffset] = 0; // ensure to null-terminate
         }
-        strcat(endTag, "</");
+        strcpy(endTag + endOffset, "</");
+        endOffset += 2;
         if (rNode->ns && rNode->ns->name) {
             // TODO - optimize
-            strcat(endTag, rNode->ns->name);
-            strcat(endTag, ":");
+            strcpy(endTag + endOffset, rNode->ns->name);
+            endOffset += nsNameLen;
+            endTag[endOffset-1] = ':';
         }
-        strcat(endTag, rNode->name);
-        strcat(endTag, ">\n");
+        sprintf(endTag + endOffset, "%s>\n", rNode->name);
+        endOffset += nameLen + 2;
+        endTag[endOffset] = 0; // ensure null-terminating
         out = (char *)malloc(depth+strlen(startTag)+strlen(endTag)+
             (value?strlen(value)+1:1)+strlen(childDump)+3);
         strcpy(out, startTag);
+        outOffset += startOffset;
         if(value && *value) { // skip also if value is an empty string (not only if it's a null pointer)
             if(!TAILQ_EMPTY(&rNode->children)) {
-                for(n = 0; n < depth; n++)
-                    strcat(out, "\t");
-                strcat(out, value);
-                strcat(out, "\n");
+                for(; outOffset < depth; outOffset++)
+                    out[outOffset] = '\t';
+                if (value) {
+                    sprintf(out + outOffset, "%s\n", value);
+                    outOffset += strlen(value)+1;
+                }
             }
             else {
-                strcat(out, value);
-                //strcat(out, " ");
+                if (value)
+                    strcpy(out + outOffset, value);
+                    outOffset += strlen(value);
             }
         }
-        strcat(out, childDump);
-        strcat(out, endTag);
+        memcpy(out + outOffset, childDump, childOffset);
+        outOffset += childOffset;
+        strcpy(out + outOffset, endTag);
     }
     else {
-        strcat(startTag, "/>\n");
+        strcpy(startTag + startOffset, "/>\n");
+        startOffset += 4;
         out = strdup(startTag);
     }
     free(startTag);
@@ -1383,6 +1398,8 @@ XmlDump(TXml *xml, int *outlen)
     unsigned int i;
     int doConversion = 0;
     char head[256]; // should be enough
+    int hLen;
+    unsigned int offset;
 
     memset(head, 0, sizeof(head));
     if (xml->head) {
@@ -1428,13 +1445,18 @@ XmlDump(TXml *xml, int *outlen)
         snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
             xml->outputEncoding?xml->outputEncoding:"utf-8");
     }
-    dump = malloc(strlen(head)+6);
+    hLen = strlen(head);
+    dump = malloc(hLen+6);
     sprintf(dump, "<?%s?>\n", head);
+    offset = hLen +5;
     TAILQ_FOREACH(rNode, &xml->rootElements, siblings) {
         branch = XmlDumpBranch(xml, rNode, 0);
         if(branch) {
-            dump = (char *)realloc(dump, strlen(dump)+strlen(branch)+1);
-            strcat(dump, branch);
+            int bLen = strlen(branch);
+            dump = (char *)realloc(dump, offset + bLen + 1);
+            // ensure copying the null-terminating byte as well
+            memcpy(dump + offset, branch, bLen + 1); 
+            offset += bLen;
             free(branch);
         }
     }
