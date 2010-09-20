@@ -59,3 +59,5 @@ Revision history for Perl extension TinyXML.
 0.24  - reverted XmlDumpBranch optimizations becuase 
         memory corruption was caused by the new code
 0.25  - reimplemented XmlDumpBranch optimizations through safer code
+0.26  - introduced 'ignoreBlanks' and 'ignoreWhiteSpaces' flags
+        (which affect both parsing and dumping behaviours)

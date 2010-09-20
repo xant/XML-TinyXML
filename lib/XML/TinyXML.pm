@@ -264,6 +264,8 @@ sub new {
     $self->{_ctx} = XmlCreateContext();
     $self->setOutputEncoding($params{encoding}) if ($params{encoding});
     $self->allowMultipleRootNodes($params{multipleRootNodes}) if ($params{multipleRootNodes});
+    $self->ignoreBlanks($params{ignoreBlanks}) if (defined($params{ignoreBlanks}));
+    $self->ignoreWhiteSpaces($params{ignoreWhiteSpaces}) if (defined($params{ignoreWhiteSpaces}));
     if($root) {
         if(UNIVERSAL::isa($root, "XML::TinyXML::Node")) {
             XmlAddRootNode($self->{_ctx}, $root->{_node});
@@ -616,6 +618,21 @@ sub allowMultipleRootNodes {
            ? $self->{_ctx}->allowMultipleRootNodes($val)
            : $self->{_ctx}->allowMultipleRootNodes;
 }
+
+sub ignoreBlanks {
+    my ($self, $val) = @_;
+    return defined($val)
+           ? $self->{_ctx}->ignoreBlanks($val)
+           : $self->{_ctx}->ignoreBlanks;
+}
+
+sub ignoreWhiteSpaces {
+    my ($self, $val) = @_;
+    return defined($val)
+           ? $self->{_ctx}->ignoreWhiteSpaces($val)
+           : $self->{_ctx}->ignoreWhiteSpaces;
+}
+
 sub DESTROY {
     my $self = shift;
     XmlDestroyContext($self->{_ctx})

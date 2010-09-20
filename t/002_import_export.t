@@ -1,5 +1,5 @@
 
-use Test::More tests => 2;
+use Test::More tests => 4;
 BEGIN { use_ok('XML::TinyXML') };
 
 $txml = XML::TinyXML->new();
@@ -16,5 +16,27 @@ while(<IN>) {
 }
 close(IN);
 ok( $out eq $in, "import/export" );
-#warn "IN $in";
-#warn "OUT $out";
+
+
+$txml->ignoreBlanks(0);
+$txml->ignoreWhiteSpaces(0);
+$txml->loadFile("./t/t-noblanks.xml");
+
+open(IN, "./t/t-noblanks.xml"); 
+$in = "";
+while(<IN>) {
+    $in .= $_;
+}
+chomp($in);
+close(IN);
+$out = $txml->dump;
+ok( $out eq $in, "import/export" );
+$txml->ignoreBlanks(1);
+$txml->ignoreWhiteSpaces(0);
+$txml->loadFile("./t/t-noblanks.xml");
+
+my $node = $txml->getNode("/qtest");
+is ($node->value, ' ');
+
+#warn "IN '$in'";
+#warn "OUT '$out'";

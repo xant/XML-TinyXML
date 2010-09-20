@@ -197,6 +197,8 @@ XmlCreateContext()
 
     xml = (TXml *)calloc(1, sizeof(TXml));
     xml->cNode = NULL;
+    xml->ignoreWhiteSpaces = 1; // defaults to old behaviour (all blanks are not taken into account)
+    xml->ignoreBlanks = 1; // defaults to old behaviour (all blanks are not taken into account)
     TAILQ_INIT(&xml->rootElements);
     xml->head = NULL;
     // default is UTF-8
@@ -754,22 +756,38 @@ XmlValueHandler(TXml *xml, char *text)
 {
     char *p;
     if(text) {
-        // TODO - make 'skipblanks' optional
         // remove heading blanks
-        while((*text == ' ' || *text == '\t' ||
-            *text == '\r' || *text == '\n') && *text != 0)
-        {
-            text++;
+        if (xml->ignoreWhiteSpaces) {
+            while((*text == ' ' || *text == '\t' || *text == '\r' || *text == '\n') &&
+                   *text != 0)
+            {
+                text++;
+            }
+        } else if (xml->ignoreBlanks) {
+            while((*text == '\t' || *text == '\r' || *text == '\n') && 
+                   *text != 0)
+            {
+                text++;
+            }
         }
 
         p = text+strlen(text)-1;
 
         // remove trailing blanks
-        while((*p == ' ' || *p == '\t' ||
-            *p == '\r' || *p == '\n') && p != text)
-        {
-            *p = 0;
-            p--;
+        if (xml->ignoreWhiteSpaces) {
+            while((*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') &&
+                    p != text)
+            {
+                *p = 0;
+                p--;
+            }
+        } else if (xml->ignoreBlanks) {
+            while((*p == '\t' || *p == '\r' || *p == '\n') &&
+                    p != text)
+            {
+                *p = 0;
+                p--;
+            }
         }
 
         if(xml->cNode)  {
@@ -822,8 +840,17 @@ XmlParseBuffer(TXml *xml, char *buf)
     }\
 
 #define SKIP_BLANKS(__p) \
-    while((*__p == ' ' || *__p == '\t' || *__p == '\r' || *__p == '\n') && *__p != 0) __p++; \
+    while((*__p == '\t' || *__p == '\r' || *__p == '\n') && *__p != 0) __p++; \
     if(*__p == 0) break;
+
+#define SKIP_WHITESPACES(__p) \
+    SKIP_BLANKS(__p); \
+    if(*__p == 0) break;\
+    while(*__p == ' ') {\
+        __p++;\
+        SKIP_BLANKS(__p);\
+        if(*__p == 0) break;\
+    }
 
 #define ADVANCE_ELEMENT(__p) \
     while(*__p != '>' && *__p != ' ' && *__p != '\t' && *__p != '\r' && *__p != '\n' && *__p != 0) __p++; \
@@ -834,12 +861,16 @@ XmlParseBuffer(TXml *xml, char *buf)
     SKIP_BLANKS(__p);
 
     while(*p != 0) {
-        SKIP_BLANKS(p);
+        if (xml->ignoreWhiteSpaces) {
+            SKIP_WHITESPACES(p);
+        } else if (xml->ignoreBlanks) {
+            SKIP_BLANKS(p);
+        }
         if(*p == '<') { // an xml entity starts here
             p++;
             if(*p == '/') { // check if this is a closing node
                 p++;
-                SKIP_BLANKS(p);
+                SKIP_WHITESPACES(p);
                 mark = p;
                 while(*p != '>' && *p != 0)
                     p++;
@@ -909,12 +940,12 @@ XmlParseBuffer(TXml *xml, char *buf)
             } else if(strncmp(p, "![", 2) == 0) {
                 mark = p;
                 p += 2; /* skip ![ */
-                SKIP_BLANKS(p);
+                SKIP_WHITESPACES(p);
                 //mark = p;
                 if(strncmp(p, "CDATA", 5) == 0) {
                     char *cdata = NULL;
                     p+=5;
-                    SKIP_BLANKS(p);
+                    SKIP_WHITESPACES(p);
                     if(*p != '[') {
                         fprintf(stderr, "Unsupported entity type at \"... -->%15s\"", mark);
                         err = XML_PARSER_GENERIC_ERR;
@@ -978,7 +1009,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                 values = NULL;
                 nAttrs = 0;
                 state = XML_ELEMENT_START;
-                SKIP_BLANKS(p);
+                SKIP_WHITESPACES(p);
                 mark = p;
                 ADVANCE_ELEMENT(p);
                 start = (char *)malloc(p-mark+2);
@@ -992,7 +1023,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                 else {
                     start[p-mark] = 0;
                 }
-                SKIP_BLANKS(p);
+                SKIP_WHITESPACES(p);
                 while(*p != '>' && *p != 0) {
                     mark = p;
                     ADVANCE_TO_ATTR_VALUE(p);
@@ -1001,7 +1032,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                         strncpy(tmpAttr, mark, p-mark);
                         tmpAttr[p-mark] = 0;
                         p++;
-                        SKIP_BLANKS(p);
+                        SKIP_WHITESPACES(p);
                         if(*p == '"' || *p == '\'') {
                             quote = *p;
                             p++;
@@ -1040,7 +1071,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                                 values[nAttrs-1] = dexmlized;
                                 values[nAttrs] = NULL;
                                 p++;
-                                SKIP_BLANKS(p);
+                                SKIP_WHITESPACES(p);
                             }
                             else {
                                 free(tmpAttr);
@@ -1270,16 +1301,24 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     if(rNode->type == XML_NODETYPE_COMMENT) {
         out = malloc(strlen(value)+depth+9);
         *out = 0;
-        for(n = 0; n < depth; n++)
-            out[n] = '\t';
-        sprintf(out+depth, "<!--%s-->\n", value);
+        if (xml->ignoreBlanks) {
+            for(n = 0; n < depth; n++)
+                out[n] = '\t';
+            sprintf(out+depth, "<!--%s-->\n", value);
+        } else {
+            sprintf(out+depth, "<!--%s-->", value);
+        }
         return out;
     } else if(rNode->type == XML_NODETYPE_CDATA) {
         out = malloc(strlen(value)+depth+14);
         *out = 0;
-        for(n = 0; n < depth; n++)
-            out[n] = '\t';
-        sprintf(out+depth, "<![CDATA[%s]]>\n", value);
+        if (xml->ignoreBlanks) {
+            for(n = 0; n < depth; n++)
+                out[n] = '\t';
+            sprintf(out+depth, "<![CDATA[%s]]>\n", value);
+        } else {
+            sprintf(out+depth, "<![CDATA[%s]]>", value);
+        }
         return out;
     }
 
@@ -1290,8 +1329,10 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     startTag = (char *)calloc(1, depth+nameLen+nsNameLen+7); // :/<>\n
     endTag = (char *)calloc(1, depth+nameLen+nsNameLen+7);
 
-    for(startOffset = 0; startOffset < depth; startOffset++)
-        startTag[startOffset] = '\t';
+    if (xml->ignoreBlanks) {
+        for(startOffset = 0; startOffset < depth; startOffset++)
+            startTag[startOffset] = '\t';
+    }
     startTag[startOffset++] = '<';
     if (rNode->ns && rNode->ns->name) {
         // TODO - optimize
@@ -1322,10 +1363,14 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     }
     if((value && *value) || !TAILQ_EMPTY(&rNode->children)) {
         if(!TAILQ_EMPTY(&rNode->children)) {
-            strcpy(startTag + startOffset, ">\n");
-            startOffset += 2;
-            for(endOffset = 0; endOffset < depth; endOffset++)
-                endTag[endOffset] = '\t';
+            if (xml->ignoreBlanks) {
+                strcpy(startTag + startOffset, ">\n");
+                startOffset += 2;
+                for(endOffset = 0; endOffset < depth; endOffset++)
+                    endTag[endOffset] = '\t';
+            } else {
+                startTag[startOffset++] = '>';
+            }
             TAILQ_FOREACH(child, &rNode->children, siblings) {
                 char *childBuff = XmlDumpBranch(xml, child, depth+1); /* let's recurse */
                 if(childBuff) {
@@ -1340,8 +1385,8 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         } else {
             // TODO - allow to specify a flag to determine if we want white spaces or not
             startTag[startOffset++] = '>';
-            startTag[startOffset] = 0; // ensure to null-terminate
         }
+        startTag[startOffset] = 0; // ensure null-terminating the start-tag
         strcpy(endTag + endOffset, "</");
         endOffset += 2;
         if (rNode->ns && rNode->ns->name) {
@@ -1350,8 +1395,10 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
             endOffset += nsNameLen;
             endTag[endOffset-1] = ':';
         }
-        sprintf(endTag + endOffset, "%s>\n", rNode->name);
-        endOffset += nameLen + 2;
+        sprintf(endTag + endOffset, "%s>", rNode->name);
+        endOffset += nameLen + 1;
+        if (xml->ignoreBlanks)
+            endTag[endOffset++] = '\n';
         endTag[endOffset] = 0; // ensure null-terminating
         out = (char *)malloc(depth+strlen(startTag)+strlen(endTag)+
             (value?strlen(value)+1:1)+strlen(childDump)+3);
@@ -1359,11 +1406,15 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         outOffset += startOffset;
         if(value && *value) { // skip also if value is an empty string (not only if it's a null pointer)
             if(!TAILQ_EMPTY(&rNode->children)) {
-                for(; outOffset < depth; outOffset++)
-                    out[outOffset] = '\t';
+                if (xml->ignoreBlanks) {
+                    for(; outOffset < depth; outOffset++)
+                        out[outOffset] = '\t';
+                }
                 if (value) {
-                    sprintf(out + outOffset, "%s\n", value);
-                    outOffset += strlen(value)+1;
+                    sprintf(out + outOffset, "%s", value);
+                    outOffset += strlen(value);
+                    if (xml->ignoreBlanks)
+                        out[outOffset++] = '\n';
                 }
             }
             else {
@@ -1377,8 +1428,11 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
         strcpy(out + outOffset, endTag);
     }
     else {
-        strcpy(startTag + startOffset, "/>\n");
-        startOffset += 4;
+        strcpy(startTag + startOffset, "/>");
+        startOffset += 2;
+        if (xml->ignoreBlanks)
+            startTag[startOffset++] = '\n';
+        startTag[startOffset] = 0;
         out = strdup(startTag);
     }
     free(startTag);

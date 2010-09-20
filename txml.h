@@ -114,6 +114,8 @@ typedef struct __TXml {
     char documentEncoding[64];
     int useNamespaces;
     int allowMultipleRootNodes;
+    int ignoreWhiteSpaces;
+    int ignoreBlanks;
 } TXml;
 
 /***

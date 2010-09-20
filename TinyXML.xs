@@ -562,3 +562,29 @@ allowMultipleRootNodes(THIS, __value = NO_INIT)
     OUTPUT:
     RETVAL
 
+int
+ignoreBlanks(THIS, __value = NO_INIT)
+    TXml *THIS
+    int __value
+    PROTOTYPE: $;$
+    CODE:
+    RETVAL = THIS->ignoreBlanks;
+    if (items > 1)
+        THIS->ignoreBlanks = __value;
+    OUTPUT:
+    RETVAL
+
+int
+ignoreWhiteSpaces(THIS, __value = NO_INIT)
+    TXml *THIS
+    int __value
+    PROTOTYPE: $;$
+    CODE:
+    RETVAL = THIS->ignoreWhiteSpaces;
+    if (items > 1)
+        THIS->ignoreWhiteSpaces = __value;
+    if (__value)
+        THIS->ignoreBlanks = __value;
+    OUTPUT:
+    RETVAL
+
