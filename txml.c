@@ -89,7 +89,7 @@ dexmlize(char *string)
                             if (string[i] >= '0' && string[i] <= '9' && string[i+1] == ';')
                                 i++;
                             else if (string[i] == ';')
-                                ;
+                                ; // do nothing
                             else
                                 return NULL;
                             chr = (char)strtol(marker, NULL, 0);
@@ -440,12 +440,13 @@ XmlUpdateKnownNamespaces(XmlNode *node)
 }
 
 // update the hinerited namespace across a branch.
-// This happens if a node (which all its childnodes) is moved across
+// This happens if a node (with all its childnodes) is moved across
 // 2 different documents. The hinerited namespace must be updated
 // accordingly to the new context, so we traverse the branches
 // under the moved node to update the the hinerited namespace where
-// necessary (if a node defines a new default itself, it's not necessary
-// to go deeper in that same branch)
+// necessary.
+// NOTE: if a node defines a new default itself, it's not necessary
+//       to go deeper in that same branch
 static void
 XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns)
 {
@@ -672,10 +673,9 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
 
     if ((nssep = strchr(nodename, ':'))) { // a namespace is defined
         XmlNamespace *ns;
-        *nssep = 0;
+        *nssep = 0; // nodename now starts with the null-terminated namespace 
+                    // followed by the real name (nssep + 1)
         newNode = XmlCreateNode(nssep+1, NULL, xml->cNode);
-        // nodename now starts with the null-terminated namespace 
-        // followed by the real name (nssep + 1)
         if (xml->cNode)
             ns = XmlGetNamespaceByName(xml->cNode, nodename);
         if (!ns) { 
@@ -757,13 +757,16 @@ XmlValueHandler(TXml *xml, char *text)
     char *p;
     if(text) {
         // remove heading blanks
-        if (xml->ignoreWhiteSpaces) {
+        if (xml->ignoreWhiteSpaces) { // first check if we want to ignore any kind of whitespace between nodes
+                                      // (which means : 'no whitespace-only values' and 'any value will be trimmed')
             while((*text == ' ' || *text == '\t' || *text == '\r' || *text == '\n') &&
                    *text != 0)
             {
                 text++;
             }
-        } else if (xml->ignoreBlanks) {
+        } else if (xml->ignoreBlanks) { // or if perhaps we want to consider pure whitespaces: ' '
+                                        // as part of the value. (but we still want to skip newlines and
+                                        // tabs, which are assumed to be there to prettify the text layout
             while((*text == '\t' || *text == '\r' || *text == '\n') && 
                    *text != 0)
             {
@@ -774,14 +777,14 @@ XmlValueHandler(TXml *xml, char *text)
         p = text+strlen(text)-1;
 
         // remove trailing blanks
-        if (xml->ignoreWhiteSpaces) {
+        if (xml->ignoreWhiteSpaces) { // XXX - read above
             while((*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') &&
                     p != text)
             {
                 *p = 0;
                 p--;
             }
-        } else if (xml->ignoreBlanks) {
+        } else if (xml->ignoreBlanks) { // XXX = read above
             while((*p == '\t' || *p == '\r' || *p == '\n') &&
                     p != text)
             {
@@ -839,10 +842,12 @@ XmlParseBuffer(TXml *xml, char *buf)
         nAttrs = 0;\
     }\
 
+// skip tabs and new-lines
 #define SKIP_BLANKS(__p) \
     while((*__p == '\t' || *__p == '\r' || *__p == '\n') && *__p != 0) __p++; \
     if(*__p == 0) break;
 
+// skip any kind of whitespace
 #define SKIP_WHITESPACES(__p) \
     SKIP_BLANKS(__p); \
     if(*__p == 0) break;\
@@ -975,7 +980,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                 p++;
                 mark = p;
                 p = strstr(mark, "?>");
-                if(xml->head)
+                if(xml->head) // we are going to overwrite existing head (if any)
                     free(xml->head); /* XXX - should notify this behaviour? */
                 xml->head = calloc(1, p-mark+1);
                 strncpy(xml->head, mark, p-mark);
