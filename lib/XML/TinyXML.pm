@@ -606,12 +606,27 @@ sub save {
     return XmlSave($self->{_ctx}, $path);
 }
 
+=item * setOutputEncoding ($encoding)
+
+Sets the output encding to the specified one
+
+(any iconv-supported encoding is a valid argument for this method)
+
+Returns XML_NOERR if success, a specific error code otherwise
+
+=cut
 sub setOutputEncoding {
     my ($self, $encoding) = @_;
     $self->{_encoding} = $encoding;
     XmlSetOutputEncoding($self->{_ctx}, $encoding);
 }
 
+=item * allowMultipleRootNodes ($bool)
+
+Allow to control if the document can contain multiple root nodes (out of xml spec)
+or if it will support only one single root node. Default is 0
+
+=cut
 sub allowMultipleRootNodes {
     my ($self, $val) = @_;
     return defined($val)
@@ -619,6 +634,52 @@ sub allowMultipleRootNodes {
            : $self->{_ctx}->allowMultipleRootNodes;
 }
 
+=item ignoreBlanks ($bool)
+
+Controls the behaviour of both the parser and the dumper.
+
+- Parser :
+
+If ignoreBlanks is true any 'tab', 'newline' and 'carriage-return' ("\t", "\n", "\r"),
+between two tags will be ignored, unless surrounded by non-whitespace character.
+For example, considering the following node:
+<parent>
+	<child>value</child>
+</parent>
+
+( literaly : "<parent>\n\t<child>value</child>\n</parent>" )
+
+the parser will gnore the newlines and the tab between two nodes.
+So, the resulting structure would be :
+$node = { 
+            value => undef,
+            children => [ { child => "value" } ]
+         }
+
+If ignoreBlanks is false, all characters between the node tags will be part of the 
+value and the result would be : 
+$node = { 
+            value => "\n\t\n",
+            children => [ { child => "value" } ]
+        }
+
+- Dumper :
+
+If ignoreBlanks is true, both newlines and tabs will be used to prettify text formatting,
+so the node in the previous example will be printed out as:
+<parent>
+	<child>value</child>
+</parent>
+
+If ignoreBlanks is false, no extra characters will be added to the xml data
+(so no newlines, indentation or such). 
+The previous example would be dumped as follows:
+
+<parent><child>value</child></parent>
+
+Default is 1
+
+=cut
 sub ignoreBlanks {
     my ($self, $val) = @_;
     return defined($val)
@@ -626,6 +687,46 @@ sub ignoreBlanks {
            : $self->{_ctx}->ignoreBlanks;
 }
 
+=item ignoreWhiteSpaces ($bool)
+
+Controls the behaviour of the parser.
+
+This flag includes the literal whitespace ' ' among the ignored characters 
+commended by ignoreBlanks()
+
+consider the following examples:
+
+<child> </child> 
+
+ - if true:
+     value = ""
+
+ - if false:
+     value = " "
+
+ * The parser will ignore the whitespace if this flag is true.
+
+<child> a value </child>
+
+<child> a value</child>
+
+<child>a value </child>
+
+ - if true:
+     value = "a value"
+
+ - if false:
+     value = " a value "
+             " a value"
+             "a value "
+
+ * The whitespace will be part of the value if this flag is false
+
+The dumper is not affected by this flag.
+
+Default is 1
+
+=cut
 sub ignoreWhiteSpaces {
     my ($self, $val) = @_;
     return defined($val)
