@@ -553,12 +553,6 @@ XmlAddAttribute(XmlNode *node, char *name, char *val)
 
     TAILQ_INSERT_TAIL(&node->attributes, attr, list);
     return XML_NOERR;
-    /*
-    free(attr->name);
-    free(attr->value);
-    free(attr);
-    return XML_GENERIC_ERR;
-    */
 }
 
 int
@@ -686,20 +680,16 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
         newNode = XmlCreateNode(nodename, NULL, xml->cNode);
     }
     free(nodename);
-    if(!newNode || !newNode->name)
-    {
+    if(!newNode || !newNode->name) {
         /* XXX - ERROR MESSAGES HERE */
         return XML_MEMORY_ERR;
     }
     /* handle attributes if present */
-    if(attr_names && attr_values)
-    {
-        while(attr_names[offset] != NULL)
-        {
+    if(attr_names && attr_values) {
+        while(attr_names[offset] != NULL) {
             char *nsp = NULL;
             res = XmlAddAttribute(newNode, attr_names[offset], attr_values[offset]);
-            if(res != XML_NOERR)
-            {
+            if(res != XML_NOERR) {
                 XmlDestroyNode(newNode);
                 goto _start_done;
             }
@@ -714,20 +704,15 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
             offset++;
         }
     }
-    if(xml->cNode)
-    {
+    if(xml->cNode) {
         res = XmlAddChildNode(xml->cNode, newNode);
-        if(res != XML_NOERR)
-        {
+        if(res != XML_NOERR) {
             XmlDestroyNode(newNode);
             goto _start_done;
         }
-    }
-    else
-    {
+    } else {
         res = XmlAddRootNode(xml, newNode) ;
-        if(res != XML_NOERR)
-        {
+        if(res != XML_NOERR) {
             XmlDestroyNode(newNode);
             goto _start_done;
         }
@@ -742,8 +727,7 @@ static XmlErr
 XmlEndHandler(TXml *xml, char *element)
 {
     XmlNode *parent;
-    if(xml->cNode)
-    {
+    if(xml->cNode) {
         parent = xml->cNode->parent;
         xml->cNode = parent;
         return XML_NOERR;
@@ -881,8 +865,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                     p++;
                 if(*p == '>') {
                     end = (char *)malloc(p-mark+1);
-                    if(!end)
-                    {
+                    if(!end) {
                         err = XML_MEMORY_ERR;
                         goto _parser_err;
                     }
@@ -1054,16 +1037,12 @@ XmlParseBuffer(TXml *xml, char *buf)
                             if(*p == quote) {
                                 char *dexmlized;
                                 char *tmpVal = (char *)malloc(p-mark+2);
-#if 0
-                                strncpy(tmpVal, mark, p-mark);
-#else
                                 int i, j=0;
                                 for (i = 0; i < p-mark; i++) {
                                     if ( mark[i] == quote && mark[i+1] == mark[i] )
                                         i++;
                                     tmpVal[j++] = mark[i]; 
                                 }
-#endif
                                 tmpVal[p-mark] = 0;
                                 /* add new attribute */
                                 nAttrs++;
@@ -1255,14 +1234,11 @@ XmlParseFile(TXml *xml, char *path)
             free(buffer); // release either the initial or the converted buffer
             XmlFileUnlock(inFile);
             fclose(inFile);
-        }
-        else {
+        } else {
             fprintf(stderr, "Can't open xmlfile %s\n", path);
             return -1;
         }
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "Can't stat xmlfile %s\n", path);
         return -1;
     }
@@ -1828,11 +1804,9 @@ XmlGetNode(TXml *xml, char *path)
             return NULL;
         }
 
-        for(i = 1; i <= XmlCountBranches(xml); i++)
-        {
+        for(i = 1; i <= XmlCountBranches(xml); i++) {
             wNode = XmlGetBranch(xml, i);
-            if(strcmp(wNode->name, tag) == 0)
-            {
+            if(strcmp(wNode->name, tag) == 0) {
                 cNode = wNode;
                 break;
             }
@@ -1864,8 +1838,7 @@ XmlGetNode(TXml *xml, char *path)
         return NULL;
     }
 
-    while(tag)
-    {
+    while(tag) {
         XmlNode *tmp;
         wNode = XmlGetChildNodeByName(cNode, tag);
         if(!wNode) {
