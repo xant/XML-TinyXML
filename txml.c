@@ -666,7 +666,7 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
         return XML_BAD_CHARS;
 
     if ((nssep = strchr(nodename, ':'))) { // a namespace is defined
-        XmlNamespace *ns;
+        XmlNamespace *ns = NULL;
         *nssep = 0; // nodename now starts with the null-terminated namespace 
                     // followed by the real name (nssep + 1)
         newNode = XmlCreateNode(nssep+1, NULL, xml->cNode);
