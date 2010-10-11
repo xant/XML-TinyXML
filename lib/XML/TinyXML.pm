@@ -45,7 +45,7 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
   # or even 
   $node->addChildNode('child', 'value3', { attr => 'val' });
   # the 3rd 'child' has an attribute
-  $child3 = $xml->getNode('/rootnode/child[@attr='val']');
+  $child3 = $xml->getNode('/rootnode/child[@attr="val"]');
 
   #### IMPORTANT NOTE: #### 
   # this is not xpath syntax. use XML::TinyXML::Selector::XPath 
@@ -93,7 +93,7 @@ The OO Tree-based api allows to :
 
 There are other "no-dependencies" tiny xml implementations on CPAN.
 Notably : XML::Easy and XML::Tiny but both are still missing some key
-features which are actually implemented in this module which are required 
+features which are actually implemented in this module and are required 
 by the projects where I use it,
 (in particular : 
     - an OO api to allow changing and re-exporting the xml document,
@@ -197,7 +197,7 @@ our @EXPORT = qw(
         XmlSetCurrentNamespace
 );
 
-our $VERSION = '0.26';
+our $VERSION = '0.28';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
