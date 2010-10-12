@@ -75,15 +75,16 @@ XML::TinyXML - Little and efficient Perl module to manage xml data.
 =head1 DESCRIPTION
 
 Since in some environments it could be desirable to avoid installing 
-Expat, XmlParser and blahblahblah , needed by most XML-related perl modules.
-My main scope was to obtain a fast xml library usable from perl
+Expat, XmlParser and blahblahblah, needed by most XML-related perl modules,
+my main scope was to obtain a fast xml library usable from perl
 (so with the possibility to expose a powerful api) but without the need to install 
 a lot of other modules (or even C libraries) to have it working.
 
 The actual version of XML::TinyXML (0.18 when I'm writing this) 
-implements an xpath selector and supports encodings (throgh iconv)
+implements an xpath selector and supports encodings (through iconv).
 
 The OO Tree-based api allows to :
+
     - create a new document programmaticaly
     - import an existing document from a file
     - import an existing document by parsing a memory buffer
@@ -94,14 +95,14 @@ The OO Tree-based api allows to :
 There are other "no-dependencies" tiny xml implementations on CPAN.
 Notably : XML::Easy and XML::Tiny but both are still missing some key
 features which are actually implemented in this module and are required 
-by the projects where I use it,
-(in particular : 
+by the projects where I use it, in particular :
+
     - an OO api to allow changing and re-exporting the xml document,
     - an easy-to-use bidirectional xml<->hashref conversion 
     - encoding-conversion capabilities
     - xpath selectors
     - small memory footprint (well... it's always a perl module)
- )
+
 The underlying xml implementation resides in txml.c and is imported in the perl
 context through XS. It uses a linkedlist implementation took out of freebsd kernel
 and is supposed to be fast enough to represent and access 'not-huge' xml trees.
@@ -232,6 +233,7 @@ XSLoader::load('XML::TinyXML', $VERSION);
 Creates a new XML::TinyXML object.
 
 $root can be any of :
+
     XML::TinyXML::Node
     XmlNodePtr
     HASHREF
@@ -243,17 +245,18 @@ xml document.
 %params is an optional hash parameter used only
 if $arg is an HASHREF or a scalar
 
-%params = (
-    param =>  * if $root is an hashref, this will be
-                  name of the root node (it will be passed 
-                  as second argument to loadHash())
-              * if $root is a scalar, this will be 
-                  the value of the root node.
-    attrs =>  attributes of the 'contextually added' $root node 
-    encoding => output encoding to use (among iconv supported ones)
-);
+    %params = (
+        param =>  * if $root is an hashref, this will be
+                      name of the root node (it will be passed 
+                      as second argument to loadHash())
+                  * if $root is a scalar, this will be 
+                      the value of the root node.
+        attrs =>  attributes of the 'contextually added' $root node 
+        encoding => output encoding to use (among iconv supported ones)
+    );
 
 =cut
+
 sub new {
     my ($class, $root, %params ) = @_;
     my $self = {} ;
@@ -293,6 +296,7 @@ $value is the value of the attribute
 This method is just an accessor. See XML::TinyXML::Node::addAttributes() instead.
 
 =cut
+
 sub addNodeAttribute {
     my ($self, $node, $key, $value) = @_;
     return undef unless($node && UNIVERSAL::isa("XML::TinyXML::Node", $node));
@@ -308,6 +312,7 @@ $node MUST be a XML::TinyXML::Node object.
 This method is just an accessor. See XML::TinyXML::Node::removeAttribute() instead.
 
 =cut
+
 sub removeNodeAttribute {
     my ($self, $node, $index) = @_;
     return undef unless($node && UNIVERSAL::isa("XML::TinyXML::Node", $node));
@@ -321,6 +326,7 @@ Adds a new root node.
 or as a new branch in the xml tree represented by the document itself)
 
 =cut
+
 sub addRootNode {
     my ($self, $name, $val, $attrs) = @_;
 
@@ -345,6 +351,7 @@ This method is exactly like addRootNode but first argument must be a valid XML::
 which will be the parent of the newly created node
 
 =cut
+
 sub addChildNode {
     my ($self, $node, $name, $val, $attrs) = @_;
 
@@ -370,6 +377,7 @@ sub addChildNode {
 Returns a stringified version of the XML structure represented internally
 
 =cut
+
 sub dump {
     my $self = shift;
     return XmlDump($self->{_ctx});
@@ -380,6 +388,7 @@ sub dump {
 Load the xml structure from a file
 
 =cut
+
 sub loadFile {
     my ($self, $path) = @_;
     return XmlParseFile($self->{_ctx}, $path);
@@ -393,6 +402,7 @@ if $root is specified, it will be the entity name of the root node
 in the resulting xml document.
 
 =cut
+
 sub loadHash {
     my ($self, $hash, $root) = @_;
     $root = "txml"
@@ -416,6 +426,7 @@ sub loadHash {
 Dump the xml structure represented internally in the form of an hashref
 
 =cut
+
 sub toHash {
     my ($self) = shift;
     # only first branch will be parsed ... This means that if multiple root 
@@ -430,6 +441,7 @@ sub toHash {
 Load the xml structure from a preloaded memory buffer
 
 =cut
+
 sub loadBuffer {
     my ($self, $buf) = @_;
     return XmlParseBuffer($self->{_ctx}, $buf);
@@ -446,6 +458,7 @@ as absolute)
 Returns an XML::TinyXML::Node object
 
 =cut
+
 sub getNode {
     my ($self, $path) = @_;
     return XML::TinyXML::Node->new(XmlGetNode($self->{_ctx}, $path));
@@ -458,6 +471,7 @@ Get the child of $node at index $index.
 Returns an XML::TinyXML::Node object
 
 =cut
+
 sub getChildNode {
     my ($self, $node, $index) = @_;
     return XML::TinyXML::Node->new(XmlGetChildNode($node, $index));
@@ -468,6 +482,7 @@ sub getChildNode {
 Returns the number of $node's children
 
 =cut
+
 sub countChildren {
     my ($self, $node) = @_;
     if(UNIVERSAL::isa($node, "XML::TinyXML::Node")) {
@@ -485,7 +500,7 @@ sub countChildren {
 
 =item * removeNode ($path)
 
-Remove the node at specific $path , if present.
+Remove the node at specific $path, if present.
 See getNode() documentation for some notes on the $path format.
 
 Returns XML_NOERR (0) if success, error code otherwise.
@@ -493,6 +508,7 @@ Returns XML_NOERR (0) if success, error code otherwise.
 See Exportable constants for a list of possible error codes
 
 =cut
+
 sub removeNode {
     my ($self, $path) = @_;
     return XmlRemoveNode($self->{_ctx}, $path);
@@ -503,6 +519,7 @@ sub removeNode {
 alias for getRootNode
 
 =cut
+
 sub getBranch {
     my ($self, $index) = @_;
     return XML::TinyXML::Node->new(XmlGetBranch($self->{_ctx}, $index));
@@ -515,6 +532,7 @@ Get the root node at $index.
 Returns an XML::TinyXML::Node object if present, undef otherwise
 
 =cut
+
 sub getRootNode {
     my ($self, $index) = @_;
     return $self->getBranch($index);
@@ -525,6 +543,7 @@ sub getRootNode {
 Alias for removeRootNode
 
 =cut
+
 sub removeBranch {
     my ($self, $index) = @_;
     return XmlRemoveBranch($self->{_ctx}, $index);
@@ -535,6 +554,7 @@ sub removeBranch {
 Remove the rootnode (and all his children) at $index.
 
 =cut
+
 sub removeRootNode {
     my ($self, $index) = @_;
     return $self->removeBranch($index);
@@ -545,6 +565,7 @@ sub removeRootNode {
 Returns the number of root nodes within this context
 
 =cut
+
 sub countRootNodes {
     my ($self) = @_;
     return XmlCountBranches($self->{_ctx});
@@ -556,6 +577,7 @@ Returns an array containing all rootnodes.
 In scalar context returns an arrayref.
 
 =cut
+
 sub rootNodes {
     my ($self) = @_;
     my @nodes;
@@ -572,6 +594,7 @@ Get the child of $node with name == $name.
 Returns an XML::TinyXML::Node object if there is such a child, undef otherwise
 
 =cut
+
 sub getChildNodeByName {
     my ($self, $node, $name) = @_;
     if ($node) {
@@ -601,6 +624,7 @@ Save the xml document represented internally into $path.
 Returns XML_NOERR if success, a specific error code otherwise
 
 =cut
+
 sub save {
     my ($self, $path) = @_;
     return XmlSave($self->{_ctx}, $path);
@@ -615,6 +639,7 @@ Sets the output encding to the specified one
 Returns XML_NOERR if success, a specific error code otherwise
 
 =cut
+
 sub setOutputEncoding {
     my ($self, $encoding) = @_;
     $self->{_encoding} = $encoding;
@@ -627,6 +652,7 @@ Allow to control if the document can contain multiple root nodes (out of xml spe
 or if it will support only one single root node. Default is 0
 
 =cut
+
 sub allowMultipleRootNodes {
     my ($self, $val) = @_;
     return defined($val)
@@ -634,7 +660,7 @@ sub allowMultipleRootNodes {
            : $self->{_ctx}->allowMultipleRootNodes;
 }
 
-=item ignoreBlanks ($bool)
+=item * ignoreBlanks ($bool)
 
 Controls the behaviour of both the parser and the dumper.
 
@@ -643,43 +669,48 @@ Controls the behaviour of both the parser and the dumper.
 If ignoreBlanks is true any 'tab', 'newline' and 'carriage-return' ("\t", "\n", "\r"),
 between two tags will be ignored, unless surrounded by non-whitespace character.
 For example, considering the following node:
-<parent>
-	<child>value</child>
-</parent>
 
-( literaly : "<parent>\n\t<child>value</child>\n</parent>" )
+    <parent>
+            <child>value</child>
+    </parent>
 
-the parser will gnore the newlines and the tab between two nodes.
+( literally : "<parent>\n\t<child>value</child>\n</parent>" )
+
+the parser will ignore the newlines and the tab between two nodes.
 So, the resulting structure would be :
-$node = { 
-            value => undef,
-            children => [ { child => "value" } ]
-         }
+
+    $node = {
+              value => undef,
+              children => [ { child => "value" } ]
+            }
 
 If ignoreBlanks is false, all characters between the node tags will be part of the 
 value and the result would be : 
-$node = { 
-            value => "\n\t\n",
-            children => [ { child => "value" } ]
-        }
+
+    $node = {
+              value => "\n\t\n",
+              children => [ { child => "value" } ]
+            }
 
 - Dumper :
 
 If ignoreBlanks is true, both newlines and tabs will be used to prettify text formatting,
 so the node in the previous example will be printed out as:
-<parent>
-	<child>value</child>
-</parent>
+
+    <parent>
+            <child>value</child>
+    </parent>
 
 If ignoreBlanks is false, no extra characters will be added to the xml data
 (so no newlines, indentation or such). 
 The previous example would be dumped as follows:
 
-<parent><child>value</child></parent>
+    <parent><child>value</child></parent>
 
-Default is 1
+Default is 1.
 
 =cut
+
 sub ignoreBlanks {
     my ($self, $val) = @_;
     return defined($val)
@@ -687,7 +718,7 @@ sub ignoreBlanks {
            : $self->{_ctx}->ignoreBlanks;
 }
 
-=item ignoreWhiteSpaces ($bool)
+=item * ignoreWhiteSpaces ($bool)
 
 Controls the behaviour of the parser.
 
@@ -696,7 +727,7 @@ commended by ignoreBlanks()
 
 consider the following examples:
 
-<child> </child> 
+    <child> </child> 
 
  - if true:
      value = ""
@@ -704,13 +735,13 @@ consider the following examples:
  - if false:
      value = " "
 
- * The parser will ignore the whitespace if this flag is true.
+The parser will ignore the whitespace if this flag is true.
 
-<child> a value </child>
+    <child> a value </child>
 
-<child> a value</child>
+    <child> a value</child>
 
-<child>a value </child>
+    <child>a value </child>
 
  - if true:
      value = "a value"
@@ -720,13 +751,14 @@ consider the following examples:
              " a value"
              "a value "
 
- * The whitespace will be part of the value if this flag is false
+The whitespace will be part of the value if this flag is false.
 
 The dumper is not affected by this flag.
 
 Default is 1
 
 =cut
+
 sub ignoreWhiteSpaces {
     my ($self, $val) = @_;
     return defined($val)
@@ -744,6 +776,7 @@ sub DESTROY {
 
 1;
 __END__
+
 =back
 
 =head2 EXPORT
