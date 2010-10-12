@@ -1,14 +1,21 @@
 
 use strict;
-use Test::More qw(no_plan);
+use Test::More;
+BEGIN {
+    if (eval "require Text::Iconv; 1") {
+        plan tests => 2;
+    }
+    else {
+        plan skip_all => "Text::Iconv not available";
+    }
+}
+
 use XML::TinyXML;
-BEGIN { use_ok('XML::TinyXML::Selector') };
+use XML::TinyXML::Selector;
 
 my $txml = XML::TinyXML->new();
 $txml->loadFile("./t/t.xml");
 
-warn "Text::Iconv not available" and exit 0
-    unless (eval "require Text::Iconv; 1");
 my $utf8_output = $txml->dump;
 $txml->setOutputEncoding("UTF-16");
 my $utf16_output = $txml->dump;
