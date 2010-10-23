@@ -284,6 +284,14 @@ sub new {
     return $self;
 }
 
+sub open {
+    my ($class, $file) = @_;
+    my $self = $class->new();
+    return $self->loadFile($file) == $self->XML_NOERR
+           ? $self
+           : undef;
+}
+
 =item * addNodeAttribute ($node, $key, $value)
 
 Adds an attribute to a specific $node
