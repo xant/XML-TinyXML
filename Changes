@@ -66,3 +66,5 @@ Revision history for Perl extension TinyXML.
 0.29  - reimplementing strcasestr() since it's not portable
         (missing on solaris)
       - fixed POD errors, warnings, formatting and a few doc typos
+0.30  - fixed an infinite loop introduced when adding the 'ignoreWhiteSpaces' flag
+      - expose a new accessor to directly construct an xml object from a file
