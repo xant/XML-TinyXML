@@ -863,13 +863,11 @@ XmlParseBuffer(TXml *xml, char *buf)
 
 // skip tabs and new-lines
 #define SKIP_BLANKS(__p) \
-    while((*__p == '\t' || *__p == '\r' || *__p == '\n') && *__p != 0) __p++; \
-    if(*__p == 0) break;
+    while((*__p == '\t' || *__p == '\r' || *__p == '\n') && *__p != 0) __p++;
 
 // skip any kind of whitespace
 #define SKIP_WHITESPACES(__p) \
     SKIP_BLANKS(__p); \
-    if(*__p == 0) break;\
     while(*__p == ' ') {\
         __p++;\
         SKIP_BLANKS(__p);\
@@ -877,8 +875,7 @@ XmlParseBuffer(TXml *xml, char *buf)
     }
 
 #define ADVANCE_ELEMENT(__p) \
-    while(*__p != '>' && *__p != ' ' && *__p != '\t' && *__p != '\r' && *__p != '\n' && *__p != 0) __p++; \
-    if(*__p == 0) break;
+    while(*__p != '>' && *__p != ' ' && *__p != '\t' && *__p != '\r' && *__p != '\n' && *__p != 0) __p++;
 
 #define ADVANCE_TO_ATTR_VALUE(__p) \
     while(*__p != '=' && *__p != ' ' && *__p != '\t' && *__p != '\r' && *__p != '\n' && *__p != 0) __p++;\
