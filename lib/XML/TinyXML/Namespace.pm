@@ -45,7 +45,7 @@ package XML::TinyXML::Namespace;
  
 use strict;
 
-our $VERSION = "0.28";
+our $VERSION = "0.29";
 
 =item new ($ns)
 

@@ -63,3 +63,6 @@ Revision history for Perl extension TinyXML.
         (which affect both parsing and dumping behaviours)
 0.27  - fixed a namespace-related bug + minor cleanings
 0.28  - fixed testunits : added missing files to MANIFEST
+0.29  - reimplementing strcasestr() since it's not portable
+        (missing on solaris)
+      - fixed POD errors, warnings, formatting and a few doc typos

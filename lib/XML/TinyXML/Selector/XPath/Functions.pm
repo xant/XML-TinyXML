@@ -3,7 +3,7 @@ package XML::TinyXML::Selector::XPath::Functions;
 
 use POSIX qw(:sys_types_h);
 
-our $VERSION = "0.28";
+our $VERSION = "0.29";
 
 # NODE FUNCTIONS
 

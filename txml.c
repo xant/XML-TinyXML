@@ -190,6 +190,34 @@ xmlize(char *string)
     return escaped;
 }
 
+// reimplementing strcasestr since it's not present on all systems
+// and we still need to be portable.
+static char *txml_strcasestr (char *h, char *n)
+{
+   char *hp, *np = n, *match = 0;
+   if(!*np) {
+       return hp;
+   }
+
+   for (hp = h; *hp; hp++) {
+       if (toupper(*hp) == toupper(*np)) {
+           if (!match) {
+               match = hp;
+           }
+               if(!*++np) {
+                   return match;
+           }
+       } else {
+           if (match) { 
+               match = 0;
+               np = n;
+           }
+       }
+   }
+
+   return NULL; 
+}
+
 TXml *
 XmlCreateContext()
 {
@@ -693,7 +721,7 @@ XmlStartHandler(TXml *xml, char *element, char **attr_names, char **attr_values)
                 XmlDestroyNode(newNode);
                 goto _start_done;
             }
-            if ((nsp = strcasestr(attr_names[offset], "xmlns"))) {
+            if ((nsp = txml_strcasestr(attr_names[offset], "xmlns"))) {
                 if ((nssep = strchr(nsp, ':'))) {  // declaration of a new namespace
                     *nssep = 0;
                     XmlAddNamespace(newNode, nssep+1, attr_values[offset]);
