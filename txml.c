@@ -17,6 +17,9 @@
 #define XML_ELEMENT_END    3
 #define XML_ELEMENT_UNIQUE 4
 
+//
+// INTERNAL HELPERS
+//
 enum {
     ENCODING_UTF8,
     ENCODING_UTF16LE,
@@ -217,6 +220,10 @@ static char *txml_strcasestr (char *h, char *n)
 
    return NULL; 
 }
+
+//
+// TXML IMPLEMENTATION
+//
 
 TXml *
 XmlCreateContext()
@@ -875,7 +882,7 @@ XmlParseBuffer(TXml *xml, char *buf)
 
 #define ADVANCE_TO_ATTR_VALUE(__p) \
     while(*__p != '=' && *__p != ' ' && *__p != '\t' && *__p != '\r' && *__p != '\n' && *__p != 0) __p++;\
-    SKIP_BLANKS(__p);
+    SKIP_WHITESPACES(__p);
 
     while(*p != 0) {
         if (xml->ignoreWhiteSpaces) {
