@@ -68,3 +68,6 @@ Revision history for Perl extension TinyXML.
       - fixed POD errors, warnings, formatting and a few doc typos
 0.30  - fixed an infinite loop introduced when adding the 'ignoreWhiteSpaces' flag
       - expose a new accessor to directly construct an xml object from a file
+0.31  - fixed a bug which caused the xpath selector to potentially return items 
+        in a random order when expanding a predicate (instead of returning them 
+        in the order of appearance in the document)

@@ -2,7 +2,7 @@
 package XML::TinyXML::Selector::XPath::Context;
 
 
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 our %Operators = (
  '+'   => sub {  $_[0] +  $_[1]  },
