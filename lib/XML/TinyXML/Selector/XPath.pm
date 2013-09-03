@@ -323,7 +323,7 @@ sub _select_unabbreviated {
                 # save the actual context to ensure sending the correct context to all predicates
                 my $saved_context2 = $self->context;
                 foreach my $predicate_string (@predicates) {
-                    # using a temporary context while itereting over all predicates
+                    # using a temporary context while iterating over all predicates
                     my $tmpctx = XML::TinyXML::Selector::XPath::Context->new($self->{_xml});
                     $tmpctx->{items} = $saved_context2->items;
                     $self->{context} = $tmpctx;
@@ -333,29 +333,25 @@ sub _select_unabbreviated {
                         my ($p, $v) = split('=', $predicate_string);
                         $v =~ s/(^['"]|['"]$)//g if ($v); # XXX - unsafe dequoting ... think more to find a better regexp
                         my %uniq;
+                        my @nodepaths;
                         foreach my $node ($self->_select_unabbreviated($p ,1)) {
                             if ($node->type eq "ATTRIBUTE") {
-                                if ($v) {
-                                    $uniq{$node->node->path} = $node->node
-                                        if ($node->value eq $self->_unescape($v));
-                                } else {
-                                   $uniq{$node->node->path} = $node->node;
-                                }
+                                my $nodepath = $node->node->path;
+                                next if ($v && $node->value ne $self->_unescape($v));
+                                push(@nodepaths, $nodepath) if (!$uniq{$nodepath});
+                                $uniq{$nodepath} = $node->node
                             } else {
                                 my $parent = $node->parent;
                                 if ($parent) {
-                                    if ($v) {
-                                        $uniq{$parent->path} = $parent
-                                            if ($node->value eq $v);
-                                    } else {
-                                        $uniq{$parent->path} = $parent;
-                                    }
+                                    next if ($v && $node->value ne $v);
+                                    push(@nodepaths, $parent->path) if (!$uniq{$parent->path});
+                                    $uniq{$parent->path} = $parent
                                 } else {
                                     # TODO - Error Messages
                                 }
                             }
                         }
-                        push (@itemrefs, [ map { $uniq{$_} } keys %uniq ]);
+                        push (@itemrefs, [ map { $uniq{$_} } @nodepaths ]);
                     } else {
                         my $predicate = $self->_parse_predicate($predicate_string);
                         if ($predicate->{attr}) {
