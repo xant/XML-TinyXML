@@ -141,7 +141,7 @@ XmlDump(xml)
     dump = XmlDump(xml, &outlen);
     if (dump) {
         sv = newSVpv(dump, outlen);
-        free(dump);
+        Safefree(dump);
     }
     RETVAL = sv;
     OUTPUT:
