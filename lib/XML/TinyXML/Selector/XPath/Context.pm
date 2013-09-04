@@ -1,6 +1,8 @@
 # Internal use only
 package XML::TinyXML::Selector::XPath::Context;
 
+use strict;
+use warnings;
 
 our $VERSION = '0.31';
 

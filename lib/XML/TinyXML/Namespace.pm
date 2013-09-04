@@ -44,6 +44,7 @@ Reference to the underlying XmlNamespacePtr object (which is a binding to the Xm
 package XML::TinyXML::Namespace;
  
 use strict;
+use warnings;
 
 our $VERSION = "0.31";
 

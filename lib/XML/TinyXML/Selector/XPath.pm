@@ -76,6 +76,7 @@ XPath-compliant selector for XML::TinyXML
 package XML::TinyXML::Selector::XPath;
 
 use strict;
+use warnings;
 use base qw(XML::TinyXML::Selector);
 use XML::TinyXML::Selector::XPath::Context;
 use XML::TinyXML::Selector::XPath::Functions;

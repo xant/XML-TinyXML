@@ -1,6 +1,7 @@
 package XML::TinyXML::Selector::XPath::Axes;
 
 use strict;
+use warnings;
 use XML::TinyXML::NodeAttribute;
 
 our $VERSION = "0.31";
