@@ -55,6 +55,7 @@ XML::TinyXML::Selector::XPath - XPath-compliant selector for XML::TinyXML
 
   # refer to XPath documentation for further examples and details on the supported syntax:
   # ( http://www.w3.org/TR/xpath )
+
 =back
 
 =head1 DESCRIPTION
