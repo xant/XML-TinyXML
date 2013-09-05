@@ -1148,6 +1148,74 @@ _parser_err:
     return err;
 }
 
+#ifdef WIN32
+//************************************************************************
+// BOOL W32LockFile (FILE* filestream)
+//
+// locks the specific file for exclusive access, nonblocking
+//
+// returns 0 on success
+//************************************************************************
+static BOOL
+W32LockFile (FILE* filestream)
+{
+    BOOL res = TRUE;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    unsigned long size = 0;
+    int fd = 0;
+
+    // check params
+    if (!filestream)
+        goto __exit;
+
+    // get handle from stream
+    fd = _fileno (filestream);
+    hFile = (HANDLE)_get_osfhandle(fd);
+
+    // lock file until access is permitted
+    size = GetFileSize(hFile, NULL);
+    res = LockFile (hFile, 0, 0, size, 0);
+    if (res)
+        res = 0;
+__exit:
+    return res;
+}
+
+//************************************************************************
+// BOOL W32UnlockFile (FILE* filestream)
+//
+// unlocks the specific file locked by W32LockFile
+//
+// returns 0 on success
+//************************************************************************
+static BOOL
+W32UnlockFile (FILE* filestream)
+{
+    BOOL res = TRUE;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    unsigned long size = 0;
+    int tries = 0;
+    int fd = 0;
+
+    // check params
+    if (!filestream)
+        goto __exit;
+
+    // get handle from stream
+    fd = _fileno (filestream);
+    hFile = (HANDLE)_get_osfhandle(fd);
+
+    // unlock
+    size = GetFileSize(hFile, NULL);
+    res = UnlockFile (hFile, 0, 0, size, 0);
+    if (res)
+        res = 0;
+
+__exit:
+    return res;
+}
+#endif // #ifdef WIN32
+
 static XmlErr
 XmlFileLock(FILE *file)
 {
@@ -2010,72 +2078,4 @@ XmlSetNodeNamespace(XmlNode *node, XmlNamespace *ns) {
     node->ns = ns;
     return XML_NOERR;
 }
-
-#ifdef WIN32
-//************************************************************************
-// BOOL W32LockFile (FILE* filestream)
-//
-// locks the specific file for exclusive access, nonblocking
-//
-// returns 0 on success
-//************************************************************************
-static BOOL
-W32LockFile (FILE* filestream)
-{
-    BOOL res = TRUE;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-    unsigned long size = 0;
-    int fd = 0;
-
-    // check params
-    if (!filestream)
-        goto __exit;
-
-    // get handle from stream
-    fd = _fileno (filestream);
-    hFile = (HANDLE)_get_osfhandle(fd);
-
-    // lock file until access is permitted
-    size = GetFileSize(hFile, NULL);
-    res = LockFile (hFile, 0, 0, size, 0);
-    if (res)
-        res = 0;
-__exit:
-    return res;
-}
-
-//************************************************************************
-// BOOL W32UnlockFile (FILE* filestream)
-//
-// unlocks the specific file locked by W32LockFile
-//
-// returns 0 on success
-//************************************************************************
-static BOOL
-W32UnlockFile (FILE* filestream)
-{
-    BOOL res = TRUE;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-    unsigned long size = 0;
-    int tries = 0;
-    int fd = 0;
-
-    // check params
-    if (!filestream)
-        goto __exit;
-
-    // get handle from stream
-    fd = _fileno (filestream);
-    hFile = (HANDLE)_get_osfhandle(fd);
-
-    // unlock
-    size = GetFileSize(hFile, NULL);
-    res = UnlockFile (hFile, 0, 0, size, 0);
-    if (res)
-        res = 0;
-
-__exit:
-    return res;
-}
-#endif // #ifdef WIN32
 
