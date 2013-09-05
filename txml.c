@@ -1277,7 +1277,7 @@ XmlParseFile(TXml *xml, char *path)
         inFile = fopen(path, "r");
         if(inFile) {
             iconv_t ich;
-            size_t cb, ilen, olen;
+            size_t rb, cb, ilen, olen;
             char *out, *iconvIn, *iconvOut;
             char *encoding_from = NULL;
 
@@ -1287,7 +1287,11 @@ XmlParseFile(TXml *xml, char *path)
             }
             olen = ilen = fileStat.st_size;
             buffer = (char *)malloc(ilen+1);
-            fread(buffer, 1, ilen, inFile);
+            rb = fread(buffer, 1, ilen, inFile);
+            if (ilen != rb) {
+                fprintf(stderr, "Can't read %s content", path);
+                return -1;
+            }
             buffer[ilen] = 0;
             switch(detect_encoding(buffer)) {
                 case ENCODING_UTF16LE:
@@ -1642,6 +1646,7 @@ XmlDump(TXml *xml, int *outlen)
 XmlErr
 XmlSave(TXml *xml, char *xmlFile)
 {
+    size_t rb;
     struct stat fileStat;
     FILE *saveFile = NULL;
     char *dump = NULL;
@@ -1663,7 +1668,11 @@ XmlSave(TXml *xml, char *xmlFile)
                 return XML_GENERIC_ERR;
             }
             backup = (char *)malloc(fileStat.st_size+1);
-            fread(backup, 1, fileStat.st_size, saveFile);
+            rb = fread(backup, 1, fileStat.st_size, saveFile);
+            if (rb != fileStat.st_size) {
+                fprintf(stderr, "Can't read %s content", xmlFile);
+                return -1;
+            }
             backup[fileStat.st_size] = 0;
             XmlFileUnlock(saveFile);
             fclose(saveFile);
