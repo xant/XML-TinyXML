@@ -8,6 +8,8 @@
 #include "txml.h"
 #include "string.h"
 #include "stdlib.h"
+#include "unistd.h"
+#include "ctype.h"
 #include "iconv.h"
 #include "errno.h"
 
@@ -425,7 +427,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
     // first empty actual list
     if (!TAILQ_EMPTY(&node->knownNamespaces)) {
         XmlNamespaceSet *oldItem;
-        while(oldItem = TAILQ_FIRST(&node->knownNamespaces)) {
+        while((oldItem = TAILQ_FIRST(&node->knownNamespaces))) {
             TAILQ_REMOVE(&node->knownNamespaces, oldItem, next);
             free(oldItem);
         }

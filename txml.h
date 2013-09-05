@@ -278,6 +278,14 @@ char *XmlDump(TXml *xml, int *outlen);
 */
 
 TXml *XmlCreateContext();
+
+
+/***
+    @brief Resets/cleans an existing context
+    @arg pointer to a valid xml context
+*/
+void XmlResetContext(TXml *xml);
+
 /***
     @brief release all resources associated to an xml context
     @arg pointer to a valid xml context
