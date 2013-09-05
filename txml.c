@@ -1587,7 +1587,7 @@ XmlDump(TXml *xml, int *outlen)
                         initial, xml->outputEncoding, ++end);
                     doConversion = 1;
 #else
-                    fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
+                    fprintf(stderr, "Iconv missing: will not convert output to %s\n", xml->outputEncoding);
                     snprintf(head, sizeof(head), "%s", xml->head);
 #endif
                 } else {
@@ -1596,27 +1596,34 @@ XmlDump(TXml *xml, int *outlen)
 
             }
         } else {
-            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
 #ifdef USE_ICONV
+            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
                 doConversion = 1;
-#else
-                fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
-#endif
+                fprintf(stderr, "Iconv missing: will not convert output to %s\n", xml->outputEncoding);
             }
             snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
                 xml->outputEncoding?xml->outputEncoding:"utf-8");
+#else
+            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
+                fprintf(stderr, "Iconv missing: will not convert output to %s\n", xml->outputEncoding);
+            }
+            snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"utf-8\"");
+#endif
         }
         free(initial);
     } else {
-        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
 #ifdef USE_ICONV
+        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
             doConversion = 1;
-#else
-            fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
-#endif
         }
         snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
             xml->outputEncoding?xml->outputEncoding:"utf-8");
+#else
+        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
+            fprintf(stderr, "Iconv missing: will not convert output to %s\n", xml->outputEncoding);
+        }
+        snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"utf-8\"");
+#endif
     }
     hLen = strlen(head);
     dump = malloc(hLen+6);

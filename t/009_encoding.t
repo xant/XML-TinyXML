@@ -8,7 +8,7 @@ my $txml;
 BEGIN {
     $txml = XML::TinyXML->new();
     if (!$txml->hasIconv) {
-        plan skip_all => "Iconv functionalities disabled at build time";
+        plan skip_all => "Iconv functionalities disabled at compile time";
     } elsif (eval "require Text::Iconv; 1") {
         plan tests => 2;
     } else {
