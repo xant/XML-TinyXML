@@ -217,6 +217,9 @@ XmlSubstBranch(xml, index, newBranch)
     unsigned long    index
     XmlNode *newBranch
 
+int
+XmlHasIconv()
+
 MODULE = XML::TinyXML        PACKAGE = XmlNamespace
 
 XmlNamespace *
@@ -592,3 +595,9 @@ ignoreWhiteSpaces(THIS, __value = NO_INIT)
     OUTPUT:
     RETVAL
 
+int
+hasIconv(THIS)
+    CODE:
+    RETVAL = XmlHasIconv();
+    OUTPUT:
+    RETVAL

@@ -10,7 +10,9 @@
 #include "stdlib.h"
 #include "unistd.h"
 #include "ctype.h"
+#ifdef USE_ICONV
 #include "iconv.h"
+#endif
 #include "errno.h"
 
 #define XML_ELEMENT_NONE   0
@@ -1276,9 +1278,12 @@ XmlParseFile(TXml *xml, char *path)
     if(fileStat.st_size>0) {
         inFile = fopen(path, "r");
         if(inFile) {
+#ifdef USE_ICONV
             iconv_t ich;
+            char *iconvIn, *iconvOut;
+#endif
+            char *out;
             size_t rb, cb, ilen, olen;
-            char *out, *iconvIn, *iconvOut;
             char *encoding_from = NULL;
 
             if(XmlFileLock(inFile) != XML_NOERR) {
@@ -1312,6 +1317,7 @@ XmlParseFile(TXml *xml, char *path)
                     break;
             }
             if (encoding_from) {
+#ifdef USE_ICONV
                 ich = iconv_open ("UTF-8", encoding_from);
                 if (ich == (iconv_t)(-1)) {
                     fprintf(stderr, "Can't init iconv: %s\n", strerror(errno));
@@ -1335,6 +1341,14 @@ XmlParseFile(TXml *xml, char *path)
                 free(buffer); // release initial buffer
                 buffer = out; // point to the converted buffer
                 iconv_close(ich);
+#else
+                fprintf(stderr, "Iconv missing: can't open file %s encoded in %s. Convert it to utf8 and try again\n",
+                        path, encoding_from);
+                free(buffer);
+                XmlFileUnlock(inFile);
+                fclose(inFile);
+                return -1;
+#endif
             }
             err = XmlParseBuffer(xml, buffer);
             free(buffer); // release either the initial or the converted buffer
@@ -1537,7 +1551,9 @@ XmlDump(TXml *xml, int *outlen)
     XmlNode *rNode;
     char *branch;
     unsigned int i;
+#ifdef USE_ICONV
     int doConversion = 0;
+#endif
     char head[256]; // should be enough
     int hLen;
     unsigned int offset;
@@ -1566,23 +1582,39 @@ XmlDump(TXml *xml, int *outlen)
                     /* TODO - Error Messages */
                 } 
                 if (strncasecmp(encoding, xml->outputEncoding, end-encoding) != 0) {
+#ifdef USE_ICONV
                     snprintf(head, sizeof(head), "%sencoding=\"%s\"%s",
                         initial, xml->outputEncoding, ++end);
                     doConversion = 1;
+#else
+                    fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
+                    snprintf(head, sizeof(head), "%s", xml->head);
+#endif
                 } else {
                     snprintf(head, sizeof(head), "%s", xml->head);
                 }
+
             }
         } else {
-            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0)
+            if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
+#ifdef USE_ICONV
                 doConversion = 1;
+#else
+                fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
+#endif
+            }
             snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
                 xml->outputEncoding?xml->outputEncoding:"utf-8");
         }
         free(initial);
     } else {
-        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0)
+        if (xml->outputEncoding && strcasecmp(xml->outputEncoding, "utf-8") != 0) {
+#ifdef USE_ICONV
             doConversion = 1;
+#else
+            fprintf(stderr, "Iconv missing: can't convert output to %s\n", xml->outputEncoding);
+#endif
+        }
         snprintf(head, sizeof(head), "xml version=\"1.0\" encoding=\"%s\"", 
             xml->outputEncoding?xml->outputEncoding:"utf-8");
     }
@@ -1603,6 +1635,7 @@ XmlDump(TXml *xml, int *outlen)
     }
     if (outlen) // check if we need to report the output size
         *outlen = strlen(dump);
+#ifdef USE_ICONV
     if (doConversion) {
         iconv_t ich;
         size_t ilen, olen, cb;
@@ -1640,6 +1673,7 @@ XmlDump(TXml *xml, int *outlen)
         if (outlen) // update the outputsize if we have to
             *outlen -= olen;
     }
+#endif
     return(dump);
 }
 

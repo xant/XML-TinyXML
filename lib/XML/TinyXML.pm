@@ -774,6 +774,11 @@ sub ignoreWhiteSpaces {
            : $self->{_ctx}->ignoreWhiteSpaces;
 }
 
+sub hasIconv {
+    my $self = shift;
+    return $self->{_ctx}->hasIconv;
+}
+
 sub DESTROY {
     my $self = shift;
     XmlDestroyContext($self->{_ctx})

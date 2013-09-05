@@ -403,4 +403,13 @@ XmlErr XmlSetNodeCNamespace(XmlNode *node, XmlNamespace *ns);
 */ 
 XmlErr XmlSetCurrentNamespace(TXml *xml, char *nsuri);
 
+static inline int XmlHasIconv()
+{
+#ifdef USE_ICONV
+    return 1;
+#else
+    return 0;
+#endif
+}
+
 #endif

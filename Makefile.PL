@@ -10,6 +10,9 @@ my $devnull = File::Spec->devnull();
 ###############################################################################
 # Check for iconv.
 
+my $original_ccflags = $config{CCFLAGS};
+$config{CCFLAGS} .= " -DUSE_ICONV";
+
 if ($config{LIBS} or $config{INC})
 {
    print "Your settings:\n",
@@ -32,6 +35,8 @@ elsif ($config{LIBS} !~ /-liconv/)
       $ok = 1;
       print "ok (added -liconv)\n";
    }
+} else {
+    $config{CCFLAGS} = $original_ccflags;
 }
 
 if ($ok)
@@ -48,11 +53,7 @@ EOT
 }
 else
 {
-   print "fail\n";
-
-   print "Failed to find iconv, please check your settings and re-run as:\n";
-   print "$^X Makefile.PL LIBS='-L/path/to/lib' INC='-I/path/to/include'\n";
-   exit 1;
+   print "Failed to find iconv, encoding functionalities will be disabled\n"
 }
 
 ###############################################################################
@@ -67,6 +68,7 @@ WriteMakefile(
     LIBS              => $config{LIBS},
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
     INC               => "-I. $config{INC}",
+    CCFLAGS           => $config{CCFLAGS},
     OBJECT            => '$(O_FILES)', # link all the C files too
 );
 if  (eval {require ExtUtils::Constant; 1}) {
