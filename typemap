@@ -1,4 +1,3 @@
-FILE						T_OPAQUE_STRUCT
 TXml						T_OPAQUE_STRUCT
 TXml *						T_PTROBJ
 XmlNode						T_OPAQUE_STRUCT
@@ -8,74 +7,7 @@ XmlNodeAttribute *				T_PTROBJ
 XmlNamespace					T_OPAQUE_STRUCT
 XmlNamespace *					T_PTROBJ
 XmlErr						T_IV
-__int32_t					T_IV
-__mbstate_t					T_OPAQUE_STRUCT
-__mbstate_t *					T_PTROBJ
-__uint32_t					T_UV
-char * const *					T_PTROBJ
-const char *					T_PTROBJ
-const fpos_t *					T_PTROBJ
-const unsigned char *				T_PTROBJ
-const unsigned char **				T_PTROBJ
-char **						T_PTROBJ
-const void *					T_PTROBJ
-const wchar_t *					T_PTROBJ
-dev_t						T_IV
-div_t						T_OPAQUE_STRUCT
-div_t *						T_PTROBJ
-double [ ]					T_PTROBJ
-fbootstraptransfer_t				T_OPAQUE_STRUCT
-fbootstraptransfer_t *				T_PTROBJ
-fd_set						T_OPAQUE_STRUCT
-fd_set *					T_PTROBJ
-filesec_property_t				T_PTROBJ
-filesec_t					T_PTROBJ
-fpos_t						T_NV
-fpos_t ( * ) ( void *, fpos_t, int )		T_PTROBJ
-fpos_t *					T_PTROBJ
-fsignatures_t					T_OPAQUE_STRUCT
-fsignatures_t *					T_PTROBJ
-fstore_t					T_OPAQUE_STRUCT
-fstore_t *					T_PTROBJ
-id_t						T_UV
-int ( * ) ( const void *, const void * )	T_PTROBJ
-int ( * ) ( void * )				T_PTROBJ
-int ( * ) ( void *, char *, int )		T_PTROBJ
-int ( * ) ( void *, const char *, int )		T_PTROBJ
-int ( * ) ( void *, const void *, const void * )	T_PTROBJ
-int *						T_PTROBJ
-ldiv_t						T_OPAQUE_STRUCT
-ldiv_t *					T_PTROBJ
-lldiv_t						T_OPAQUE_STRUCT
-lldiv_t *					T_PTROBJ
-long *						T_PTROBJ
-long double					T_NV
-long long					T_NV
-mode_t						T_UV
-off_t						T_NV
-pid_t						T_IV
-pthread_mutex_t					T_OPAQUE_STRUCT
-siginfo_t					T_OPAQUE_STRUCT
-siginfo_t *					T_PTROBJ
-size_t *					T_PTROBJ
-struct __LinkedList *				T_PTROBJ
-struct __ListEntry *				T_PTROBJ
 struct __XmlNode *				T_PTROBJ
-struct __sFILEX *				T_PTROBJ
-struct __sbuf					T_OPAQUE_STRUCT
-struct rusage *					T_PTROBJ
-struct stat64 *					T_PTROBJ
-u_int32_t					T_UV
-uid_t						T_UV
-union sigval					T_OPAQUE_STRUCT
-unsigned *					T_PTROBJ
-unsigned long long				T_NV
-unsigned short *				T_PTROBJ
-unsigned short [ 3 ]				T_PTROBJ
-unsigned short [ 7 ]				T_PTROBJ
-va_list						T_PTROBJ
-void ( * ) ( void )				T_PTROBJ
-void ( * itemHandler ) ( void * item, unsigned long idx, void * user )	T_PTROBJ
 #############################################################################
 INPUT
 T_OPAQUE_STRUCT
