@@ -43,7 +43,7 @@ package XML::TinyXML::Selector;
 
 use strict;
 use warnings;
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 =item * new ($xml, $type, %args)
 

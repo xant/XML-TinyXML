@@ -71,3 +71,8 @@ Revision history for Perl extension TinyXML.
 0.31  - fixed a bug which caused the xpath selector to potentially return items 
         in a random order when expanding a predicate (instead of returning them 
         in the order of appearance in the document)
+0.32  - fixed the 'Free to wrong pool' bug showing on multi-threaded perl when running on win32
+      - cleanings to suppress compiler warnings
+      - fixed compilation on some windows systems complaining about W32LockFile/W32UnlockFile redefinition
+      - fixed pod documentation for XML::TinyXML::Selector::XPath
+      - enforced 'use strict' and 'use warnings' on all perl modules
