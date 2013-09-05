@@ -1,3 +1,7 @@
+
+#include <stdlib.h>
+static void (*std_free)(void *) = free;
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -141,7 +145,7 @@ XmlDump(xml)
     dump = XmlDump(xml, &outlen);
     if (dump) {
         sv = newSVpv(dump, outlen);
-        Safefree(dump);
+        std_free(dump);
     }
     RETVAL = sv;
     OUTPUT:
@@ -253,7 +257,7 @@ name(THIS, __value = NO_INIT)
     RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
-        free(THIS->name);
+            free(THIS->name);
         THIS->name = __value;
     }
     OUTPUT:
@@ -268,7 +272,7 @@ uri(THIS, __value = NO_INIT)
     RETVAL = newSVpv(THIS->uri, 0);
     if (items > 1) {
         if(THIS->uri)
-        free(THIS->uri);
+            free(THIS->uri);
         THIS->uri = __value;
     }
     OUTPUT:
@@ -315,7 +319,7 @@ name(THIS, __value = NO_INIT)
     RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
-        free(THIS->name);
+            free(THIS->name);
         THIS->name = __value;
     }
     OUTPUT:
@@ -330,7 +334,7 @@ value(THIS, __value = NO_INIT)
     RETVAL = newSVpv(THIS->value, 0);
     if (items > 1) {
         if(THIS->value)
-        free(THIS->value);
+            free(THIS->value);
         THIS->value = __value;
     }
     OUTPUT:
@@ -396,7 +400,7 @@ name(THIS, __value = NO_INIT)
     RETVAL = newSVpv(THIS->name, 0);
     if (items > 1) {
         if(THIS->name)
-        free(THIS->name);
+            free(THIS->name);
         THIS->name = __value;
     }
     OUTPUT:
