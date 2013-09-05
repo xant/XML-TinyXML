@@ -1,8 +1,10 @@
 
+use strict;
+
 use Test::More tests => 4;
 BEGIN { use_ok('XML::TinyXML') };
 
-$txml = XML::TinyXML->new();
+my $txml = XML::TinyXML->new();
 $txml->loadFile("./t/t.xml");
 my $out = $txml->dump;
 

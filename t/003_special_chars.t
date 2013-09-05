@@ -1,9 +1,11 @@
+use strict;
 use Test::More tests => 3;
+
 BEGIN { use_ok('XML::TinyXML') };
 
-$txml = XML::TinyXML->new();
+my $txml = XML::TinyXML->new();
 $txml->loadBuffer("<node>Import&amp;special&quot;&lt;chars&gt;&#67;&#105;&#97;&#111;</node>");
-$node = $txml->getRootNode(1);
+my $node = $txml->getRootNode(1);
 ok ( $node->value eq "Import&special\"<chars>Ciao", "unescaping" );
 
 $txml = XML::TinyXML->new();
