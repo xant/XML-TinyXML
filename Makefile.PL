@@ -10,8 +10,7 @@ my $devnull = File::Spec->devnull();
 ###############################################################################
 # Check for iconv.
 
-my $original_ccflags = $config{CCFLAGS};
-$config{CCFLAGS} .= " -DUSE_ICONV";
+$config{CCFLAGS} = "$Config{ccflags} -DUSE_ICONV";
 
 if ($config{LIBS} or $config{INC})
 {
@@ -36,7 +35,7 @@ elsif ($config{LIBS} !~ /-liconv/)
       print "ok (added -liconv)\n";
    }
 } else {
-    $config{CCFLAGS} = $original_ccflags;
+    delete $config{CCFLAGS};
 }
 
 if ($ok)
