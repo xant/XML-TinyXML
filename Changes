@@ -1,5 +1,6 @@
 Revision history for Perl extension TinyXML.
 
+0.33  - allow to build even if iconv is missing. In which case encoding conversion functionalities will be disabled
 0.32  - fixed the 'Free to wrong pool' bug showing on multi-threaded perl when running on win32
       - cleanings to suppress compiler warnings
       - fixed compilation on some windows systems complaining about W32LockFile/W32UnlockFile redefinition

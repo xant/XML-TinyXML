@@ -66,7 +66,7 @@ package XML::TinyXML::Node;
 
 use strict;
 use warnings;
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 
 =item * new ($entity, $value, $parent, %attrs)
 
