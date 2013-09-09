@@ -10,8 +10,6 @@ my $devnull = File::Spec->devnull();
 ###############################################################################
 # Check for iconv.
 
-$config{CCFLAGS} = "$Config{ccflags} -DUSE_ICONV";
-
 if ($config{LIBS} or $config{INC})
 {
    print "Your settings:\n",
@@ -32,14 +30,14 @@ elsif ($config{LIBS} !~ /-liconv/)
    if (linktest($config{LIBS}, $config{INC}))
    {
       $ok = 1;
-      print "ok (added -liconv)\n";
+      print "ok (added: '-DUSE_ICONV -liconv')\n";
    }
-} else {
-    delete $config{CCFLAGS};
 }
 
 if ($ok)
 {
+   $config{CCFLAGS} = "$Config{ccflags} -DUSE_ICONV";
+
    print <<EOT;
 
 NOTE: If you have multiple iconv implementations installed, you might
@@ -119,12 +117,12 @@ EOT
    {
       # It is admittedly a bit simplistic to simply concatenate all
       # flags, but it seems to work in most cases.
-      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags},
+      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags}, '-DUSE_ICONV',
 	  $Config{ldflags}, $libs;
    }
    else
    {
-      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags}, $libs;
+      $compile = join ' ', $Config{cc}, $incs, $Config{ccflags}, '-DUSE_ICONV', $libs;
    }
 
    if (exists $config{verbose})
