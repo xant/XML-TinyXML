@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use XML::TinyXML::NodeAttribute;
 
-our $VERSION = "0.33";
+our $VERSION = "0.34";
 
 sub child {
     my ($class, $context) = @_;
