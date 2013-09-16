@@ -80,7 +80,7 @@ dexmlize(char *string)
     char *unescaped = NULL;
 
     if (string) {
-        unescaped = calloc(1, len+1); // inlude null-byte
+        unescaped = (char *)calloc(1, len+1); // inlude null-byte
         for (i = 0; i < len; i++) {
             switch (string[i]) {
                 case '&':
@@ -142,7 +142,7 @@ xmlize(char *string)
     len = strlen(string);
     if (string) {
         bufsize = len+1;
-        escaped = calloc(1, bufsize); // inlude null-byte
+        escaped = (char *)calloc(1, bufsize); // inlude null-byte
         for (i = 0; i < len; i++) {
             switch (string[i]) {
                 case '&':
@@ -338,7 +338,7 @@ XmlCreateNode(char *name, char *value, XmlNode *parent)
     if(value && strlen(value) > 0)
         node->value = strdup(value);
     else
-        node->value = calloc(1, 1);
+        node->value = (char *)calloc(1, 1);
     return node;
 }
 
@@ -437,11 +437,11 @@ XmlUpdateKnownNamespaces(XmlNode *node)
 
     // than start populating the list with actual default namespace
     if (node->cns) {
-        newItem = calloc(1, sizeof(XmlNamespaceSet));
+        newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
         newItem->ns = node->cns;
         TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
     } else if (node->hns) {
-        newItem = calloc(1, sizeof(XmlNamespaceSet));
+        newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
         newItem->ns = node->hns;
         TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
     }
@@ -449,7 +449,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
     // add all namespaces defined by this node
     TAILQ_FOREACH(ns, &node->namespaces, list) {
         if (ns->name) { // skip an eventual default namespace since has been handled earlier
-            newItem = calloc(1, sizeof(XmlNamespaceSet));
+            newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
             newItem->ns = ns;
             TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
         }
@@ -461,7 +461,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
             XmlNamespaceSet *parentItem;
             TAILQ_FOREACH(parentItem, &node->parent->knownNamespaces, next) {
                 if (parentItem->ns->name) { // skip the default namespace
-                    newItem = calloc(1, sizeof(XmlNamespaceSet));
+                    newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
                     newItem->ns = parentItem->ns;
                     TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
                 }
@@ -469,7 +469,7 @@ XmlUpdateKnownNamespaces(XmlNode *node)
         } else { // this shouldn't happen until knownNamespaces is properly kept synchronized
             TAILQ_FOREACH(ns, &node->parent->namespaces, list) {
                 if (ns->name) { // skip the default namespace
-                    newItem = calloc(1, sizeof(XmlNamespaceSet));
+                    newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
                     newItem->ns = ns;
                     TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
                 }
@@ -512,7 +512,7 @@ XmlUpdateBranchNamespace(XmlNode *node, XmlNamespace *ns)
 
             newNS = XmlAddNamespace(node, node->ns->name, node->ns->uri);
             node->ns = newNS;
-            newItem = calloc(1, sizeof(XmlNamespaceSet));
+            newItem = (XmlNamespaceSet *)calloc(1, sizeof(XmlNamespaceSet));
             newItem->ns = newNS;
             TAILQ_INSERT_TAIL(&node->knownNamespaces, newItem, next);
             newAttr = malloc(strlen(newNS->name)+7); // prefix + xmlns + :
@@ -585,7 +585,7 @@ XmlAddAttribute(XmlNode *node, char *name, char *val)
     if(!name || !node)
         return XML_BADARGS;
 
-    attr = calloc(1, sizeof(XmlNodeAttribute));
+    attr = (XmlNodeAttribute *)calloc(1, sizeof(XmlNodeAttribute));
     attr->name = strdup(name);
     attr->value = val?strdup(val):strdup("");
     attr->node = node;
@@ -598,17 +598,16 @@ int
 XmlRemoveAttribute(XmlNode *node, unsigned long index)
 {
     XmlNodeAttribute *attr, *tmp;
-    int count = 1;
+    int count = 0;
 
     TAILQ_FOREACH_SAFE(attr, &node->attributes, list, tmp) {
-        if (count == index) {
+        if (count++ == index) {
             TAILQ_REMOVE(&node->attributes, attr, list);
             free(attr->name);
             free(attr->value);
             free(attr);
             return XML_NOERR;
         }
-        count++;
     }
     return XML_GENERIC_ERR;
 }
@@ -644,11 +643,10 @@ XmlNodeAttribute
 *XmlGetAttribute(XmlNode *node, unsigned long index)
 {
     XmlNodeAttribute *attr;
-    int count = 1;
+    int count = 0;
     TAILQ_FOREACH(attr, &node->attributes, list) {
-        if (count == index)
+        if (count++ == index)
             return attr;
-        count++;
     }
     return NULL;
 }
@@ -952,7 +950,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                 if(!p) {
                     /* XXX - TODO - This error condition must be handled asap */
                 }
-                comment = calloc(1, p-mark+1);
+                comment = (char *)calloc(1, p-mark+1);
                 if(!comment) {
                     err = XML_MEMORY_ERR;
                     goto _parser_err;
@@ -980,7 +978,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                     if(!p) {
                         /* XXX - TODO - This error condition must be handled asap */
                     }
-                    cdata = calloc(1, p-mark+1);
+                    cdata = (char *)calloc(1, p-mark+1);
                     if(!cdata) {
                         err = XML_MEMORY_ERR;
                         goto _parser_err;
@@ -1001,7 +999,7 @@ XmlParseBuffer(TXml *xml, char *buf)
                 p = strstr(mark, "?>");
                 if(xml->head) // we are going to overwrite existing head (if any)
                     free(xml->head); /* XXX - should notify this behaviour? */
-                xml->head = calloc(1, p-mark+1);
+                xml->head = (char *)calloc(1, p-mark+1);
                 strncpy(xml->head, mark, p-mark);
                 encoding = strstr(xml->head, "encoding=");
                 if (encoding) {
@@ -1326,7 +1324,7 @@ XmlParseFile(TXml *xml, char *path)
                     fclose(inFile);
                     return -1;
                 }
-                out = calloc(1, olen);
+                out = (char *)calloc(1, olen);
                 iconvIn = buffer;
                 iconvOut = out;
                 cb = iconv(ich, &iconvIn, &ilen, &iconvOut, &olen);
@@ -1445,7 +1443,7 @@ XmlDumpBranch(TXml *xml, XmlNode *rNode, unsigned int depth)
     startOffset += nameLen;
     nAttrs = XmlCountAttributes(rNode);
     if(nAttrs>0) {
-        for(i = 1; i <= nAttrs; i++) {
+        for(i = 0; i < nAttrs; i++) {
             attr = XmlGetAttribute(rNode, i);
             if(attr) {
                 int anLen, avLen;
@@ -1657,7 +1655,7 @@ XmlDump(TXml *xml, int *outlen)
         // we will update outlen later once iconv tell us the size
         if (outlen) 
             *outlen = olen;
-        out = calloc(1, olen);
+        out = (char *)calloc(1, olen);
         ich = iconv_open (xml->outputEncoding, xml->documentEncoding);
         if (ich == (iconv_t)(-1)) {
             free(dump);
@@ -1806,15 +1804,14 @@ XmlRemoveNode(TXml *xml, char *path)
 XmlErr
 XmlRemoveBranch(TXml *xml, unsigned long index)
 {
-    int count = 1;
+    int count = 0;
     XmlNode *branch, *tmp;
     TAILQ_FOREACH_SAFE(branch, &xml->rootElements, siblings, tmp) {
-        if (count == index) {
+        if (count++ == index) {
             TAILQ_REMOVE(&xml->rootElements, branch, siblings);
             XmlDestroyNode(branch);
             return XML_NOERR;
         }
-        count++;
     }
     return XML_GENERIC_ERR;
 }
@@ -1823,15 +1820,14 @@ XmlNode
 *XmlGetChildNode(XmlNode *node, unsigned long index)
 {
     XmlNode *child;
-    int count = 1;
+    int count = 0;
     if(!node)
         return NULL;
     TAILQ_FOREACH(child, &node->children, siblings) {
-        if (count == index) {
+        if (count++ == index) {
             return child;
             break;
         }
-        count++;
     }
     return NULL;
 }
@@ -1956,7 +1952,7 @@ XmlGetNode(TXml *xml, char *path)
             return NULL;
         }
 
-        for(i = 1; i <= XmlCountBranches(xml); i++) {
+        for(i = 0; i < XmlCountBranches(xml); i++) {
             wNode = XmlGetBranch(xml, i);
             if(strcmp(wNode->name, tag) == 0) {
                 cNode = wNode;
@@ -1970,7 +1966,7 @@ XmlGetNode(TXml *xml, char *path)
         tag = strtok(NULL, "/");
 #endif
     } else { // no multiple rootnodes
-        cNode = XmlGetBranch(xml, 1);
+        cNode = XmlGetBranch(xml, 0);
         // TODO - this could be done in a cleaner and more efficient way
         if (*walk != '/') {
             buff = malloc(strlen(walk)+2);
@@ -2013,13 +2009,12 @@ XmlNode
 *XmlGetBranch(TXml *xml, unsigned long index)
 {
     XmlNode *node;
-    int cnt = 1;
+    int cnt = 0;
     if(!xml)
         return NULL;
     TAILQ_FOREACH(node, &xml->rootElements, siblings) {
-        if (cnt == index)
+        if (cnt++ == index)
             return node;
-        cnt++;
     }
     return NULL;
 }
@@ -2028,14 +2023,13 @@ XmlErr
 XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 {
     XmlNode *branch, *tmp;
-    int cnt = 1;
+    int cnt = 0;
     TAILQ_FOREACH_SAFE(branch, &xml->rootElements, siblings, tmp) {
-        if (cnt == index) {
+        if (cnt++ == index) {
             TAILQ_INSERT_BEFORE(branch, newBranch, siblings);
             TAILQ_REMOVE(&xml->rootElements, branch, siblings);
             return XML_NOERR;
         }
-        cnt++;
     }
     return XML_LINKLIST_ERR;
 }
@@ -2043,7 +2037,7 @@ XmlSubstBranch(TXml *xml, unsigned long index, XmlNode *newBranch)
 XmlNamespace *
 XmlCreateNamespace(char *nsName, char *nsUri) {
     XmlNamespace *newNS;
-    newNS = calloc(1, sizeof(XmlNamespace));
+    newNS = (XmlNamespace *)calloc(1, sizeof(XmlNamespace));
     if (nsName)
         newNS->name = strdup(nsName);
     newNS->uri = strdup(nsUri);

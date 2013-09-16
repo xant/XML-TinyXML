@@ -5,7 +5,7 @@ BEGIN { use_ok('XML::TinyXML') };
 
 my $txml = XML::TinyXML->new();
 $txml->loadBuffer("<node>Import&amp;special&quot;&lt;chars&gt;&#67;&#105;&#97;&#111;</node>");
-my $node = $txml->getRootNode(1);
+my $node = $txml->getRootNode(0);
 ok ( $node->value eq "Import&special\"<chars>Ciao", "unescaping" );
 
 $txml = XML::TinyXML->new();

@@ -424,7 +424,7 @@ sub loadHash {
         $self->addRootNode($root);
         $cur = $self->allowMultipleRootNodes
              ? $self->getNode($root)
-             : $self->getRootNode(1);
+             : $self->getRootNode(0);
     }
     return $cur->loadHash($hash);
 }
@@ -440,7 +440,7 @@ sub toHash {
     # only first branch will be parsed ... This means that if multiple root 
     # nodes are present (which is anyway not allowed by the xml spec), only 
     # the first one will be parsed and translated into an hashref
-    my $node = $self->getRootNode(1);
+    my $node = $self->getRootNode(0);
     return $node->toHash;
 }
 
@@ -589,7 +589,7 @@ In scalar context returns an arrayref.
 sub rootNodes {
     my ($self) = @_;
     my @nodes;
-    for (my $i = 1; $i <= XmlCountBranches($self->{_ctx}); $i++) {
+    for (my $i = 0; $i < XmlCountBranches($self->{_ctx}); $i++) {
         push (@nodes, XML::TinyXML::Node->new(XmlGetBranch($self->{_ctx}, $i)));
     }
     return wantarray?@nodes:\@nodes;

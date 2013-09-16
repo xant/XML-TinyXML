@@ -44,7 +44,7 @@ is ($set[0]->name, "foo");
 $selector->resetContext;
 @set = $selector->select("child::parent[child::blah='SECOND']");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah"); # tests both last selection and getChildNode
+is ($set[0]->getChildNode(0)->name, "blah"); # tests both last selection and getChildNode
 @set = $selector->select("attribute::*"); # reusing last context node
 is (scalar(@set), 1);
 is_deeply ([$set[0]->name, $set[0]->value], ['attr', 'val']); # ensure it's the expected attribute
@@ -83,22 +83,22 @@ is_deeply ([ $set[0]->name, $set[0]->value ], ['attr', 'val']); # ensure it's th
 $selector->resetContext;
 @set = $selector->select("child::parent[position()=2]");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah");
+is ($set[0]->getChildNode(0)->name, "blah");
 
 $selector->resetContext;
 @set = $selector->select("child::parent[position()=last()]");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah");
+is ($set[0]->getChildNode(0)->name, "blah");
 
 $selector->resetContext;
 @set = $selector->select("child::parent[position()=last()-1]");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "child1");
+is ($set[0]->getChildNode(0)->name, "child1");
 
 $selector->resetContext;
 @set = $selector->select("child::parent[position()=1+1]");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah");
+is ($set[0]->getChildNode(0)->name, "blah");
 
 # now check if using "2 mod 3" instead of "1+1" produces the same result
 $selector->resetContext;
@@ -108,7 +108,7 @@ is_deeply(\@set, \@set2);
 $selector->resetContext;
 @set = $selector->select("child::parent[position()>=1][position()=2]");
 is (scalar(@set), 1);
-is ($set[0]->getChildNode(1)->name, "blah");
+is ($set[0]->getChildNode(0)->name, "blah");
 
 $selector->resetContext;
 @set = $selector->select("descendant::*[attribute::attr]");

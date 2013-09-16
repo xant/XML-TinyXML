@@ -56,7 +56,7 @@ is(ref($ref), "ARRAY");
 is(scalar(@$ref), 2);
 
 # can we remove an entire branch ?
-$txml->removeRootNode(1);
+$txml->removeRootNode(0);
 is($txml->countRootNodes, 1);
 
 # test switching ALLOW_MULTIPLE_ROOTNODES again

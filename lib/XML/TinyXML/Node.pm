@@ -299,7 +299,7 @@ Returns all attribute (array/arrayref of XML::TinyXML::NodeAttribute objects) fo
 sub getAttributes {
     my ($self) = shift;
     my @res;
-    for(my $i = 1; $i <= XML::TinyXML::XmlCountAttributes($self->{_node}); $i++) {
+    for(my $i = 0; $i < XML::TinyXML::XmlCountAttributes($self->{_node}); $i++) {
         push @res, XML::TinyXML::NodeAttribute->new(XML::TinyXML::XmlGetAttribute($self->{_node}, $i));
     }
     return wantarray?@res:\@res;
@@ -320,7 +320,7 @@ getAttributes() or getAttribute() instead.
 sub attributes {
     my ($self) = shift;
     my $res = {};
-    for(my $i = 1; $i <= XML::TinyXML::XmlCountAttributes($self->{_node}); $i++) {
+    for(my $i = 0; $i < XML::TinyXML::XmlCountAttributes($self->{_node}); $i++) {
         my $attr = XML::TinyXML::XmlGetAttribute($self->{_node}, $i);
         $res->{$attr->name} = $attr->value;
     }
@@ -368,7 +368,7 @@ Returns an array containing all actual children in the form of Xml::TinyXML::Nod
 sub children {
     my ($self) = @_;
     my @children;
-    for (my $i = 1; $i <= XML::TinyXML::XmlCountChildren($self->{_node}); $i++) {
+    for (my $i = 0; $i < XML::TinyXML::XmlCountChildren($self->{_node}); $i++) {
         push (@children, XML::TinyXML::Node->new(XML::TinyXML::XmlGetChildNode($self->{_node}, $i)));
     }
     return wantarray?@children:\@children;
@@ -413,7 +413,7 @@ Removes all children from this node
 =cut
 sub removeAllChildren {
     my ($self) = @_;
-    for (my $i = 1; $i <= $self->countChildren; $i++) {
+    for (my $i = 0; $i < $self->countChildren; $i++) {
         XML::TinyXML::XmlRemoveChildNode($self->{_node}, $i);
     }
 }
