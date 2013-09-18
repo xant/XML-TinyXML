@@ -1038,14 +1038,21 @@ XmlParseBuffer(TXml *xml, char *buf)
                 if(start == NULL)
                     return XML_MEMORY_ERR;
                 strncpy(start, mark, p-mark);
+
                 if(*p == '>' && *(p-1) == '/') {
                     start[p-mark-1] = 0;
                     state = XML_ELEMENT_UNIQUE;
-                }
-                else {
+                } else {
                     start[p-mark] = 0;
                 }
+
                 SKIP_WHITESPACES(p);
+                if(*p == '>' || (*p == '/' && *(p+1) == '>')) {
+                    if (*p == '/') {
+                        state = XML_ELEMENT_UNIQUE;
+                        p++;
+                    }
+                }
                 while(*p != '>' && *p != 0) {
                     mark = p;
                     ADVANCE_TO_ATTR_VALUE(p);
